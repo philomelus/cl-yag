@@ -5,13 +5,12 @@
   :version "0.0.1"
   :depends-on (:clg
                :fiveam)
-  :license "BSD"
+  :pathname "tests/"
+  :license "MIT"
   :serial t
   :components ((:module "tests"
-                        :serial t
-                        :components ((:file "packages")
-                                     (:file "test-clg"))))
+                :serial t
+                :components ((:file "packages")
+                             (:file "clg-tests"))))
 
-  ;; The following would not return the right exit code on error, but still 0.
-  ;; :perform (test-op (op _) (symbol-call :fiveam :run-all-tests))
-  )
+  :perform (test-op (o c) (symbol-call :clg-tests :run-all-tests)))

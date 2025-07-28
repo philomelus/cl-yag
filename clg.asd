@@ -1,28 +1,33 @@
-(in-package :asdf-user)
-
 (defsystem "clg"
-  :author "Russ Gibson <russg@rnstech.com>"
+  :author "Russell E. Gibson <russg@rnstech.com>"
   :version "0.0.1"
   :license "MIT"
   :description "Common Lisp GUI on top of liballegro."
-  :homepage ""
-  :bug-tracker ""
-  :source-control (:git "")
+  :homepage "yeah, right, sure, I'll get right on that."
+  :bug-tracker "Pffftt"
+  :source-control (:git "https://github.com/philomelus/clg.git")
 
   ;; Dependencies.
-  :depends-on ()
+  :depends-on ("cl-liballegro"
+               "event-glue"
+               "cffi-object"
+               "documentation-utils")
 
   ;; Project stucture.
   :serial t
   :components ((:module "src"
-                        :serial t
-                        :components ((:file "packages")
-                                     (:file "clg"))))
+                :serial t
+                :components ((:file "packages")
+                             (:file "asteroids")
+                             (:file "asteroids-docs")
+                             (:file "blastem")
+                             (:file "blastem-docs")
+                             (:file "generics")
+                             (:file "generics-docs")
+                             (:file "mixins")
+                             (:file "mixins-docs")
+                             (:file "utils")
+                             (:file "utils-docs")
+                             (:file "clg")
+                             (:file "clg-docs")))))
 
-  ;; Build a binary:
-  ;; don't change this line.
-  :build-operation "program-op"
-  ;; binary name: adapt.
-  :build-pathname "clg"
-  ;; entry point: here "main" is an exported symbol. Otherwise, use a double ::
-  :entry-point "clg:main")

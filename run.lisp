@@ -13,7 +13,7 @@ If you don't want to land in the REPL, you can (quit) below or call lisp with th
 Another solution to run the app is to build and run a binary (see README).
 "
 
-(load "clg.asd")
+(asdf:load-asd "clg.asd")
 
 (ql:quickload "clg")
 
