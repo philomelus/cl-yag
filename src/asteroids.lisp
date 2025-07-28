@@ -190,7 +190,7 @@
 (defclass system (al:system)
   ()
   (:default-initargs
-   :title "Simple-Asteroids"
+   :title "Asteroids"
    :width +display-width+ :height +display-height+
    :display-options '((:sample-buffers 1 :suggest) (:samples 8 :suggest))))
 
@@ -789,14 +789,4 @@
 (defun main ()
   (al:run-system (make-instance 'system))
   nil)
-(defpackage simple-asteroids
-  (:use :cl)
-  (:import-from #:cffi
-                #:foreign-slot-value
-                #:null-pointer-p
-                #:null-pointer
-                #:foreign-pointer
-                #:foreign-free
-                #:foreign-enum-value)
-  (:export #:main))
 

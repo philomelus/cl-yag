@@ -24,7 +24,7 @@
 ;;         (if (> (al:get-errno) 0)
 ;;             (error "Failed to initialize ~s (~d)" ,desc (al:get-errno))
 ;;             (error "Failed to initialize ~s" ,desc))))
-;;     (cons) <<<--- Don't know how to deal with this ...
+;;     (cons) <<<--- Don't know how to deal with this ... (turns out ... its a list ...)
 ;;     (otherwise
 ;;      (error "MUST-INIT unknown type: ~a (~a)" (type-of test) test))))
 
