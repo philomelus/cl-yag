@@ -10,10 +10,20 @@
    (options :initarg :options :initform () :type list :accessor window-options)
    ))
 
-(defun print-window (object stream)
-  (format stream "~&window:~&  options: ~a~&  active: ~a~&  enabled: ~a~&  left/top: ~d ~d~&  width/height: ~d ~d~&  visible: ~a~&  content: ~a"
-          (window-options object) (active object) (enabled object) (area-left object)
-          (area-top object) (area-width object) (area-height object) (visible object) (window-content object)))
+;;-------------------------------------------------------------------
+;; Make sure our children know who their parent is
+
+(defmethod initialize-instance :after ((obj window) &key)
+  (if (slot-boundp obj 'content)
+      (dolist (child (window-content obj))
+        (if (typep child 'parent-mixin)
+            (setf (parent child) obj)))))
+
+(defmethod (setf window-content) :after (val (obj window))
+  (dolist (child (window-content obj))
+    (setf (parent child) obj)))
+
+;;-------------------------------------------------------------------
 
 ;; If window is visible, hide it
 (defmethod hide ((obj window) &key)
@@ -68,4 +78,3 @@
       (cerror "Retry, using (list ~a)" "options must be a list, receivd ~a" options)
       (setf (window-options obj) newval)))
   (next-method))
-

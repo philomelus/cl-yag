@@ -33,14 +33,11 @@
     (unwind-protect
          (progn
            
-           (let* ((t1 (make-instance 'active-text :title "Asteroids" :font font
-                                                  :h-align :center :x 0 :y 0))
-                  (t2 (make-instance 'active-text :title "Blastem" :font font
-                                                  :h-align :center :x 0 :y 50))
-                  (t3 (make-instance 'active-text :title "Quit" :font font
-                                                  :h-align :center :x 0 :y 100))
+           (let* ((t1 (make-instance 'active-text :title "Asteroids" :font font :h-align :center :left 0 :top 0))
+                  (t2 (make-instance 'active-text :title "Blastem" :font font :h-align :center :left 0 :top 50))
+                  (t3 (make-instance 'active-text :title "Quit" :font font :h-align :center :left 0 :top 100))
                   (vg (make-instance 'vertical-grid :content (list t1 t2 t3) :h-align :center :v-align :middle))
-                  (w (make-instance 'window :x 200 :y 200 :w 400 :h 400 :content (list vg)))
+                  (w (make-instance 'window :left 200 :top 200 :width 400 :height 400 :content (list vg)))
                   (boss (make-instance 'manager :contents (list w))))
 
              (ready boss)

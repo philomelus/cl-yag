@@ -6,55 +6,50 @@
                 color-mixin
                 font-mixin
                 h-align-mixin
+                parent-mixin
+                title-mixin
                 v-align-mixin)
-  ((title :initarg :title :initform "" :type string :accessor text-title)))
+  ())
 
-(defun print-color (color stream)
-  (format stream "R: ~d, G: ~d, B: ~d, A: ~d"
-          (clg-utils:color-r color)
-          (clg-utils:color-g color)
-          (clg-utils:color-b color)
-          (clg-utils:color-a color)))
-
-(defun print-text (obj stream &optional (title "text"))
-  (format stream "~&~a: ~a~&  title: ~s~&  color: ~a~&  area: ~a~&  font: ~a~&  h-align: ~a~&  v-align: ~a"
-          title obj (text-title obj) (print-color (color obj) nil)
-          (list (area-left obj) (area-top obj) (area-height obj) (area-width obj))
-          (font obj) (h-align obj) (v-align obj)))
+;;; methods ---------------------------------------------------------
 
 (defmethod layout ((obj text) mgr &key parent)
   (declare (ignore mgr parent))
   (next-method))
 
 (defmethod on-paint ((obj text) &key)
-  (al:draw-text (font obj) (color obj) (area-left obj) (area-top obj) 0 (text-title obj))
+  (al:draw-text (font obj) (color obj) (text-calc-left obj) (area-top obj) 0 (title obj))
   (next-method))
 
 (defmethod ready ((obj text) &key manager parent)
   (declare (ignore manager parent))
   (next-method))
 
+(defun text-calc-left (obj)
+  (let ((al (area-left obj)))
+   (case (h-align obj)
+     (:center
+      (let ((tw (al:get-text-width (font obj) (title obj)))
+            (aw (area-width obj)))
+        ;; Does text fit?
+        (if (> (- aw tw) 1)
+            (+ (truncate (/ (- aw tw) 2)) al)
+            al)))
+     (:right
+      (let ((tw (al:get-text-width (font obj) (title obj)))
+            (aw (area-width obj)))
+        (if (> (- aw tw) 0)
+            (+ al (- aw tw))
+            al)))
+     ((:none :left)
+      al))))
+
 ;;;; active-text ==============================================================
 
 (defclass active-text (text)
   ((inside :initform nil :type boolean :accessor active-text-inside)))
 
-(defun print-active-text (obj stream)
-  (print-text obj stream "active-text"))
-
-(defmethod (setf text-title) :after (newval (obj active-text))
-  (if (and (not (cffi:null-pointer-p (font obj)))
-           (not (eq nil newval))
-           (> (length newval) 0)
-           (member (h-align obj) (list :left :right :center)))
-      (progn
-        (case (h-align obj)
-          (:left
-           (setf (area-width obj) (al:get-text-width (font obj) (text-title obj))))
-          (:right)
-          (:center)))
-      )
-  )
+;;; methods ---------------------------------------------------------
 
 (defmethod layout ((obj active-text) mgr &key parent)
   (declare (ignore mgr parent))
@@ -72,7 +67,7 @@
   (al:draw-text (font obj) (if (active-text-inside obj)
                                (color-inverse (color obj))
                                (color obj))
-                (area-left obj) (area-top obj) 0 (text-title obj))
+                (text-calc-left obj) (area-top obj) 0 (title obj))
   (next-method))
 
 (defmethod ready ((obj active-text) &key manager parent)

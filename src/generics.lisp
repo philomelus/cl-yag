@@ -1,34 +1,20 @@
 (in-package #:clg)
 
-;;;; functionality ------------------------------------------------------------
+(defgeneric area-bottom (obj &key &allow-other-keys))
 
-(defgeneric clear-connections (mgr &key &allow-other-keys))
+(defgeneric area-right (obj &key &allow-other-keys))
 
 (defgeneric connect (name obj mgr func &key &allow-other-keys))
 
 (defgeneric disconnect (name obj mgr func &key &allow-other-keys))
 
+(defgeneric disconnect-all (mgr &key &allow-other-keys))
+
 (defgeneric hide (obj &key &allow-other-keys))
 
-(defgeneric layout (obj mgr &key parent &allow-other-keys)
-  (:method (obj mgr &key)))
+(defgeneric layout (obj mgr &key parent &allow-other-keys))
 
 (defgeneric manage (obj mgr &key &allow-other-keys))
-
-(defgeneric paint (obj &key &allow-other-keys))
-
-(defgeneric process-events (queue object &key unhandled-event-proc &allow-other-keys))
-
-(defgeneric ready (obj &key manager parent &allow-other-keys)
-  (:method (obj &key)))
-
-(defgeneric show (obj &key &allow-other-keys))
-
-(defgeneric unmanage (obj mgr &key &allow-other-keys))
-
-(defgeneric update (obj &key &allow-other-keys))
-
-;;;; events -------------------------------------------------------------------
 
 (defgeneric on-mouse-click (obj x y b &key &allow-other-keys))
 
@@ -46,3 +32,30 @@
 
 (defgeneric on-resize (obj x y w h &key &allow-other-keys))
 
+(defgeneric paint (obj &key &allow-other-keys))
+
+(defgeneric process-events (queue object &key unhandled-event-proc &allow-other-keys))
+
+(defgeneric ready (obj &key manager parent &allow-other-keys))
+
+(defgeneric show (obj &key &allow-other-keys))
+
+(defgeneric unmanage (obj mgr &key &allow-other-keys))
+
+(defgeneric update (obj &key &allow-other-keys))
+
+;;;; setf =====================================================================
+
+(defgeneric (setf location) (x y object &key &allow-other-keys))
+
+(defgeneric (setf padding) (value object &key &allow-other-keys))
+
+(defgeneric (setf padding-h) (value object &key &allow-other-keys))
+
+(defgeneric (setf padding-v) (value object &key &allow-other-keys))
+
+(defgeneric (setf spacing) (value object &key &allow-other-keys))
+
+(defgeneric (setf spacing-h) (value object &key &allow-other-keys))
+
+(defgeneric (setf spacing-v) (value object &key &allow-other-keys))

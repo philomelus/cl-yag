@@ -18,6 +18,7 @@
   :components ((:module "src"
                 :serial t
                 :components ((:file "packages")
+                             (:file "macros")
                              (:file "clg")
                              (:file "clg-docs")
                              (:file "utils")
@@ -43,6 +44,7 @@
                              )))
   :around-compile
   (lambda (next)
-    (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 0) (speed 0)))    
+    ;; (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 0) (speed 0)))    
+    (proclaim '(optimize (debug 3) (safety 3)))    
     (funcall next)))
 

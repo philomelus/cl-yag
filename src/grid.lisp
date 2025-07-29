@@ -3,31 +3,39 @@
 ;;;; vertical-grid ============================================================
 
 (defclass vertical-grid (h-align-mixin
+                         parent-mixin
                          v-align-mixin)
   ((content :initarg :content :initform () :type list :accessor vertical-grid-content)))
 
-(defun print-vertical-grid (obj stream)
-  (format stream "vertical-grid:~&  h-align: ~a~&  v-align: ~a~&  content: ~a"
-          (h-align obj) (v-align obj)
-          (vertical-grid-content obj)))
+;;-------------------------------------------------------------------
+;; Make sure our children know we are their parent
+
+(defmethod initialize-instance :after ((obj vertical-grid) &key)
+  (dolist (child (vertical-grid-content obj))
+    (setf (parent child) obj)))
+
+(defmethod (setf vertical-grid-content) :after (value (object vertical-grid))
+  (dolist (child (vertical-grid-content object))
+    (if (typep child 'parent-mixin)
+        (setf (parent child) object)))
+  (next-method))
+
+(defmethod (setf parent) :after (val (obj vertical-grid))
+  (dolist (child (vertical-grid-content obj))
+    (if (typep child 'parent-mixin)
+        (setf (parent child) obj)))
+  (next-method))
+
+;;-------------------------------------------------------------------
+
+(defmethod (setf content) :after (value (obj vertical-grid))
+  (dolist (child (vertical-grid-content obj))
+    (setf (parent child) obj)))
 
 (defmethod layout ((obj vertical-grid) (mgr manager) &key parent)
   (declare (ignore parent))
   (dolist (child (vertical-grid-content obj))
     (layout child mgr :parent obj))
-  (next-method))
-
-(defmethod on-mouse-clicked ((obj vertical-grid) x y b &key)
-  ;; If click is within boundary of contained items,
-  ;; somehow return that object as the result of the processing...
-  (next-method))
-
-(defmethod on-mouse-enter ((obj vertical-grid) x y &key)
-  ;; Pass on to contained object if its within their controlled area
-  (next-method))
-
-(defmethod on-mouse-exit ((obj vertical-grid) x y &key)
-  ;; Pass on to contained object if we were in their area and are not now
   (next-method))
 
 ;; Paint all contained objects and set clean

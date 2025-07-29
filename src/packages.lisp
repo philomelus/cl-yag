@@ -23,39 +23,11 @@
            #:must-init
            #:rect-collide))
 
-(defpackage :clg-mixins
-  (:use #:cl)
-  (:export #:active-mixin #:active
-           #:align-mixin
-           #:area-mixin #:area-bottom #:area-h #:area-height #:area-left #:area-right
-                        #:area-top #:area-w #:area-width #:area-x #:area-y
-           #:color-mixin #:color
-           #:color-back-fore-mixin #:back-color #:fore-color
-           #:enable-mixin #:enabled
-           #:font-mixin #:font
-           #:h-align-mixin #:h-align #:align-h
-           #:location-mixin #:location-x #:location-y #:location
-           #:padding-mixin #:padding #:padding-bottom #:padding-h #:padding-left
-                           #:padding-right #:padding-top #:padding-v
-           #:spaceing-mixin #:spacing #:spacing-bottom #:spacing-h #:spacing-left
-                           #:spacing-right #:spacing-top #:spacing-v
-           #:v-align-mixin #:v-align #:align-v
-           #:visible-mixin #:visible))
-
 (defpackage :clg
   (:use #:cl)
   (:import-from #:cffi
                 #:null-pointer
                 #:foreign-pointer)
-  (:import-from #:clg-mixins
-                #:active-mixin #:active
-                #:area-mixin #:area-height #:area-left #:area-top #:area-width
-                #:color-mixin #:color
-                #:enable-mixin #:enabled
-                #:font-mixin #:font
-                #:h-align-mixin #:h-align
-                #:v-align-mixin #:v-align
-                #:visible-mixin #:visible)
   (:import-from #:event-glue
                 #:bind
                 #:data

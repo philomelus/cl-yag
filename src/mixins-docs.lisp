@@ -1,4 +1,4 @@
-(in-package #:clg-mixins)
+(in-package #:clg)
 
 ;;;; align-mixin ==============================================================
 
