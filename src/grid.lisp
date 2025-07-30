@@ -28,15 +28,12 @@
 
 ;;-------------------------------------------------------------------
 
+(defmethod area-height ((obj vertical-grid))
+  (/ (area-height (coerce obj 'area-mixin)) (length (vertical-grid-content obj))))
+
 (defmethod (setf content) :after (value (obj vertical-grid))
   (dolist (child (vertical-grid-content obj))
     (setf (parent child) obj)))
-
-(defmethod layout ((obj vertical-grid) (mgr manager) &key parent)
-  (declare (ignore parent))
-  (dolist (child (vertical-grid-content obj))
-    (layout child mgr :parent obj))
-  (next-method))
 
 ;; Paint all contained objects and set clean
 (defmethod on-paint ((obj vertical-grid) &key)

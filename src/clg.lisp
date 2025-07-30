@@ -33,13 +33,43 @@
     (unwind-protect
          (progn
            
-           (let* ((t1 (make-instance 'active-text :title "Asteroids" :font font :h-align :center :left 0 :top 0))
-                  (t2 (make-instance 'active-text :title "Blastem" :font font :h-align :center :left 0 :top 50))
-                  (t3 (make-instance 'active-text :title "Quit" :font font :h-align :center :left 0 :top 100))
-                  (vg (make-instance 'vertical-grid :content (list t1 t2 t3) :h-align :center :v-align :middle))
-                  (w (make-instance 'window :left 200 :top 200 :width 400 :height 400 :content (list vg)))
+           (let* ((t1 (make-instance 'active-text :title "Asteroids"
+                                                  :font font
+                                                  :h-align :center
+                                                  :v-align :middle
+                                                  :left 0
+                                                  :top 0
+                                                  :color (al:map-rgb-f 1 0 0)))
+                  
+                  (t2 (make-instance 'active-text :title "Blastem"
+                                                  :font font
+                                                  :h-align :center
+                                                  :v-align :middle
+                                                  :left 0
+                                                  :top 50
+                                                  :color (al:map-rgb-f 0 1 0)))
+                  
+                  (t3 (make-instance 'active-text :title "Quit" :font font
+                                                  :h-align :center
+                                                  :left 0
+                                                  :v-align :middle
+                                                  :top 100
+                                                  :color (al:map-rgb-f 0 0 1)))
+                  
+                  (vg (make-instance 'vertical-grid :content (list t1 t2 t3)
+                                                    :h-align :center
+                                                    :v-align :middle))
+                  
+                  (w (make-instance 'window :left 200
+                                            :top 200
+                                            :width 400
+                                            :height 400
+                                            :content (list vg)))
+                  
                   (boss (make-instance 'manager :contents (list w))))
 
+             (setf (border w) (make-instance 'border :color (al:map-rgb-f 1 1 0)))
+             
              (ready boss)
 
              (show w)

@@ -4,14 +4,15 @@
 
 (defclass window (active-mixin
                   area-mixin
+                  border-mixin
                   enable-mixin
                   visible-mixin)
   ((content :initarg :content :initform () :type list :accessor window-content)
    (options :initarg :options :initform () :type list :accessor window-options)
    ))
 
-;;-------------------------------------------------------------------
-;; Make sure our children know who their parent is
+;;;------------------------------------------------------------------
+;;; Make sure our children know who their parent is
 
 (defmethod initialize-instance :after ((obj window) &key)
   (if (slot-boundp obj 'content)
@@ -23,18 +24,12 @@
   (dolist (child (window-content obj))
     (setf (parent child) obj)))
 
-;;-------------------------------------------------------------------
+;;;------------------------------------------------------------------
 
 ;; If window is visible, hide it
 (defmethod hide ((obj window) &key)
   (when (visible obj)
     (setf (visible obj) nil))
-  (next-method))
-
-(defmethod layout ((obj window) mgr &key)
-  ;; Let contained objects layout
-  (dolist (child (window-content obj))
-    (layout child mgr :parent obj))
   (next-method))
 
 (defmethod on-mouse-down ((obj window) x y b &key)
@@ -51,6 +46,34 @@
 
 ;; Paint all contained objects and set clean
 (defmethod on-paint ((obj window) &key)
+  (let ((x (area-left obj))
+        (y (area-top obj)))
+    (let ((r (+ x (area-width obj) -1))
+          (b (+ y (area-height obj) -1)))
+      ;; Left side
+      (if (slot-boundp obj 'border-left)
+          (let ((bo (border-left obj)))
+            (case (style bo)
+              (:default
+               (al:draw-line x y x b (color bo) (width bo))))))
+      ;; Top side
+      (if (slot-boundp obj 'border-top)
+          (let ((bo (border-top obj)))
+            (case (style bo)
+              (:default
+               (al:draw-line x y r y (color bo) (width bo))))))
+      ;; Right side
+      (if (slot-boundp obj 'border-right)
+          (let ((bo (border-right obj)))
+            (case (style bo)
+              (:default
+               (al:draw-line r y r b (color bo) (width bo))))))
+      ;; Bottom side
+      (if (slot-boundp obj 'border-bottom)
+          (let ((bo (border-bottom obj)))
+            (case (style bo)
+              (:default
+               (al:draw-line x b r b (color bo) (width bo))))))))
   (let ((children (window-content obj)))
     (dolist (c children)
       (progn

@@ -86,12 +86,8 @@
         (disconnect-all obj)
         (setf (manager-ready obj) nil)))
 
+  ;; Allow all managed objects to get ready
   (let ((children (manager-content obj)))
-    ;; Allow all managed object to perform layout
-    (dolist (child children)
-      (layout child obj))
-  
-   ;; Allow all managed objects to get ready
    (dolist (child children)
      (ready child :manager obj)))
 

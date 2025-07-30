@@ -44,8 +44,34 @@
           (error "height not specified for any object in hierarchy")
           (area-height am)))))
 
+(defmethod area-left ((obj area-mixin))
+  (let ((ol (slot-value obj 'left)))
+   ;; If no parent, return objects left
+   (if (not (typep obj 'parent-mixin))
+       (return-from area-left ol))
+  
+   ;; Otherwise add the parent's left
+   (let ((am (find-parent-area-mixin obj)))
+     ;; Parent area-mixin?
+     (if (eq am nil)
+         (return-from area-left ol))
+     (+ ol (area-left am)))))
+
 (defmethod area-right ((obj area-mixin) &key)
   (+ (area-left obj) (area-width obj)))
+
+(defmethod area-top ((obj area-mixin))
+  (let ((ot (slot-value obj 'top)))
+   ;; If no parent, return objects top
+   (if (not (typep obj 'parent-mixin))
+       (return-from area-top ot))
+
+   ;; Otherwise add the parents top
+   (let ((am (find-parent-area-mixin obj)))
+     ;; Parent area-mixin?
+     (if (eq am nil)
+         (return-from area-top ot))
+     (+ ot (area-top am)))))
 
 (defmethod area-width ((obj area-mixin))
   (let ((w (slot-value obj 'width)))
@@ -56,6 +82,40 @@
       (if (eq am nil)
           (error "width not specified for any object in hierarchy")
           (area-width am)))))
+
+(defmethod (setf area) (x y w h (obj area-mixin))
+  (setf (area-left obj) x)
+  (setf (area-top obj) y)
+  (setf (area-width obj) w)
+  (setf (area-height obj) h))
+
+;;;; border-mixin ===============================================================
+
+(defclass border ()
+  ((border-color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor color)
+   (border-style :initarg :style :initform :default :type keyword :accessor style)
+   (border-width :initarg :width :initform 1 :type integer :accessor width)))
+
+(defclass border-mixin ()
+  ((border-left :initarg :border-left :initform nil :accessor border-left)
+   (border-right :initarg :border-right :initform nil :accessor border-right)
+   (border-top :initarg :border-top :initform nil :accessor border-top)
+   (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
+
+(defmethod (setf border) ((value border) (object border-mixin))
+  (setf (border-h object) value)
+  (setf (border-v object) value)
+  (next-method))
+
+(defmethod (setf border-h) ((value border) (object border-mixin))
+  (setf (border-left object) value)
+  (setf (border-right object) value)
+  (next-method))
+
+(defmethod (setf border-v) ((value border) (object border-mixin))
+  (setf (border-top object) value)
+  (setf (border-bottom object) value)
+  (next-method))
 
 ;;=============================================================================
 
@@ -92,7 +152,7 @@
             (keyword (unless (member newval '(:none :left :right :center))
                        (error msg newval)))
             (t (error msg newval))))
-  (clg::next-method))
+  (next-method))
 
 ;;=============================================================================
 
@@ -100,10 +160,10 @@
   ((x :initarg :x :initform 0 :type integer :accessor location-x)
    (y :initarg :y :initform 0 :type integer :accessor location-y)))
 
-(defmethod (setf location) (x y (object location-mixin) &key)
+(defmethod (setf location) (x y (object location-mixin))
   (setf (location-x object) x)
   (setf (location-y object) y)
-  (clg::next-method))
+  (next-method))
 
 ;;=============================================================================
 
@@ -113,20 +173,20 @@
    (padding-top :initarg :pad-top :initform 0 :type integer :accessor padding-top)
    (padding-bottom :initarg :pad-bottom :initform 0 :type integer :accessor padding-bottom)))
 
-(defmethod (setf padding) (value (object padding-mixin) &key)
+(defmethod (setf padding) (value (object padding-mixin))
   (setf (padding-h object) value)
   (setf (padding-v object) value)
-  (clg::next-method))
+  (next-method))
 
-(defmethod (setf padding-h) (value (object padding-mixin) &key)
+(defmethod (setf padding-h) (value (object padding-mixin))
   (setf (padding-left object) value)
   (setf (padding-right object) value)
-  (clg::next-method))
+  (next-method))
 
-(defmethod (setf padding-v) (value (object padding-mixin) &key)
+(defmethod (setf padding-v) (value (object padding-mixin))
   (setf (padding-top object) value)
   (setf (padding-bottom object) value)
-  (clg::next-method))
+  (next-method))
 
 ;;=============================================================================
 
@@ -136,25 +196,25 @@
 ;;=============================================================================
 
 (defclass spacing-mixin ()
-  ((spacing-left :initarg :pad-left :initform 0 :type integer :accessor spacing-left)
-   (spacing-right :initarg :pad-right :initform 0 :type integer :accessor spacing-right)
-   (spacing-top :initarg :pad-top :initform 0 :type integer :accessor spacing-top)
-   (spacing-bottom :initarg :pad-bottom :initform 0 :type integer :accessor spacing-bottom)))
+  ((spacing-left :initarg :spacing-left :initform 0 :type integer :accessor spacing-left)
+   (spacing-right :initarg :spacing-right :initform 0 :type integer :accessor spacing-right)
+   (spacing-top :initarg :spacing-top :initform 0 :type integer :accessor spacing-top)
+   (spacing-bottom :initarg :spacing-bottom :initform 0 :type integer :accessor spacing-bottom)))
 
-(defmethod (setf spacing) (value (object spacing-mixin) &key)
+(defmethod (setf spacing) (value (object spacing-mixin))
   (setf (spacing-h object) value)
   (setf (spacing-v object) value)
-  (clg::next-method))
+  (next-method))
 
-(defmethod (setf spacing-h) (value (object spacing-mixin) &key)
+(defmethod (setf spacing-h) (value (object spacing-mixin))
   (setf (spacing-left object) value)
   (setf (spacing-right object) value)
-  (clg::next-method))
+  (next-method))
 
-(defmethod (setf spacing-v) (value (object spacing-mixin) &key)
+(defmethod (setf spacing-v) (value (object spacing-mixin))
   (setf (spacing-top object) value)
   (setf (spacing-bottom object) value)
-  (clg::next-method))
+  (next-method))
 
 ;; title-mixin ================================================================
 
@@ -174,7 +234,7 @@
             (keyword (unless (member newval '(:none :top :bottom :middle))
                        (error msg newval)))
             (t (error msg newval))))
-  (clg::next-method))
+  (next-method))
 
 ;;=============================================================================
 

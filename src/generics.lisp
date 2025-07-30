@@ -12,8 +12,6 @@
 
 (defgeneric hide (obj &key &allow-other-keys))
 
-(defgeneric layout (obj mgr &key parent &allow-other-keys))
-
 (defgeneric manage (obj mgr &key &allow-other-keys))
 
 (defgeneric on-mouse-click (obj x y b &key &allow-other-keys))
@@ -46,16 +44,24 @@
 
 ;;;; setf =====================================================================
 
-(defgeneric (setf location) (x y object &key &allow-other-keys))
+(defgeneric (setf area) (x y w h object))
 
-(defgeneric (setf padding) (value object &key &allow-other-keys))
+(defgeneric (setf border) (border-object object))
 
-(defgeneric (setf padding-h) (value object &key &allow-other-keys))
+(defgeneric (setf border-h) (border-object object))
 
-(defgeneric (setf padding-v) (value object &key &allow-other-keys))
+(defgeneric (setf border-v) (border-object object))
 
-(defgeneric (setf spacing) (value object &key &allow-other-keys))
+(defgeneric (setf location) (x y object))
 
-(defgeneric (setf spacing-h) (value object &key &allow-other-keys))
+(defgeneric (setf padding) (value object))
 
-(defgeneric (setf spacing-v) (value object &key &allow-other-keys))
+(defgeneric (setf padding-h) (value object))
+
+(defgeneric (setf padding-v) (value object))
+
+(defgeneric (setf spacing) (value object))
+
+(defgeneric (setf spacing-h) (value object))
+
+(defgeneric (setf spacing-v) (value object))
