@@ -10,11 +10,6 @@ Objects must decide what active and inactive actually mean."))
                     "Sets whether contained controls are drawn as active or inactive.
 Will mark itself and all contained objects as dirty when changed."))
 
-(docs:define-docs (window-content
-                    "List of objects to show/interact with within the windows controlled area."))
-(docs:define-docs ((setf window-content)
-                    "Sets the list of objects to show/interact with within the windows controlled area.  Will mark object dirty."))
-
 (docs:define-docs (window-dirty
                     "When t, repaint is needed."))
 

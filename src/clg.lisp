@@ -56,9 +56,7 @@
                                                   :top 100
                                                   :color (al:map-rgb-f 0 0 1)))
                   
-                  (vg (make-instance 'vertical-grid :content (list t1 t2 t3)
-                                                    :h-align :center
-                                                    :v-align :middle))
+                  (vg (make-instance 'vertical-grid :content (list t1 t2 t3)))
                   
                   (w (make-instance 'window :left 200
                                             :top 200
@@ -66,9 +64,10 @@
                                             :height 400
                                             :content (list vg)))
                   
-                  (boss (make-instance 'manager :contents (list w))))
+                  (boss (make-instance 'manager :content (list w))))
 
              (setf (border w) (make-instance 'border :color (al:map-rgb-f 1 1 0)))
+             (setf (border t2) (make-instance 'border :color (al:map-rgb-f 0 1 1)))
              
              (ready boss)
 

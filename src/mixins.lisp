@@ -117,6 +117,16 @@
   (setf (border-bottom object) value)
   (next-method))
 
+;; Only allow valid keywords
+;; #+safety
+(defmethod (setf style) :after (newval (obj border))
+  (let ((msg "Expected :default, but got ~s"))
+    (typecase newval
+            (keyword (unless (member newval '(:default))
+                       (error msg newval)))
+            (t (error msg newval))))
+  (next-method))
+
 ;;=============================================================================
 
 (defclass color-mixin ()
@@ -127,6 +137,11 @@
 (defclass color-fore-back--mixin ()
   ((fore-color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor fore-color)
    (back-color :initarg :back-color :initform (al:map-rgb-f 0 0 0) :type list :accessor back-color)))
+
+;;;; container-mixin ==========================================================
+
+(defclass container-mixin ()
+  ((content :initarg :content :initform () :type list :accessor content)))
 
 ;;=============================================================================
 
@@ -154,7 +169,7 @@
             (t (error msg newval))))
   (next-method))
 
-;;=============================================================================
+;;;; location-mixin ===========================================================
 
 (defclass location-mixin ()
   ((x :initarg :x :initform 0 :type integer :accessor location-x)
@@ -165,7 +180,12 @@
   (setf (location-y object) y)
   (next-method))
 
-;;=============================================================================
+;;;; manager-mixin ============================================================
+
+(defclass manager-mixin ()
+  ((manager :initarg :manager :initform nil :accessor manager)))
+
+;;;; padding-mixin ============================================================
 
 (defclass padding-mixin ()
   ((padding-left :initarg :pad-left :initform 0 :type integer :accessor padding-left)
@@ -188,12 +208,12 @@
   (setf (padding-bottom object) value)
   (next-method))
 
-;;=============================================================================
+;;;;===========================================================================
 
 (defclass parent-mixin ()
   ((parent :initarg :parent :initform nil :type t :accessor parent)))
 
-;;=============================================================================
+;;;;===========================================================================
 
 (defclass spacing-mixin ()
   ((spacing-left :initarg :spacing-left :initform 0 :type integer :accessor spacing-left)

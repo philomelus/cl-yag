@@ -5,24 +5,25 @@
 (defclass window (active-mixin
                   area-mixin
                   border-mixin
+                  container-mixin
                   enable-mixin
                   visible-mixin)
-  ((content :initarg :content :initform () :type list :accessor window-content)
-   (options :initarg :options :initform () :type list :accessor window-options)
-   ))
+  ((options :initarg :options :initform () :type list :accessor options)))
 
 ;;;------------------------------------------------------------------
 ;;; Make sure our children know who their parent is
 
 (defmethod initialize-instance :after ((obj window) &key)
   (if (slot-boundp obj 'content)
-      (dolist (child (window-content obj))
+      (dolist (child (content obj))
         (if (typep child 'parent-mixin)
-            (setf (parent child) obj)))))
+            (setf (parent child) obj))))
+  (next-method))
 
-(defmethod (setf window-content) :after (val (obj window))
-  (dolist (child (window-content obj))
-    (setf (parent child) obj)))
+(defmethod (setf content) :after (val (obj window))
+  (dolist (child (content obj))
+    (setf (parent child) obj))
+  (next-method))
 
 ;;;------------------------------------------------------------------
 
@@ -74,7 +75,7 @@
             (case (style bo)
               (:default
                (al:draw-line x b r b (color bo) (width bo))))))))
-  (let ((children (window-content obj)))
+  (let ((children (content obj)))
     (dolist (c children)
       (progn
         (on-paint c))))
@@ -82,7 +83,7 @@
 
 (defmethod ready ((obj window) &key manager)
   ;; Let contained object prepare for events
-  (dolist (child (window-content obj))
+  (dolist (child (content obj))
     (ready child :manager manager :parent obj))
   (next-method))
 

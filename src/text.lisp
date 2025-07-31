@@ -3,6 +3,7 @@
 ;;;; text =====================================================================
 
 (defclass text (area-mixin
+                border-mixin
                 color-mixin
                 font-mixin
                 h-align-mixin
@@ -14,7 +15,7 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-paint ((obj text) &key)
-  (al:draw-text (font obj) (color obj) (text-calc-left obj) (area-top obj) 0 (title obj))
+  (al:draw-text (font obj) (color obj) (text-calc-left obj) (text-calc-top obj) 0 (title obj))
   (next-method))
 
 (defmethod ready ((obj text) &key manager parent)
@@ -74,14 +75,6 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod on-mouse-enter ((obj active-text) x y &key)
-  ;; Repaint with hilite of some sort
-  (next-method))
-
-(defmethod on-mouse-exit ((obj active-text) x y &key)
-  ;; Repaint normally
-  (next-method))
-
 (defmethod on-paint ((obj active-text) &key)
   (al:draw-text (font obj) (if (active-text-inside obj)
                                (color-inverse (color obj))
@@ -91,5 +84,6 @@
 
 (defmethod ready ((obj active-text) &key manager parent)
   (declare (ignore manager parent))
+  ;; Subscribe to mouse events
   (next-method))
 

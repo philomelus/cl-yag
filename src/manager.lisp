@@ -2,15 +2,14 @@
 
 ;;;; manager ==================================================================
 
-(defclass manager (dispatch)
-  ((content :initarg :contents :initform () :accessor manager-content)
-   (ready :initform nil :type boolean :accessor manager-ready)
-   (process :initform nil :type boolean :accessor manager-process)
-   ))
+(defclass manager (dispatch
+                   container-mixin)
+  ((ready :initform nil :type boolean :accessor manager-ready)
+   (process :initform nil :type boolean :accessor manager-process)))
 
 (defmethod initialize-instance :after ((obj manager) &key)
   (when (slot-boundp obj 'content)
-    (dolist (child (manager-content obj))
+    (dolist (child (content obj))
       (when (typep child 'parent-mixin)
         (setf (parent child) nil)))))
 
@@ -28,7 +27,7 @@
 
 (defmethod manage (obj mgr &key &allow-other-keys)
   ;; Maintain order of addition so events are passed in same order
-  (setf (manager-content mgr) (list (manager-content mgr) obj))
+  (setf (content mgr) (list (content mgr) obj))
   (next-method))
 
 (defmethod process-events (queue (object manager) &key unhandled-event-proc &allow-other-keys)
@@ -75,7 +74,7 @@
   (next-method))
 
 (defmethod paint ((obj manager) &key)
-  (dolist (child (manager-content obj))
+  (dolist (child (content obj))
     (on-paint child))
   (next-method))
 
@@ -87,7 +86,7 @@
         (setf (manager-ready obj) nil)))
 
   ;; Allow all managed objects to get ready
-  (let ((children (manager-content obj)))
+  (let ((children (content obj)))
    (dolist (child children)
      (ready child :manager obj)))
 
@@ -96,6 +95,10 @@
   (next-method))
 
 (defmethod unmanage (obj mgr &key &allow-other-keys)
-  (setf (manager-content mgr) (remove obj (manager-content mgr)))
+  (setf (content mgr) (remove obj (content mgr)))
   (next-method))
 
+;;;------------------------------------------------------------------
+
+(defun root (obj)
+  )
