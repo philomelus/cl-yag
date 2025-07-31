@@ -98,7 +98,4 @@
   (setf (content mgr) (remove obj (content mgr)))
   (next-method))
 
-;;;------------------------------------------------------------------
 
-(defun root (obj)
-  )

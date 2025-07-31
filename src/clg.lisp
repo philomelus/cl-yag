@@ -8,12 +8,12 @@
 ;;;; main =====================================================================
 
 (defun main-init ()
-  (clg-utils:must-init (al:init) "allegro")
-  (clg-utils:must-init (al:install-keyboard) "keyboard")
-  (clg-utils:must-init (al:install-mouse) "mouse")
-  (clg-utils:must-init (al:init-font-addon) "font addon")
-  (clg-utils:must-init (al:init-image-addon) "image addon")
-  (clg-utils:must-init (al:init-primitives-addon) "primitives addon"))
+  (must-init (al:init) "allegro")
+  (must-init (al:install-keyboard) "keyboard")
+  (must-init (al:install-mouse) "mouse")
+  (must-init (al:init-font-addon) "font addon")
+  (must-init (al:init-image-addon) "image addon")
+  (must-init (al:init-primitives-addon) "primitives addon"))
 
 (defun main-setup-display ()
   (al:set-new-display-option :sample-buffers 1 :suggest)
@@ -56,13 +56,13 @@
                                                   :top 100
                                                   :color (al:map-rgb-f 0 0 1)))
                   
-                  (vg (make-instance 'vertical-grid :content (list t1 t2 t3)))
+                  (cl (make-instance 'column-layout :content (list t1 t2 t3)))
                   
                   (w (make-instance 'window :left 200
                                             :top 200
                                             :width 400
                                             :height 400
-                                            :content (list vg)))
+                                            :content (list cl)))
                   
                   (boss (make-instance 'manager :content (list w))))
 
