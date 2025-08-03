@@ -1,8 +1,8 @@
 (in-package :asdf-user)
-(defpackage :clg-tests
-  (:use :common-lisp
-        :fiveam
-        :clg))
+(defpackage :cl-yag-tests
+  (:use #:common-lisp
+        #:fiveam
+        #:cl-yag))
 
 
-(in-package :clg-tests)
+(in-package #:cl-yag-tests)

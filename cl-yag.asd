@@ -1,16 +1,15 @@
-(defsystem "clg"
+(defsystem "cl-yag"
   :author "Russell E. Gibson <russg@rnstech.com>"
   :version "0.0.1"
   :license "MIT"
   :description "Common Lisp GUI on top of liballegro."
   :homepage "yeah, right, sure, I'll get right on that."
   :bug-tracker "Pffftt"
-  :source-control (:git "https://github.com/philomelus/clg.git")
+  :source-control (:git "https://github.com/philomelus/cl-yag.git")
 
   ;; Dependencies.
   :depends-on ("cl-liballegro"
-               "event-glue"
-               "cffi-object"
+               ;; "cffi-object"
                "documentation-utils")
 
   ;; Project stucture.
@@ -19,8 +18,8 @@
                 :serial t
                 :components ((:file "packages")
                              (:file "macros")
-                             (:file "clg")
-                             (:file "clg-docs")
+                             (:file "cl-yag")
+                             (:file "cl-yag-docs")
                              (:file "utils")
                              (:file "utils-docs")
                              (:file "generics")

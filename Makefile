@@ -7,9 +7,9 @@ run:
 
 build:
 	$(LISP)	--non-interactive \
-		--load clg.asd \
-		--eval '(ql:quickload :clg)' \
-		--eval '(asdf:make :clg)'
+		--load cl-yag.asd \
+		--eval '(ql:quickload :cl-yag)' \
+		--eval '(asdf:make :cl-yag)'
 
 test:
 	$(LISP) --non-interactive \

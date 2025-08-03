@@ -1,4 +1,4 @@
-(in-package #:clg)
+(in-package #:cl-yag)
 
 ;;=============================================================================
 
@@ -13,15 +13,34 @@
 ;;=============================================================================
 
 (defclass area-mixin ()
-  ((left :initarg :left :initform 0 :type integer :accessor area-left)
-   (top :initarg :top :initform 0 :type integer :accessor area-top)
-   (width :initarg :width :initform 0 :type integer :accessor area-width)
-   (height :initarg :height :initform 0 :type integer :accessor area-height)))
+  ((left :initarg :left :initform +LAYOUT-LEFT-CALC+ :type integer :accessor left)
+   (top :initarg :top :initform +LAYOUT-TOP-CALC+ :type integer :accessor top)
+   (width :initarg :width :initform +LAYOUT-HEIGHT-CALC+ :type integer :accessor width)
+   (height :initarg :height :initform +LAYOUT-WIDTH-CALC+ :type integer :accessor height)))
 
-(defmethod area-bottom ((obj area-mixin) &key)
-  (+ (area-top obj) (area-height obj)))
+(defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
+  ;; If we are a container, pass on to all children
+  (if (typep obj 'container-mixin)
+      (dolist (child (content obj))
+        (on-mouse-move x y dx dy child)))
+  (next-method))
+
+(defmethod on-mouse-down (x y b (obj area-mixin) &key)
+  (if (typep obj 'container-mixin)
+      (dolist (child (content obj))
+        (on-mouse-down x y b child)))
+  (next-method))
+
+(defmethod on-mouse-up (x y b (obj area-mixin) &key)
+  (if (typep obj 'container-mixin)
+      (dolist (child (content obj))
+        (on-mouse-up x y b child)))
+  (next-method))
+
+;;; functions -------------------------------------------------------
 
 (defun find-parent-area-mixin (obj)
+  "Returns first parent that is a subclass of area-mixin, or nil."
   (if (not (typep obj 'parent-mixin))
       (return-from find-parent-area-mixin nil))  
   (let ((par-obj (parent obj)))
@@ -29,65 +48,74 @@
       (if (eq nil par-obj)
           (return-from find-parent-area-mixin nil))
       (if (typep par-obj 'area-mixin)
-         (return-from find-parent-area-mixin par-obj))
+          (return-from find-parent-area-mixin par-obj))
       (if (not (typep par-obj 'parent-mixin))
-          (return-from find-parent-area-mixin nil)
-          (setf par-obj (parent par-obj))))))
+          (return-from find-parent-area-mixin nil))
+      (setf par-obj (parent par-obj)))))
 
-(defmethod area-height ((obj area-mixin))
+;;; methods ---------------------------------------------------------
+
+(defmethod bottom ((obj area-mixin) &key)
+  (+ (top obj) (height obj)))
+
+(defmethod height ((obj area-mixin))
   (let ((h (slot-value obj 'height)))
-    (if (> h 0)
-        (return-from area-height h))
-    ;; Invalid height, so calculate it if possible
-    (let ((am (find-parent-area-mixin obj)))
-      (if (eq am nil)
-          (error "height not specified for any object in hierarchy")
-          (area-height am)))))
+    (if (= h +LAYOUT-HEIGHT-CALC+)
+        (setf h 0))
+    (when (typep obj 'parent-mixin)
+      (let ((p (parent obj)))
+       (when (typep p 'container-mixin)
+         (setf h (container-calc-child-height obj p)))))
+    h))
 
-(defmethod area-left ((obj area-mixin))
-  (let ((ol (slot-value obj 'left)))
-   ;; If no parent, return objects left
-   (if (not (typep obj 'parent-mixin))
-       (return-from area-left ol))
-  
-   ;; Otherwise add the parent's left
-   (let ((am (find-parent-area-mixin obj)))
-     ;; Parent area-mixin?
-     (if (eq am nil)
-         (return-from area-left ol))
-     (+ ol (area-left am)))))
+(defmethod left ((obj area-mixin))
+  (let ((l (slot-value obj 'left)))
+    (if (= l +LAYOUT-LEFT-CALC+)
+        (setf l 0))
+    (when (typep obj 'parent-mixin)
+      (let ((p (parent obj)))
+        (when (typep p 'container-mixin)
+         (setf l (container-calc-child-left obj p)))))
+    l))
 
-(defmethod area-right ((obj area-mixin) &key)
-  (+ (area-left obj) (area-width obj)))
+(defmethod right ((obj area-mixin) &key)
+  (+ (left obj) (width obj)))
 
-(defmethod area-top ((obj area-mixin))
-  (let ((ot (slot-value obj 'top)))
-   ;; If no parent, return objects top
-   (if (not (typep obj 'parent-mixin))
-       (return-from area-top ot))
+(defmethod top ((obj area-mixin))
+  (let ((top (slot-value obj 'top)))
+    (if (= top +LAYOUT-TOP-CALC+)
+        (setf top 0))
+    (when (typep obj 'parent-mixin)
+      (let ((p (parent obj)))
+        (when (typep p 'container-mixin)
+          (setf top (container-calc-child-top obj p)))))
+    top))
 
-   ;; Otherwise add the parents top
-   (let ((am (find-parent-area-mixin obj)))
-     ;; Parent area-mixin?
-     (if (eq am nil)
-         (return-from area-top ot))
-     (+ ot (area-top am)))))
-
-(defmethod area-width ((obj area-mixin))
+(defmethod width ((obj area-mixin))
   (let ((w (slot-value obj 'width)))
-    (if (> w 0)
-        (return-from area-width w))
-    ;; Invalid width, so calculate it if possible
-    (let ((am (find-parent-area-mixin obj)))
-      (if (eq am nil)
-          (error "width not specified for any object in hierarchy")
-          (area-width am)))))
+    (if (= w +LAYOUT-WIDTH-CALC+)
+        (setf w 0))
+    (when (typep obj 'parent-mixin)
+      (let ((p (parent obj)))
+        (when (typep p 'container-mixin)
+          (setf w (container-calc-child-width obj p)))))
+    w))
+
+(defmethod within (x y (obj area-mixin) &key)
+  (let ((left (left obj))
+        (top (top obj))
+        (right (right obj))
+        (bottom (bottom obj)))
+    (if (and (> x left) (< x right)
+             (> y top) (< y bottom))
+        t
+        nil)))
 
 (defmethod (setf area) (x y w h (obj area-mixin))
-  (setf (area-left obj) x)
-  (setf (area-top obj) y)
-  (setf (area-width obj) w)
-  (setf (area-height obj) h))
+  (setf (left obj) x)
+  (setf (top obj) y)
+  (setf (width obj) w)
+  (setf (height obj) h))
 
 ;;;; border-mixin ===============================================================
 
@@ -122,9 +150,9 @@
 (defmethod (setf style) :after (newval (obj border))
   (let ((msg "Expected :default, but got ~s"))
     (typecase newval
-            (keyword (unless (member newval '(:default))
-                       (error msg newval)))
-            (t (error msg newval))))
+      (keyword (unless (member newval '(:default))
+                 (error msg newval)))
+      (t (error msg newval))))
   (next-method))
 
 ;;=============================================================================
@@ -134,14 +162,70 @@
 
 ;;=============================================================================
 
-(defclass color-fore-back--mixin ()
-  ((fore-color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor fore-color)
+(defclass color-fore-back-mixin ()
+  ((fore-color :initarg :fore-color :initform (al:map-rgb-f 1 1 1) :type list :accessor fore-color)
    (back-color :initarg :back-color :initform (al:map-rgb-f 0 0 0) :type list :accessor back-color)))
 
 ;;;; container-mixin ==========================================================
+;;;; Controls area for contained objects
 
-(defclass container-mixin ()
-  ((content :initarg :content :initform () :type list :accessor content)))
+(defclass container-mixin (area-mixin
+                           content-mixin)
+  ())
+
+(defmethod initialize-instance :after ((obj container-mixin) &key)
+  ;; Take on the area of our (eventual) parent if exists
+  (let ((pam (find-parent-area-mixin obj)))
+    (if (not (eq pam nil))
+        (container-copy-area pam obj)))
+  
+  (next-method))
+
+(defun container-copy-area (source container)
+  "Copy area contents from source to container."
+  (setf (left container) (1+ (left source))
+        (top container) (1+ (top source))
+        (height container) (- (height source) 2)
+        (width container) (- (width source) 2))
+
+  ;; Adjust for padding if needed
+  (if (typep container 'padding-mixin)
+      (progn
+        (incf (left container) (padding-left container))
+        (incf (top container) (padding-top container))
+        (decf (height container) (+ (padding-top container) (padding-bottom container)))
+        (decf (width container) (+ (padding-left container) (padding-right container))))))
+
+;;;; content-mixin ============================================================
+;;;; Has contained objects
+
+(defclass content-mixin ()
+  ((content :initarg :content :initform (list) :type list :accessor content)))
+
+(defmethod initialize-instance :after ((obj content-mixin) &key)
+  ;; Let children know who their parent is
+  (dolist (child (content obj))
+    ;; If child has a parent slot
+    (when (typep child 'parent-mixin)
+      (setf (parent child) obj))
+
+    ;; If child is a container-mixin pass on area
+    (when (typep child 'container-mixin)
+      (container-copy-area obj child)))
+  (next-method))
+
+(defmethod (setf content) :after (value (obj content-mixin))
+  ;; Let children know who their parent is
+  (dolist (child (content obj))
+    ;; If child has a pernt slot
+    (when (typep child 'parent-mixin)
+      (setf (parent child) obj))
+
+    ;; If child is a container-mixin pass on area
+    (when (typep child 'container-mixin)
+      (container-copy-area obj child)))
+
+  (next-method))
 
 ;;=============================================================================
 
@@ -164,9 +248,9 @@
 (defmethod (setf h-align) :after (newval (obj h-align-mixin))
   (let ((msg "Expected :none, :left, :right, or :center but got ~s"))
     (typecase newval
-            (keyword (unless (member newval '(:none :left :right :center))
-                       (error msg newval)))
-            (t (error msg newval))))
+      (keyword (unless (member newval '(:none :left :right :center))
+                 (error msg newval)))
+      (t (error msg newval))))
   (next-method))
 
 ;;;; location-mixin ===========================================================
@@ -213,6 +297,25 @@
 (defclass parent-mixin ()
   ((parent :initarg :parent :initform nil :type t :accessor parent)))
 
+(defmethod (setf parent) :after (val (obj parent-mixin))
+  ;; If we have content
+  (if (typep obj 'content-mixin)
+      (dolist (child (content obj))
+        ;; If child has a parent slot
+        (when (typep child 'parent-mixin)
+          (setf (parent child) obj))))
+  (next-method))
+
+(defmethod owner ((obj parent-mixin))
+  "Returns manager of current object or nil."
+  (let ((par-obj (parent obj)))
+    (loop
+      (if (typep par-obj 'manager)
+          (return-from owner par-obj))
+      (if (eq nil par-obj)
+          (return-from owner nil))
+      (setf par-obj (parent par-obj)))))
+
 ;;;;===========================================================================
 
 (defclass spacing-mixin ()
@@ -251,9 +354,9 @@
 (defmethod (setf v-align) :after (newval (obj v-align-mixin))
   (let ((msg "Expected :none, :top, :bottom, or :middle but got ~s"))
     (typecase newval
-            (keyword (unless (member newval '(:none :top :bottom :middle))
-                       (error msg newval)))
-            (t (error msg newval))))
+      (keyword (unless (member newval '(:none :top :bottom :middle))
+                 (error msg newval)))
+      (t (error msg newval))))
   (next-method))
 
 ;;=============================================================================

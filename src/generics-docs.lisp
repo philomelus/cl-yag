@@ -1,4 +1,4 @@
-(in-package :clg)
+(in-package :cl-yag)
 
 (docs:define-docs (bottom
                     "Returns bottom coordinate of objects controlled space."))

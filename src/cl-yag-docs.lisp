@@ -1,12 +1,8 @@
-(in-package :clg)
+(in-package :cl-yag)
 
 ;;;;000001111111111222222222233333333334444444444555555555566666666667777777777
 
                  ;;;;0000000001111111111222222222233333333334444444444555555555566666666667777777777
-
-(docs:define-docs (active-text
-                    "Display text at specified coordinates.
-When mouse is over text area, will hilight title by inversing color."))
 
 (docs:define-docs (manager
                     "Given a list of objects to manager, handles interaction of user interface
@@ -27,8 +23,6 @@ The following events also contain pre and post events as well:
   mouse-down, mouse-up, key-down, key-up, mouse-move, paint
 "))
 
-(docs:define-docs (text
-                   "Display title at specified coordinates with specified font."))
 
 
 

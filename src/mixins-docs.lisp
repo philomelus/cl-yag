@@ -1,4 +1,4 @@
-(in-package #:clg)
+(in-package #:cl-yag)
 
 ;;;; align-mixin ==============================================================
 
@@ -7,42 +7,6 @@
 ;;;; area-mixin ===============================================================
 
 (docs:define-docs (area-mixin ""))
-
-(docs:define-docs (area-bottom ""))
-
-(docs:define-docs (area-h "Alias for area-height."))
-
-(docs:define-docs ((setf area-h) "Alias for (setf area-height)."))
-
-(docs:define-docs (area-height ""))
-
-(docs:define-docs ((setf area-height) ""))
-
-(docs:define-docs (area-left ""))
-
-(docs:define-docs ((setf area-left) ""))
-
-(docs:define-docs (area-right ""))
-
-(docs:define-docs (area-top ""))
-
-(docs:define-docs ((setf area-top) ""))
-
-(docs:define-docs (area-w "Alias for area-width."))
-
-(docs:define-docs ((setf area-w) "Alias for (setf area-width)."))
-
-(docs:define-docs (area-width ""))
-
-(docs:define-docs ((setf area-width) ""))
-
-(docs:define-docs (area-x "Alias for area-left."))
-
-(docs:define-docs ((setf area-x) "Alias for (setf area-left)."))
-
-(docs:define-docs (area-y "Alias for area-top."))
-
-(docs:define-docs ((setf area-y) "Alias for (setf area-top)."))
 
 ;;;; enable-mixin =============================================================
 

@@ -1,4 +1,4 @@
-(in-package #:clg)
+(in-package #:cl-yag)
 
 (docs:define-docs (active-text
                     "Display title at specified coordinates with specified font..

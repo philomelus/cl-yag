@@ -1,4 +1,4 @@
-(in-package #:clg)
+(in-package #:cl-yag)
 
 (docs:define-docs (window
                     "Virtual grouping of functionality together in whatever way makes sense for the application."))

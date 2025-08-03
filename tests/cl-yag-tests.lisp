@@ -1,4 +1,4 @@
-(in-package :clg-tests)
+(in-package :cl-yag-tests)
 
 ;; Define your project tests here...
 

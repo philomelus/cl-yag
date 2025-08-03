@@ -1,51 +1,61 @@
-(in-package #:clg)
+(in-package #:cl-yag)
+
+;;;; layout ===================================================================
+
+(defclass layout (container-mixin
+                  parent-mixin)
+  ())
+
+(defmethod on-mouse-down (x y b (obj layout) &key)
+  (dolist (child (content obj))
+    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
+    (on-mouse-down x y b child)))
+
+(defmethod on-mouse-move (x y dx dy (obj layout) &key)
+  (dolist (child (content obj))
+    (on-mouse-move x y dx dy child)))
+
+(defmethod on-mouse-up (x y b (obj layout) &key)
+  (dolist (child (content obj))
+    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
+    (on-mouse-up x y b child)))
 
 ;;;; column-layout ============================================================
 
-(defclass column-layout (container-mixin
-                         parent-mixin)
+(defclass column-layout (layout
+                         padding-mixin)
   ())
 
-;;-------------------------------------------------------------------
-;; Make sure our children know we are their parent
+;;; methods ---------------------------------------------------------
 
-(defmethod initialize-instance :after ((obj column-layout) &key)
-  (dolist (child (content obj))
-    (setf (parent child) obj)))
-
-(defmethod (setf content) :after (value (object column-layout))
-  (dolist (child (content object))
-    (if (typep child 'parent-mixin)
-        (setf (parent child) object)))
-  (next-method))
-
-(defmethod (setf parent) :after (val (obj column-layout))
-  (dolist (child (content obj))
-    (if (typep child 'parent-mixin)
-        (setf (parent child) obj)))
-  (next-method))
-
-;;-------------------------------------------------------------------
-
-(defmethod area-height ((obj column-layout))
-  
-  (let ((ah (/ (area-height (coerce obj 'area-mixin)) (length (content obj)))))
-    (format *standard-output* "column-layout: height: ~d" ah)
-    ah))
-
-(defmethod (setf content) :after (value (obj column-layout))
-  (dolist (child (content obj))
-    (setf (parent child) obj)))
-
-;; Paint all contained objects and set clean
 (defmethod on-paint ((obj column-layout) &key)
   (dolist (c (content obj))
     (on-paint c))
   (next-method))
 
-(defmethod ready ((obj column-layout) &key manager parent)
-  (declare (ignore parent))
-  (dolist (child (content obj))
-    (ready child :manager manager :parent obj))
-  (next-method))
+(defmethod container-calc-child-height (child (container column-layout) &key)
+  (let ((c (content container))
+        (h (slot-value container 'height)))
+    (let ((p (position child c))
+          (l (length c)))
+      (assert (not (eq p nil)))
+      (let ((ch (truncate (/ h l))))
+        (if (> (mod h l) 0)
+            (incf ch 1))
+        ch))))
+
+(defmethod container-calc-child-left (child (container column-layout) &key)
+  (slot-value container 'left))
+
+(defmethod container-calc-child-top (child (container column-layout) &key)
+  (let ((h (slot-value container 'top))
+        (c (content container)))
+    (let ((p (position child c)))
+      (if (> p 0)
+          (loop :for i :from 0 :to (1- p) :do
+            (incf h (container-calc-child-height (nth i c) container))))
+      h)))
+
+(defmethod container-calc-child-width (child (container column-layout) &key)
+  (slot-value container 'width))
 

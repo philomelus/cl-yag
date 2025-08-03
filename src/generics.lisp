@@ -1,46 +1,40 @@
-(in-package #:clg)
+(in-package #:cl-yag)
 
-(defgeneric area-bottom (obj &key &allow-other-keys))
+(defgeneric bottom (obj &key &allow-other-keys))
 
-(defgeneric area-right (obj &key &allow-other-keys))
+(defgeneric container-calc-child-height (obj container &key &allow-other-keys))
 
-(defgeneric connect (name obj mgr func &key &allow-other-keys))
+(defgeneric container-calc-child-left (obj container &key &allow-other-keys))
 
-(defgeneric disconnect (name obj mgr func &key &allow-other-keys))
+(defgeneric container-calc-child-top (obj container &key &allow-other-keys))
 
-(defgeneric disconnect-all (mgr &key &allow-other-keys))
+(defgeneric container-calc-child-width (obj container &key &allow-other-keys))
 
-(defgeneric hide (obj &key &allow-other-keys))
+(defgeneric on-char (key mods object &key &allow-other-keys))
 
-(defgeneric manage (obj mgr &key &allow-other-keys))
+(defgeneric on-mouse-down (x y b o &key &allow-other-keys))
 
-(defgeneric on-mouse-click (obj x y b &key &allow-other-keys))
+(defgeneric on-mouse-click (x y b o &key &allow-other-keys))
 
-(defgeneric on-mouse-down (obj x y b &key &allow-other-keys))
+(defgeneric on-mouse-move (x y dx dy o &key &allow-other-keys))
 
-(defgeneric on-mouse-enter (obj x y &key &allow-other-keys))
-
-(defgeneric on-mouse-exit (obj x y &key &allow-other-keys))
-
-(defgeneric on-mouse-move (obj x y dx dy &key &allow-other-keys))
-
-(defgeneric on-mouse-up (obj x y b &key &allow-other-keys))
+(defgeneric on-mouse-up (x y b o &key &allow-other-keys))
 
 (defgeneric on-paint (obj &key &allow-other-keys))
 
 (defgeneric on-resize (obj x y w h &key &allow-other-keys))
 
+(defgeneric owner (obj))
+
 (defgeneric paint (obj &key &allow-other-keys))
 
-(defgeneric process-events (queue object &key unhandled-event-proc &allow-other-keys))
+(defgeneric process-events (queue object &key &allow-other-keys))
 
-(defgeneric ready (obj &key manager parent &allow-other-keys))
+(defgeneric right (obj &key &allow-other-keys))
 
-(defgeneric show (obj &key &allow-other-keys))
+(defgeneric unhandled-event (event object) (:method (e o)))
 
-(defgeneric unmanage (obj mgr &key &allow-other-keys))
-
-(defgeneric update (obj &key &allow-other-keys))
+(defgeneric within (x y obj &key &allow-other-keys))
 
 ;;;; setf =====================================================================
 

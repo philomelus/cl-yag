@@ -13,11 +13,11 @@ If you don't want to land in the REPL, you can (quit) below or call lisp with th
 Another solution to run the app is to build and run a binary (see README).
 "
 
-(asdf:load-asd "clg.asd")
+(asdf:load-asd "cl-yag.asd")
 
-(ql:quickload "clg")
+(ql:quickload "cl-yag")
 
-(in-package :clg)
+(in-package :cl-yag)
 (handler-case
     (main)
   (error (c)
