@@ -6,6 +6,12 @@
                   parent-mixin)
   ())
 
+(defmacro column-layout (content &rest rest &key &allow-other-keys)
+  `(make-instance 'column-layout :content (list ,@content) ,@rest))
+
+;; (defmethod print-object ((obj layout) stream)
+;;   (format stream "'layout ~a ~a" (dump-container-mixin obj nil) (dump-parent-mixin obj nil)))
+
 (defmethod on-mouse-down (x y b (obj layout) &key)
   (dolist (child (content obj))
     ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
@@ -25,6 +31,10 @@
 (defclass column-layout (layout
                          padding-mixin)
   ())
+
+(defmethod print-object ((obj column-layout) stream)
+  (format stream "'column-layout ~a ~a ~a" (dump-container-mixin obj nil)
+          (dump-parent-mixin obj nil) (dump-padding-mixin obj nil)))
 
 ;;; methods ---------------------------------------------------------
 

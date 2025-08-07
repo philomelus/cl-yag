@@ -71,6 +71,9 @@ returns
   "Returns r of allegro color."
   (first (color2list color)))
 
+(defun dump-color (color stream)
+  (format stream "al:map-rgba-f ~d ~d ~d ~d" (color-r color) (color-g color) (color-b color) (color-a color)))
+
 (defgeneric must-init (test desc))
 
 (defmethod must-init ((test sb-sys::system-area-pointer) desc)

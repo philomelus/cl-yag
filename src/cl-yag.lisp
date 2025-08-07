@@ -30,11 +30,11 @@
 
 ;;;; main =====================================================================
 
-(defstruct main-data
-  (item1)
-  (item2)
-  (item3))
-(defvar *globals* (make-main-data))
+;; (defstruct main-data
+;;   (item1)
+;;   (item2)
+;;   (item3))
+;; (defvar *globals* (make-main-data))
 
 (defun main-init ()
   (must-init (al:init) "allegro")
@@ -61,54 +61,31 @@
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
-         (progn
-
-           (setf (slot-value *globals* 'item1) (make-instance 'active-text :title "Asteroids"
-                                                                           :font font
-                                                                           :h-align :center
-                                                                           :left +LAYOUT-LEFT-CALC+
-                                                                           :v-align :middle
-                                                                           :top +LAYOUT-TOP-CALC+
-                                                                           :color-down (al:map-rgb-f 0 1 1)
-                                                                           :color-up (al:map-rgb-f 1 0 1)))
-           (setf (slot-value *globals* 'item2) (make-instance 'active-text :title "Blastem"
-                                                                           :font font
-                                                                           :h-align :center
-                                                                           :left +LAYOUT-LEFT-CALC+
-                                                                           :v-align :middle
-                                                                           :top +LAYOUT-TOP-CALC+
-                                                                           :color-down (al:map-rgb-f 1 0 1)
-                                                                           :color-up (al:map-rgb-f 0 1 0)))
-           (setf (slot-value *globals* 'item3) (make-instance 'active-text :title "Quit"
-                                                                           :font font
-                                                                           :h-align :center
-                                                                           :left +LAYOUT-LEFT-CALC+
-                                                                           :v-align :middle
-                                                                           :top +LAYOUT-TOP-CALC+
-                                                                           :color-down (al:map-rgb-f 1 1 0)
-                                                                           :color-up (al:map-rgb-f 0 0 1)))
-           
-           (let* ((cl (make-instance 'column-layout :content (list (slot-value *globals* 'item1)
-                                                                   (slot-value *globals* 'item2)
-                                                                   (slot-value *globals* 'item3))))
-                  
-                  (w (make-instance 'window :left 200
-                                            :top 200
-                                            :width 400
-                                            :height 400
-                                            :content (list cl)))
-                  
-                  (boss (make-instance 'manager :content (list w)))
+         (progn                         ; Not needed, because of the let ...
+           (let* (
+                  (w1 (defwindow 200 200 400 400 ((column-layout ((active-text :title "Asteroids" :font font :h-align :center
+                                                                               :left -1 :top -1 :v-align :middle
+                                                                               :color-down (al:map-rgb-f 0 1 0)
+                                                                               :color-up (al:map-rgb-f 1 0 1))
+                                                                  (active-text :title "Blastem" :font font :h-align :center
+                                                                               :left -1 :top -1 :v-align :middle
+                                                                               :color-down (al:map-rgb-f 1 0 1)
+                                                                               :color-up (al:map-rgb-f 0 1 0))
+                                                                  (active-text :title "Quit" :font font :h-align :center
+                                                                               :left -1 :top -1 :v-align :middle
+                                                                               :color-down (al:map-rgb-f 1 1 0)
+                                                                               :color-up (al:map-rgb-f 0 0 1)))))))
+                  (boss (make-instance 'manager :content (list w1)))
                   (selected-object nil))
 
-             (defmethod on-mouse-click (x y b (obj (eql (slot-value *globals* 'item1))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (first (content (first (content w1)))))) &key)
                (format *standard-output* "~&Item 1 clicked")
                (setf selected-object obj))
 
-             (defmethod on-mouse-click (x y b (obj (eql (slot-value *globals* 'item2))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (second (content (first (content w1)))))) &key)
                (format *standard-output* "~&Item 2 clicked"))
 
-             (defmethod on-mouse-click (x y b (obj (eql (slot-value *globals* 'item3))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w1)))))) &key)
                (format *standard-output* "~&Item 3 clicked"))
 
              (defmethod on-char (key mods (object (eql boss)) &key)
@@ -127,7 +104,7 @@
                  (:display-close (setf (process boss) nil))
                  
                  (:display-resize
-                  (on-resize w (cffi:foreign-slot-value event '(:struct al:display-event) 'al::x)
+                  (on-resize w1 (cffi:foreign-slot-value event '(:struct al:display-event) 'al::x)
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::y)
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::width)
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::height)))
@@ -137,8 +114,8 @@
                   ;;         (cffi:foreign-slot-value event '(:union al:event) 'al::type))
                   )))
 
-             (setf (border w) (make-instance 'border :color (al:map-rgb-f 1 1 0)))
-             (setf (border (slot-value *globals* 'item2)) (make-instance 'border :color (al:map-rgb-f 0 1 1)))
+             (setf (border w1) (make-instance 'border :color (al:map-rgb-f 1 1 0)))
+             ;; (setf (border (slot-value *globals* 'item2)) (make-instance 'border :color (al:map-rgb-f 0 1 1)))
              
              (al:start-timer timer)
              (al:clear-keyboard-state screen)
@@ -148,7 +125,8 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             (dump-cl-yag w 0)
+             ;; (dump-cl-yag w 0)
+             (pprint boss)
              (process-events queue boss)))
       
       (progn

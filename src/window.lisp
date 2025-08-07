@@ -9,6 +9,14 @@
                   parent-mixin)
   ())
 
+(defmacro defwindow (l top w h content &rest rest &key &allow-other-keys)
+  `(make-instance 'window :left ,l :top ,top :width ,w :height ,h :content (list ,@content) ,@rest))
+
+
+;; (defmethod print-object ((obj window) stream)
+;;   (format stream "'window ~a ~a ~a ~a ~a" (dump-area-mixin obj nil) (dump-border-mixin obj nil)
+;;           (dump-color-fore-back-mixin obj nil) (dump-content-mixin obj nil) (dump-parent-mixin obj nil)))
+
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-mouse-down (x y b (obj window) &key)

@@ -5,6 +5,9 @@
 (defclass manager (content-mixin)
   ((process :initform nil :type boolean :accessor process)))
 
+(defmethod print-object ((obj manager) stream)
+  (format stream "manager ~a" (dump-content-mixin obj nil)))
+
 (defmethod process-events (queue (object manager) &key &allow-other-keys)
   (let ((event (cffi:foreign-alloc '(:union al:event))))
     (unwind-protect

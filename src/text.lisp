@@ -14,14 +14,12 @@
         (:left)
         
         (:center
-         (assert (not (eql (font obj) nil)))
          ;; Does text fit?
          (if (> (- aw tw) 1)
              ;; Yes so center it
              (incf al (truncate (/ (- aw tw) 2)))))
         
         (:right
-         (assert (not (eql (font obj) nil)))
          (if (> (- aw tw) 0)
              (incf al (- aw tw))))
 
@@ -34,6 +32,8 @@
   (let ((at (top obj))
         (va (v-align obj)))
 
+    (assert (not (eql nil (font obj))))
+    
     ;; When auto-calculated, start at 0 offset from parent
     (if (= at +LAYOUT-LEFT-CALC+)
         (setf at 0))
@@ -42,13 +42,11 @@
       (:top)
       
       (:middle
-       (assert (not (eql (font obj) nil)))
        (let ((h (height obj))
              (fh (al:get-font-line-height (font obj))))
          (incf at (truncate (/ (- h fh) 2)))))
       
       (:bottom
-       (assert (not (eql (font obj) nil)))
        (let ((h (height obj))
              (fh (al:get-font-line-height (font obj))))
          (incf at (- h fh))))
@@ -69,6 +67,16 @@
 
 
   ((original-area :initform (list) :type list)))
+
+(defmacro text-base (&rest rest &key &allow-other-keys)
+  `(make-instance 'active-text ,@rest))
+
+;; (defmethod print-object ((obj text-base) stream)
+;;   (print-unreadable-object (obj stream :type t)
+;;     (format stream "text-base ~a ~a ~a ~a ~a ~a" (dump-align-mixin obj nil)
+;;            (dump-area-mixin obj nil) (dump-border-mixin obj nil)
+;;            (dump-font-mixin obj nil) (dump-parent-mixin obj nil)
+;;            (dump-title-mixin obj nil))))
 
 (defmethod initialize-instance :after ((obj text-base) &key)
   (setf (slot-value obj 'original-area) (list (slot-value obj 'left) (slot-value obj 'top)
@@ -92,6 +100,16 @@
                 color-mixin)
   ())
 
+(defmacro text (&rest rest &key &allow-other-keys)
+  `(make-instance 'active-text ,@rest))
+
+;; (defmethod print-object ((obj text-base) stream)
+;;   (print-unreadable-object (obj stream :type t)
+;;     (format stream "text ~a ~a ~a ~a ~a ~a ~a" (dump-align-mixin obj nil)
+;;            (dump-area-mixin obj nil) (dump-border-mixin obj nil)
+;;            (dump-font-mixin obj nil) (dump-parent-mixin obj nil)
+;;            (dump-title-mixin obj nil) (dump-color-mixin obj nil))))
+
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-paint ((obj text) &key)
@@ -100,12 +118,7 @@
 
 ;;;; active-text ==============================================================
 
-(defclass active-text (align-mixin
-                       area-mixin
-                       border-mixin
-                       font-mixin
-                       parent-mixin
-                       title-mixin)
+(defclass active-text (text-base)
   ((color-down :initarg :color-down :initform (al:map-rgb-f 0 0 0) :type list :accessor color-down)
    (color-hover :initarg :color-hover :initform (al:map-rgb-f 0.5 0.5 0.5) :type list :accessor color-hover)
    (color-up :initarg :color-up :initform (al:map-rgb-f 1 1 1) :type list :accessor color-up)
@@ -113,6 +126,16 @@
    (down :initform nil :type boolean)
    (was-down :initform nil :type boolean)
    (original-area :initform (list) :type list)))
+
+(defmacro active-text (&rest rest &key &allow-other-keys)
+  `(make-instance 'active-text ,@rest))
+
+;; (defmethod print-object ((obj active-text) stream)
+;;   (print-unreadable-object (obj stream :type t)
+;;     (format stream "~a ~a ~a ~a ~a ~a :color-down (~a) :color-hover (~a) :color-up (~a)"
+;;             (dump-align-mixin obj nil) (dump-area-mixin obj nil) (dump-border-mixin obj nil)
+;;             (dump-font-mixin obj nil) (dump-parent-mixin obj nil) (dump-title-mixin obj nil)
+;;             (dump-color (color-down obj) nil) (dump-color (color-hover obj) nil) (dump-color (color-up obj) nil))))
 
 ;;; methods ---------------------------------------------------------
 
