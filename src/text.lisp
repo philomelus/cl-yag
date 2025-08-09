@@ -68,15 +68,14 @@
 
   ((original-area :initform (list) :type list)))
 
-(defmacro text-base (&rest rest &key &allow-other-keys)
+(defmacro deftext-base (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
 
-;; (defmethod print-object ((obj text-base) stream)
-;;   (print-unreadable-object (obj stream :type t)
-;;     (format stream "text-base ~a ~a ~a ~a ~a ~a" (dump-align-mixin obj nil)
-;;            (dump-area-mixin obj nil) (dump-border-mixin obj nil)
-;;            (dump-font-mixin obj nil) (dump-parent-mixin obj nil)
-;;            (dump-title-mixin obj nil))))
+(defmethod print-object ((o text-base) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deftext-base ")
+    (print-mixin o s)))
 
 (defmethod initialize-instance :after ((obj text-base) &key)
   (setf (slot-value obj 'original-area) (list (slot-value obj 'left) (slot-value obj 'top)
@@ -100,21 +99,20 @@
                 color-mixin)
   ())
 
-(defmacro text (&rest rest &key &allow-other-keys)
+(defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
 
-;; (defmethod print-object ((obj text-base) stream)
-;;   (print-unreadable-object (obj stream :type t)
-;;     (format stream "text ~a ~a ~a ~a ~a ~a ~a" (dump-align-mixin obj nil)
-;;            (dump-area-mixin obj nil) (dump-border-mixin obj nil)
-;;            (dump-font-mixin obj nil) (dump-parent-mixin obj nil)
-;;            (dump-title-mixin obj nil) (dump-color-mixin obj nil))))
+(defmethod print-object ((o text-base) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deftext ")
+    (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-paint ((obj text) &key)
   (al:draw-text (font obj) (color obj) (text-calc-left obj) (text-calc-top obj) 0 (title obj))
-  (next-method))
+  (my-next-method))
 
 ;;;; active-text ==============================================================
 
@@ -127,15 +125,30 @@
    (was-down :initform nil :type boolean)
    (original-area :initform (list) :type list)))
 
-(defmacro active-text (&rest rest &key &allow-other-keys)
+(defmacro defactive-text (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
 
-;; (defmethod print-object ((obj active-text) stream)
-;;   (print-unreadable-object (obj stream :type t)
-;;     (format stream "~a ~a ~a ~a ~a ~a :color-down (~a) :color-hover (~a) :color-up (~a)"
-;;             (dump-align-mixin obj nil) (dump-area-mixin obj nil) (dump-border-mixin obj nil)
-;;             (dump-font-mixin obj nil) (dump-parent-mixin obj nil) (dump-title-mixin obj nil)
-;;             (dump-color (color-down obj) nil) (dump-color (color-hover obj) nil) (dump-color (color-up obj) nil))))
+(defmethod print-object ((o active-text) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "defactive-text ")
+
+    (pprint-indent :current 0 s)
+    (with-slots ((c color-down)) o
+      (format s ":color-down (al:map-rgba-f ~d ~d ~d ~d) " (color-r c) (color-g c) (color-b c) (color-a c)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (with-slots ((c color-hover)) o
+      (format s ":color-hover (al:map-rgba-f ~d ~d ~d ~d) " (color-r c) (color-g c) (color-b c) (color-a c)))
+    (pprint-newline :linear s)
+    
+    (pprint-indent :current 0 s)
+    (with-slots ((c color-up)) o
+      (format s ":color-up (al:map-rgba-f ~d ~d ~d ~d) " (color-r c) (color-g c) (color-b c) (color-a c)))
+    (pprint-newline :linear s)
+
+    (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 
@@ -176,4 +189,4 @@
                   (text-calc-left obj) (text-calc-top obj) 0 (title obj))
     (if in
         (al:draw-rectangle (1+ (left obj)) (1+ (top obj)) (1- (right obj)) (1- (bottom obj)) ch 1)))
-  (next-method))
+  (my-next-method))

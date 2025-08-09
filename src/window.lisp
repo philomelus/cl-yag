@@ -12,10 +12,12 @@
 (defmacro defwindow (l top w h content &rest rest &key &allow-other-keys)
   `(make-instance 'window :left ,l :top ,top :width ,w :height ,h :content (list ,@content) ,@rest))
 
-
-;; (defmethod print-object ((obj window) stream)
-;;   (format stream "'window ~a ~a ~a ~a ~a" (dump-area-mixin obj nil) (dump-border-mixin obj nil)
-;;           (dump-color-fore-back-mixin obj nil) (dump-content-mixin obj nil) (dump-parent-mixin obj nil)))
+(defmethod print-object ((o window) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "(defwindow ")
+    (print-mixin o s)
+    (format s ")")))
 
 ;;; methods ---------------------------------------------------------
 
@@ -73,5 +75,5 @@
     (dolist (c children)
       (progn
         (on-paint c))))
-  (next-method))
+  (my-next-method))
 

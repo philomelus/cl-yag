@@ -3,18 +3,22 @@
 ;;;; active-mixin =============================================================
 
 (defclass active-mixin ()
-  ((enabled :initarg :active :initform nil :type boolean :accessor active)))
+  ((active :initarg :active :initform nil :type boolean :accessor active)))
 
-(defun dump-active-mixin (obj stream)
-  (format stream ":enabled ~a" (if (active obj) "t" "nil")))
+(defmethod print-mixin ((o active-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":active ~a " (if (active o) "t" "nil"))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; align-mixin ==============================================================
 
 (defclass align-mixin (h-align-mixin v-align-mixin)
   ())
 
-(defun dump-align-mixin (obj stream)
-  (format stream "~a ~a" (dump-h-align-mixin obj nil) (dump-v-align-mixin obj nil)))
+(defmethod print-mixin ((o align-mixin) s)
+  ;; Base mixins get printed via call-next-method, so nothing to do here
+  (my-next-method))
 
 ;;;; area-mixin ===============================================================
 
@@ -26,9 +30,20 @@
 
 ;;; functions -------------------------------------------------------
 
-(defun dump-area-mixin (obj stream)
-  (format stream ":left ~d :top ~d :width ~d :height ~d" (left obj) (top obj)
-          (width obj) (height obj)))
+(defmethod print-mixin ((o area-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":left ~d " (left o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":top ~d " (top o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":width ~d " (width o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":height ~d " (height o))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 (defun find-parent-area-mixin (obj)
   "Returns first parent that is a subclass of area-mixin, or nil."
@@ -74,19 +89,19 @@
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
         (on-mouse-move x y dx dy child)))
-  (next-method))
+  (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj area-mixin) &key)
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
         (on-mouse-down x y b child)))
-  (next-method))
+  (my-next-method))
 
 (defmethod on-mouse-up (x y b (obj area-mixin) &key)
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
         (on-mouse-up x y b child)))
-  (next-method))
+  (my-next-method))
 
 (defmethod right ((obj area-mixin) &key)
   (+ (left obj) (width obj)))
@@ -134,11 +149,18 @@
    (style :initarg :style :initform :default :type keyword :accessor style)
    (width :initarg :width :initform 1 :type integer :accessor width)))
 
-(defun dump-border (obj stream)
-  (with-slots (color style width) obj
-   (format stream "border :color (al:map-rgba-f ~d ~d ~d ~d) :style ~a :width ~d"
-           (color-r color) (color-g color) (color-b color) (color-a color)
-           style width)))
+(defmacro defborder (&rest rest &key &allow-other-keys)
+  `(make-instance 'border ,@rest))
+
+(defun print-border (o s)
+  (format s "(defborder ")
+  (if (eq o nil)
+      (format s "nil) ")
+      (progn
+        (with-slots ((c color)) o
+          (format s ":color (al:map-rgba-f ~d ~d ~d ~d) " (color-r c) (color-g c)
+                  (color-b c) (color-a c)))(format s ":style ~a " (style o))
+        (format s ":width ~d) " (width o)))))
 
 (defclass border-mixin ()
   ((border-left :initarg :border-left :initform nil :accessor border-left)
@@ -146,41 +168,55 @@
    (border-top :initarg :border-top :initform nil :accessor border-top)
    (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
 
-(defun dump-border-mixin (obj stream)
-  (let ((out (make-array '(0) :element-type 'base-char :fill-pointer 0 :adjustable t)))
-    (with-output-to-string (s out)
-      (if (slot-boundp obj 'border-left)
-          (if (eql (border-left obj) nil)
-              (format s ":border-left nil")
-              (format s ":border-left '(~a)" (dump-border (border-left obj) nil))))
-      (if (slot-boundp obj 'border-right)
-          (if (eql (border-right obj) nil)
-              (format s " :border-right nil")
-              (format s " :border-right '(~a)" (dump-border (border-right obj) nil))))
-      (if (slot-boundp obj 'border-top)
-          (if (eql (border-top obj) nil)
-              (format s " :border-top nil")
-              (format s " :border-top '(~a)" (dump-border (border-top obj) nil))))
-      (if (slot-boundp obj 'border-bottom)
-          (if (eql (border-bottom obj) nil)
-              (format s " :border-bottom nil")
-              (format s " :border-bottom '(~a)" (dump-border (border-bottom obj) nil)))))
-    (format stream out)))
+(defmethod print-mixin ((o border-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":border-left ")
+  (let ((oo (border-left o)))
+    (if (eq nil oo)
+        (format s "nil ")
+        (print-border oo s)))
+  (pprint-newline :linear s)
+  
+  (pprint-indent :current 0 s)
+  (format s ":border-right ")
+  (let ((oo (border-right o)))
+    (if (eq nil oo)
+        (format s "nil ")
+        (print-border oo s)))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":border-top ")
+  (let ((oo (border-top o)))
+    (if (eq nil oo)
+        (format s "nil ")
+        (print-border oo s)))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":border-bottom ")
+  (let ((oo (border-bottom o)))
+    (if (eq nil oo)
+        (format s "nil ")
+        (print-border oo s)))
+  (pprint-newline :linear s)
+
+  (my-next-method))
 
 (defmethod (setf border) ((value border) (object border-mixin))
   (setf (border-h object) value)
   (setf (border-v object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf border-h) ((value border) (object border-mixin))
   (setf (border-left object) value)
   (setf (border-right object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf border-v) ((value border) (object border-mixin))
   (setf (border-top object) value)
   (setf (border-bottom object) value)
-  (next-method))
+  (my-next-method))
 
 ;; Only allow valid keywords
 ;; #+safety
@@ -190,17 +226,15 @@
       (keyword (unless (member newval '(:default :none :in :out :flat))
                  (error msg newval)))
       (t (error msg newval))))
-  (next-method))
+  (my-next-method))
 
 ;;;; color-mixin ==============================================================
 
 (defclass color-mixin ()
   ((color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor color)))
 
-(defun dump-color-mixin (obj stream)
-  (with-slots (color) obj
-    (format stream ":color (al:map-rgba-f ~d ~d ~d ~d)"
-            (color-r color) (color-g color) (color-b color) (color-a color))))
+(defmethod print-mixn ((o color-mixin) s)
+  (my-next-method))
 
 ;;=============================================================================
 
@@ -208,11 +242,16 @@
   ((fore-color :initarg :fore-color :initform (al:map-rgb-f 1 1 1) :type list :accessor fore-color)
    (back-color :initarg :back-color :initform (al:map-rgb-f 0 0 0) :type list :accessor back-color)))
 
-(defun dump-color-fore-back-mixin (obj stream)
-  (with-slots ((fore fore-color) (back back-color)) obj
-    (format stream ":fore-color (al:map-rgba-f ~d ~d ~d ~d) :back-color (al:map-rgba-f ~d ~d ~d ~d)"
-            (color-r fore) (color-g fore) (color-b fore) (color-a fore)
-            (color-r back) (color-g back) (color-b back) (color-a back))))
+(defmethod print-mixin ((o color-fore-back-mixin) s)
+  (pprint-indent :current 0 s)
+  (with-slots ((c fore-color)) o
+    (format s ":fore-color (al:map-rgba-f ~d ~d ~d ~d)" (color-r c) (color-g c) (color-b c) (color-a c)))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (with-slots ((c back-color)) o
+    (format s ":back-color (al:map-rgba-f ~d ~d ~d ~d)" (color-r c) (color-g c) (color-b c) (color-a c)))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; container-mixin ==========================================================
 ;;;; Controls area for contained objects
@@ -221,8 +260,9 @@
                            content-mixin)
   ())
 
-(defun dump-container-mixin (obj stream)
-  (format stream "~a ~a" (dump-area-mixin obj nil) (dump-content-mixin obj nil)))
+(defmethod print-mixin ((o container-mixin) s)
+  ;; Base mixins get printed via call-next-method, so nothing to do here
+  (my-next-method))
 
 (defmethod initialize-instance :after ((obj container-mixin) &key)
   ;; Take on the area of our (eventual) parent if exists
@@ -230,7 +270,7 @@
     (if (not (eq pam nil))
         (container-copy-area pam obj)))
   
-  (next-method))
+  (my-next-method))
 
 (defun container-copy-area (source container)
   "Copy area contents from source to container."
@@ -253,8 +293,25 @@
 (defclass content-mixin ()
   ((content :initarg :content :initform (list) :type list :accessor content)))
 
-(defun dump-content-mixin (obj stream)
-  (format stream ":content ~a" (content obj)))
+(defmethod print-mixin ((o content-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":content ")
+  (if (= (length (content o)) 0)
+      (format s "() ")
+      (let ((children (content o)))
+        (pprint-logical-block (s children :prefix "(" :suffix ")")
+          ;;(pprint-exit-if-list-exhausted)
+          (pprint-indent :block 0 s)
+          (let ((oo (pprint-pop)))
+            (pprint-indent :block 0 s)
+            (format s "(~a)" oo)
+            (pprint-newline :fill s)
+            )
+          )
+        )
+      )
+  (pprint-newline :linear s)
+  (my-next-method))
 
 (defmethod initialize-instance :after ((obj content-mixin) &key)
   ;; Let children know who their parent is
@@ -266,7 +323,7 @@
     ;; If child is a container-mixin pass on area
     (when (typep child 'container-mixin)
       (container-copy-area obj child)))
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf content) :after (value (obj content-mixin))
   ;; Let children know who their parent is
@@ -279,15 +336,18 @@
     (when (typep child 'container-mixin)
       (container-copy-area obj child)))
 
-  (next-method))
+  (my-next-method))
 
 ;;;; enable-mixin =============================================================
 
 (defclass enable-mixin ()
   ((enabled :initarg :enabled :initform nil :type boolean :accessor enabled)))
 
-(defun dump-enable-mixin (obj stream)
-  (format stream ":enabled ~a" (if (enabled obj) "t" "nil")))
+(defmethod print-mixin ((o enable-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":enabled ~a " (if (enabled o) "t" "nil"))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; font-mixin ===============================================================
 
@@ -295,16 +355,28 @@
   ((font :initarg :font :initform (cffi:null-pointer) :type cffi:foreign-pointer
          :accessor font)))
 
-(defun dump-font-mixin (obj stream)
-  (format stream ":font ~a" (font obj)))
+(defmethod print-mixin ((o font-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":font ")
+  (if (eq nil (font o))
+      (format s "nil ")
+      (progn
+        (print-unreadable-object ((font o) s :identity t)
+          (format s "AL:FONT"))
+        (write-char #\Space s)))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; h-align-mixin ============================================================
 
 (defclass h-align-mixin ()
   ((h-align :initarg :h-align :initform :none :type keyword :accessor h-align)))
 
-(defun dump-h-align-mixin (obj stream)
-  (format stream ":h-align ~a" (h-align obj)))
+(defmethod print-mixin ((o h-align-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":h-align :~a" (string-downcase (h-align o)))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;; Only allow valid keywords
 ;; #+safety
@@ -314,7 +386,7 @@
       (keyword (unless (member newval '(:none :left :right :center))
                  (error msg newval)))
       (t (error msg newval))))
-  (next-method))
+  (my-next-method))
 
 ;;;; location-mixin ===========================================================
 
@@ -323,20 +395,29 @@
    (y :initarg :y :initform 0 :type integer :accessor location-y)))
 
 (defun dump-location-mixin (obj stream)
-  (format stream ":x ~d :y ~d" (location-x obj) (location-y obj)))
+  (format stream ":x ~d :y ~d " (location-x obj) (location-y obj)))
 
 (defmethod (setf location) (x y (object location-mixin))
   (setf (location-x object) x)
   (setf (location-y object) y)
-  (next-method))
+  (my-next-method))
 
 ;;;; manager-mixin ============================================================
 
 (defclass manager-mixin ()
   ((manager :initarg :manager :initform nil :accessor manager)))
 
-(defun dump-manager-mixin (obj stream)
-  (format stream ":manager ~a" (manager obj)))
+(defmethod print-mixin ((o manager-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":manager ")
+  (if (eq nil (font o))
+      (format s "nil ")
+      (progn
+        (print-unreadable-object ((font o) s :type t :identity t)
+          (format s ""))
+        (write-char #\Space s)))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; padding-mixin ============================================================
 
@@ -346,32 +427,58 @@
    (padding-top :initarg :pad-top :initform 0 :type integer :accessor padding-top)
    (padding-bottom :initarg :pad-bottom :initform 0 :type integer :accessor padding-bottom)))
 
-(defun dump-padding-mixin (obj stream)
-  (format stream ":padding-left ~d :padding-right ~d :padding-top ~d :padding-bottom ~d"
-          (padding-left obj) (padding-right obj) (padding-top obj) (padding-bottom obj)))
+(defmethod print-mixin ((o padding-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":padding-left ~d " (padding-left o))
+  (pprint-newline :linear s)
+  
+  (pprint-indent :current 0 s)
+  (format s ":padding-right ~d " (padding-right o))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":padding-top ~d " (padding-top o))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":padding-bottom ~d " (padding-bottom o))
+  (pprint-newline :linear s)
+
+  (my-next-method))
 
 (defmethod (setf padding) (value (object padding-mixin))
   (setf (padding-h object) value)
   (setf (padding-v object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf padding-h) (value (object padding-mixin))
   (setf (padding-left object) value)
   (setf (padding-right object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf padding-v) (value (object padding-mixin))
   (setf (padding-top object) value)
   (setf (padding-bottom object) value)
-  (next-method))
+  (my-next-method))
 
 ;;;; parent-mixin =============================================================
 
 (defclass parent-mixin ()
   ((parent :initarg :parent :initform nil :type t :accessor parent)))
 
-(defun dump-parent-mixin (obj stream)
-  (format stream ":parent ~a" (parent obj)))
+(defmethod print-mixin ((o parent-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":parent ")
+  (let ((p (parent o)))
+    (if (eq p nil)
+        (format s "NIL ")
+        (progn
+          (print-unreadable-object ((parent o) s :type t :identity t)
+            (format s ""))
+          (write-char #\Space s)
+          )))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 (defmethod (setf parent) :after (val (obj parent-mixin))
   ;; If we have content
@@ -380,7 +487,7 @@
         ;; If child has a parent slot
         (when (typep child 'parent-mixin)
           (setf (parent child) obj))))
-  (next-method))
+  (my-next-method))
 
 (defmethod owner ((obj parent-mixin))
   "Returns manager of current object or nil."
@@ -400,40 +507,61 @@
    (spacing-top :initarg :spacing-top :initform 0 :type integer :accessor spacing-top)
    (spacing-bottom :initarg :spacing-bottom :initform 0 :type integer :accessor spacing-bottom)))
 
-(defun dump-spacing-mixin (obj stream)
-  (format stream ":spacing-left ~d :psacing-right ~d :spacing-top ~d :spacing-bottom ~d"
-          (spacing-left obj) (spacing-right obj) (spacing-top obj) (spacing-bottom obj)))
+(defmethod print-mixin ((o spacing-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":spacing-left ~d " (spacing-left o))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":spacing-right ~d " (spacing-right o))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":spacing-top ~d " (spacing-top o))
+  (pprint-newline :linear s)
+
+  (pprint-indent :current 0 s)
+  (format s ":spacing-bottom ~d " (spacing-bottom o))
+  (pprint-newline :linear s)
+
+  (my-next-method))
 
 (defmethod (setf spacing) (value (object spacing-mixin))
   (setf (spacing-h object) value)
   (setf (spacing-v object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf spacing-h) (value (object spacing-mixin))
   (setf (spacing-left object) value)
   (setf (spacing-right object) value)
-  (next-method))
+  (my-next-method))
 
 (defmethod (setf spacing-v) (value (object spacing-mixin))
   (setf (spacing-top object) value)
   (setf (spacing-bottom object) value)
-  (next-method))
+  (my-next-method))
 
 ;; title-mixin ================================================================
 
 (defclass title-mixin ()
   ((title :initarg :title :initform "" :type string :accessor title)))
 
-(defun dump-title-mixin (obj stream)
-  (format stream ":title ~s" (title obj)))
+(defmethod print-mixin ((o title-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":title ~s" (title o))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;;; v-align-mixin ============================================================
 
 (defclass v-align-mixin ()
   ((v-align :initarg :v-align :initform :none :type keyword :accessor v-align)))
 
-(defun dump-v-align-mixin (obj stream)
-  (format stream ":v-align ~a" (v-align obj)))
+(defmethod print-mixin ((o v-align-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":v-align :~a" (string-downcase (v-align o)))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;; Only allow valid keywords
 ;; #+safety
@@ -443,13 +571,16 @@
       (keyword (unless (member newval '(:none :top :bottom :middle))
                  (error msg newval)))
       (t (error msg newval))))
-  (next-method))
+  (my-next-method))
 
 ;;;; visible-mixin ============================================================
 
 (defclass visible-mixin ()
   ((visible :initarg :visible :initform nil :type boolean :accessor visible)))
 
-(defun dump-visible-mixin (obj stream)
-  (format stream ":visible ~a" (if (visible obj) "t" "nil")))
+(defmethod print-mixin ((o visible-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":visible ~a " (if (visible o) "t" "nil"))
+  (pprint-newline :linear s)
+  (my-next-method))
 

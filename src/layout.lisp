@@ -6,11 +6,14 @@
                   parent-mixin)
   ())
 
-(defmacro column-layout (content &rest rest &key &allow-other-keys)
+(defmacro defcolumn-layout (content &rest rest &key &allow-other-keys)
   `(make-instance 'column-layout :content (list ,@content) ,@rest))
 
-;; (defmethod print-object ((obj layout) stream)
-;;   (format stream "'layout ~a ~a" (dump-container-mixin obj nil) (dump-parent-mixin obj nil)))
+(defmethod print-object ((o layout) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deflayout ")
+    (print-mixin o s)))
 
 (defmethod on-mouse-down (x y b (obj layout) &key)
   (dolist (child (content obj))
@@ -32,16 +35,18 @@
                          padding-mixin)
   ())
 
-(defmethod print-object ((obj column-layout) stream)
-  (format stream "'column-layout ~a ~a ~a" (dump-container-mixin obj nil)
-          (dump-parent-mixin obj nil) (dump-padding-mixin obj nil)))
+(defmethod print-object ((o column-layout) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "defcolumn-layout ")
+    (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-paint ((obj column-layout) &key)
   (dolist (c (content obj))
     (on-paint c))
-  (next-method))
+  (my-next-method))
 
 (defmethod container-calc-child-height (child (container column-layout) &key)
   (let ((c (content container))

@@ -28,6 +28,8 @@
 
 (defgeneric paint (obj &key &allow-other-keys))
 
+(defgeneric print-mixin (object stream))
+
 (defgeneric process-events (queue object &key &allow-other-keys))
 
 (defgeneric right (obj &key &allow-other-keys))

@@ -1,15 +1,5 @@
 (in-package :cl-yag)
 
-(defconstant +LAYOUT-HEIGHT-CALC+ -1 "When used for height, causes it to be calculated.  How its calculated is object dependent.")
-(defconstant +LAYOUT-LEFT-CALC+ -1 "When used for a left coordinate, causes it to be calculated.  How its calculated is object dependent.")
-(defconstant +LAYOUT-TOP-CALC+ -1 "When used for a top coordinate, causes it to be calculated.  How its calculated is object dependent.")
-(defconstant +LAYOUT-WIDTH-CALC+ -1 "When used for width, causes it to be calculated.  How its calculated is object dependent.")
-
-;;;; macros ===================================================================
-
-(defmacro next-method ()
-  `(if (next-method-p) (call-next-method)))
-
 ;;;; functions ================================================================
 
 (defun dump-cl-yag (object offset)
@@ -62,19 +52,19 @@
     
     (unwind-protect
          (progn                         ; Not needed, because of the let ...
-           (let* (
-                  (w1 (defwindow 200 200 400 400 ((column-layout ((active-text :title "Asteroids" :font font :h-align :center
-                                                                               :left -1 :top -1 :v-align :middle
-                                                                               :color-down (al:map-rgb-f 0 1 0)
-                                                                               :color-up (al:map-rgb-f 1 0 1))
-                                                                  (active-text :title "Blastem" :font font :h-align :center
-                                                                               :left -1 :top -1 :v-align :middle
-                                                                               :color-down (al:map-rgb-f 1 0 1)
-                                                                               :color-up (al:map-rgb-f 0 1 0))
-                                                                  (active-text :title "Quit" :font font :h-align :center
-                                                                               :left -1 :top -1 :v-align :middle
-                                                                               :color-down (al:map-rgb-f 1 1 0)
-                                                                               :color-up (al:map-rgb-f 0 0 1)))))))
+           (let* ((w1 (defwindow 200 200 400 400
+                        ((defcolumn-layout ((defactive-text :title "Asteroids" :font font :h-align :center
+                                                            :left -1 :top -1 :v-align :middle
+                                                            :color-down (al:map-rgb-f 0 1 0)
+                                                            :color-up (al:map-rgb-f 1 0 1))
+                                            (defactive-text :title "Blastem" :font font :h-align :center
+                                                            :left -1 :top -1 :v-align :middle
+                                                            :color-down (al:map-rgb-f 1 0 1)
+                                                            :color-up (al:map-rgb-f 0 1 0))
+                                            (defactive-text :title "Quit" :font font :h-align :center
+                                                            :left -1 :top -1 :v-align :middle
+                                                            :color-down (al:map-rgb-f 1 1 0)
+                                                            :color-up (al:map-rgb-f 0 0 1)))))))
                   (boss (make-instance 'manager :content (list w1)))
                   (selected-object nil))
 
@@ -86,7 +76,8 @@
                (format *standard-output* "~&Item 2 clicked"))
 
              (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w1)))))) &key)
-               (format *standard-output* "~&Item 3 clicked"))
+               (format *standard-output* "~&Item 3 clicked")
+               (setf (process boss) nil))
 
              (defmethod on-char (key mods (object (eql boss)) &key)
                (if (equal key :escape)
@@ -94,7 +85,6 @@
              
              (defmethod unhandled-event (event (object (eql boss)))
                (declare (ignore object))
-               ;; (format *standard-output* "~&unhandled-events: ~a ~a" object event)
                (case (cffi:foreign-slot-value event '(:union al:event) 'al::type)
                  (:timer
                   (al:clear-to-color (al:map-rgb-f 0.25 0.25 0.25))
@@ -105,7 +95,7 @@
                  
                  (:display-resize
                   (on-resize w1 (cffi:foreign-slot-value event '(:struct al:display-event) 'al::x)
-                             (cffi:foreign-slot-value event '(:struct al:display-event) 'al::y)
+                       (cffi:foreign-slot-value event '(:struct al:display-event) 'al::y)
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::width)
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::height)))
 
@@ -114,8 +104,8 @@
                   ;;         (cffi:foreign-slot-value event '(:union al:event) 'al::type))
                   )))
 
-             (setf (border w1) (make-instance 'border :color (al:map-rgb-f 1 1 0)))
-             ;; (setf (border (slot-value *globals* 'item2)) (make-instance 'border :color (al:map-rgb-f 0 1 1)))
+             (setf (border w1) (defborder :color (al:map-rgb-f 1 1 0)))
+             (setf (border (second (content (first (content w1))))) (defborder :color (al:map-rgb-f 0 1 1)))
              
              (al:start-timer timer)
              (al:clear-keyboard-state screen)
@@ -125,7 +115,6 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             ;; (dump-cl-yag w 0)
              (pprint boss)
              (process-events queue boss)))
       

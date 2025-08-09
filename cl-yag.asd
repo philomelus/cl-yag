@@ -17,9 +17,8 @@
   :components ((:module "src"
                 :serial t
                 :components ((:file "packages")
+                             (:file "constants")
                              (:file "macros")
-                             (:file "cl-yag")
-                             (:file "cl-yag-docs")
                              (:file "utils")
                              (:file "utils-docs")
                              (:file "generics")
@@ -34,13 +33,8 @@
                              (:file "text-docs")
                              (:file "window")
                              (:file "window-docs")
-
-                             ;; (:file "asteroids")
-                             ;; (:file "asteroids-docs")
-                             
-                             ;; (:file "blastem")
-                             ;; (:file "blastem-docs")
-                             )))
+                             (:file "cl-yag")
+                             (:file "cl-yag-docs"))))
   :around-compile
   (lambda (next)
     ;; (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 0) (speed 0)))    
