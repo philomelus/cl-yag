@@ -94,7 +94,10 @@
 (defmethod on-mouse-down (x y b (obj area-mixin) &key)
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
-        (on-mouse-down x y b child)))
+        (if (on-mouse-down x y b child)
+            (progn
+              (format *standard-output* "~&on-mouse-down: area-mixin: claimed by ~a" (print-raw-object child))
+              (return-from on-mouse-down t)))))
   (my-next-method))
 
 (defmethod on-mouse-up (x y b (obj area-mixin) &key)
@@ -152,15 +155,17 @@
 (defmacro defborder (&rest rest &key &allow-other-keys)
   `(make-instance 'border ,@rest))
 
+;; TODO:  This should allow the border slots to be wrapped.  Haven't figured out
+;;        how to do so at this point ...
 (defun print-border (o s)
-  (format s "(defborder ")
-  (if (eq o nil)
-      (format s "nil) ")
-      (progn
-        (with-slots ((c color)) o
-          (format s ":color (al:map-rgba-f ~d ~d ~d ~d) " (color-r c) (color-g c)
-                  (color-b c) (color-a c)))(format s ":style ~a " (style o))
-        (format s ":width ~d) " (width o)))))
+  (pprint-logical-block (s nil)
+    (format s "(defborder ")
+    (if (eq o nil)
+        (format s "nil) ")
+        (progn
+          (format s ":color (~a) " (print-color (color o)))
+          (format s ":style :~a " (string-downcase (style o)))
+          (format s ":width ~d) " (width o))))))
 
 (defclass border-mixin ()
   ((border-left :initarg :border-left :initform nil :accessor border-left)
@@ -234,6 +239,9 @@
   ((color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor color)))
 
 (defmethod print-mixn ((o color-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":color (~a) " (print-color (color o)))
+  (pprint-newline :linear s)
   (my-next-method))
 
 ;;=============================================================================
@@ -244,12 +252,10 @@
 
 (defmethod print-mixin ((o color-fore-back-mixin) s)
   (pprint-indent :current 0 s)
-  (with-slots ((c fore-color)) o
-    (format s ":fore-color (al:map-rgba-f ~d ~d ~d ~d)" (color-r c) (color-g c) (color-b c) (color-a c)))
+  (format s ":fore-color (~a) " (print-color (fore-color o)))
   (pprint-newline :linear s)
   (pprint-indent :current 0 s)
-  (with-slots ((c back-color)) o
-    (format s ":back-color (al:map-rgba-f ~d ~d ~d ~d)" (color-r c) (color-g c) (color-b c) (color-a c)))
+  (format s ":back-color (~a) " (print-color (back-color o)))
   (pprint-newline :linear s)
   (my-next-method))
 

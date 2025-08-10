@@ -1,5 +1,7 @@
 (defpackage :cl-yag
   (:use #:cl)
+  (:local-nicknames
+   (#:v #:org.shirakumo.verbose))  
   (:import-from #:cffi
                 #:foreign-alloc
                 #:foreign-enum-value
@@ -11,4 +13,5 @@
   ;; (:import-from #:cffi-object
   ;;               #:define-cobject-class)
   (:export #:main))
+
 

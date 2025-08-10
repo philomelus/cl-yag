@@ -153,17 +153,17 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-mouse-down (x y b (obj active-text) &key)
-  (if (and (= b 1)
+  (if (and (= b +MOUSE-BUTTON-LEFT+)
            (within x y obj)
            (not (slot-value obj 'was-down)))
-      (setf (slot-value obj 'was-down) t)))
+      (progn
+        (setf (slot-value obj 'was-down) t)
+        (on-mouse-down-accept obj (owner obj))
+        (return-from on-mouse-down t)))
+  nil)
 
 (defmethod on-mouse-move (x y dx dy (obj active-text) &key)
-  ;; (format *standard-output* "~&on-mouse-move: active-text: (~d, ~d) (~d, ~d)" x y dx dy)
-  (if (and (> x (left obj))
-           (< x (right obj))
-           (> y (top obj))
-           (< y (bottom obj)))
+  (if (within x y obj)
       (if (not (slot-value obj 'inside))
           (setf (slot-value obj 'inside) t))
       (if (slot-value obj 'inside)
@@ -171,13 +171,20 @@
 
 (defmethod on-mouse-up (x y b (obj active-text) &key)
   (if (and (slot-value obj 'was-down)
-           (= b 1)
-           (within x y obj))
-      (progn
-        (setf (slot-value obj 'was-down) nil
-              (slot-value obj 'down) t)
-        (on-mouse-click x y b obj)
-        (setf (slot-value obj 'down) nil))))
+           (= b 1))
+      (if (within x y obj)
+          (progn
+            (v:debug :event "on-mouse-up: active-text: :x ~d :y ~d :b ~d" x y b)
+            (setf (slot-value obj 'was-down) nil
+                  (slot-value obj 'down) t)
+            (on-mouse-click x y b obj)
+            (setf (slot-value obj 'down) nil)
+            (return-from on-mouse-up t))
+          (progn
+            (setf (slot-value obj 'was-down) nil
+                  (slot-value obj 'down) nil)
+            (v:info :event "on-mouse-up: active-text: aborted"))))
+  nil)
 
 (defmethod on-paint ((obj active-text) &key)
   (let ((in (slot-value obj 'inside))

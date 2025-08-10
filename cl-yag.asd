@@ -10,31 +10,33 @@
   ;; Dependencies.
   :depends-on ("cl-liballegro"
                ;; "cffi-object"
-               "documentation-utils")
+               "documentation-utils"
+               "verbose")
 
   ;; Project stucture.
   :serial t
   :components ((:module "src"
-                :serial t
                 :components ((:file "packages")
                              (:file "constants")
                              (:file "macros")
-                             (:file "utils")
-                             (:file "utils-docs")
                              (:file "generics")
-                             (:file "generics-docs")
+                             (:file "utils")
                              (:file "layout")
-                             (:file "layout-docs")
                              (:file "mixins")
-                             (:file "mixins-docs")
                              (:file "manager")
-                             (:file "manager-docs")
                              (:file "text")
-                             (:file "text-docs")
                              (:file "window")
-                             (:file "window-docs")
                              (:file "cl-yag")
-                             (:file "cl-yag-docs"))))
+                             (:file "cl-yag-docs")
+                             (:file "constants-docs")
+                             (:file "generics-docs")
+                             (:file "layout-docs")
+                             (:file "manager-docs")
+                             (:file "mixins-docs")
+                             (:file "text-docs")
+                             (:file "utils-docs")
+                             (:file "window-docs")
+                             )))
   :around-compile
   (lambda (next)
     ;; (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 0) (speed 0)))    

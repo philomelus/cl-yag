@@ -1,5 +1,9 @@
 (in-package #:cl-yag)
 
+;;;; generics =================================================================
+
+(defgeneric between (lo hi))
+
 (defgeneric bottom (obj &key &allow-other-keys))
 
 (defgeneric container-calc-child-height (obj container &key &allow-other-keys))
@@ -10,11 +14,15 @@
 
 (defgeneric container-calc-child-width (obj container &key &allow-other-keys))
 
+(defgeneric must-init (test desc))
+
 (defgeneric on-char (key mods object &key &allow-other-keys))
+
+(defgeneric on-mouse-click (x y b o &key &allow-other-keys))
 
 (defgeneric on-mouse-down (x y b o &key &allow-other-keys))
 
-(defgeneric on-mouse-click (x y b o &key &allow-other-keys))
+(defgeneric on-mouse-down-accept (o m));
 
 (defgeneric on-mouse-move (x y dx dy o &key &allow-other-keys))
 

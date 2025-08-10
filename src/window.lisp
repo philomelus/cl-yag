@@ -23,18 +23,21 @@
 
 (defmethod on-mouse-down (x y b (obj window) &key)
   (dolist (child (content obj))
-    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
-    (on-mouse-down x y b child)))
+    (if (on-mouse-down x y b child)
+        (return-from on-mouse-down t)))
+  nil)
 
 (defmethod on-mouse-move (x y dx dy (obj window) &key)
   (dolist (child (content obj))
-    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
-    (on-mouse-move x y dx dy child)))
+    (if (on-mouse-move x y dx dy child)
+        (return t)))
+  nil)
 
 (defmethod on-mouse-up (x y b (obj window) &key)
   (dolist (child (content obj))
-    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
-    (on-mouse-up x y b child)))
+    (if (on-mouse-up x y b child)
+        (return t)))
+  nil)
 
 (defmethod on-paint ((obj window) &key)
   ;; Clear background

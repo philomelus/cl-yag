@@ -20,12 +20,6 @@
 
 ;;;; main =====================================================================
 
-;; (defstruct main-data
-;;   (item1)
-;;   (item2)
-;;   (item3))
-;; (defvar *globals* (make-main-data))
-
 (defun main-init ()
   (must-init (al:init) "allegro")
   (must-init (al:install-keyboard) "keyboard")
@@ -52,31 +46,39 @@
     
     (unwind-protect
          (progn                         ; Not needed, because of the let ...
-           (let* ((w1 (defwindow 200 200 400 400
-                        ((defcolumn-layout ((defactive-text :title "Asteroids" :font font :h-align :center
-                                                            :left -1 :top -1 :v-align :middle
-                                                            :color-down (al:map-rgb-f 0 1 0)
-                                                            :color-up (al:map-rgb-f 1 0 1))
-                                            (defactive-text :title "Blastem" :font font :h-align :center
-                                                            :left -1 :top -1 :v-align :middle
-                                                            :color-down (al:map-rgb-f 1 0 1)
-                                                            :color-up (al:map-rgb-f 0 1 0))
-                                            (defactive-text :title "Quit" :font font :h-align :center
-                                                            :left -1 :top -1 :v-align :middle
-                                                            :color-down (al:map-rgb-f 1 1 0)
-                                                            :color-up (al:map-rgb-f 0 0 1)))))))
+           (let* ((white (al:map-rgb-f 1.0 1.0 1.0))
+                  (dkgray (al:map-rgb-f 0.25 0.25 0.25))
+                  (w1 (defwindow 200 200 400 400
+                        ((defcolumn-layout ((defactive-text :title "Asteroids" :font font
+                                                            :h-align :center :v-align :middle
+                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
+                                                            :color-down dkgray
+                                                            :color-hover white
+                                                            :color-up white)
+                                            (defactive-text :title "Blastem" :font font
+                                                            :h-align :center :v-align :middle
+                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
+                                                            :color-down dkgray
+                                                            :color-hover white
+                                                            :color-up white)
+                                            (defactive-text :title "Quit" :font font
+                                                            :h-align :center :v-align :middle
+                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
+                                                            :color-down dkgray
+                                                            :color-hover white
+                                                            :color-up white))))))
                   (boss (make-instance 'manager :content (list w1)))
                   (selected-object nil))
 
              (defmethod on-mouse-click (x y b (obj (eql (first (content (first (content w1)))))) &key)
-               (format *standard-output* "~&Item 1 clicked")
+               (v:info :app "Item 1 clicked")
                (setf selected-object obj))
 
              (defmethod on-mouse-click (x y b (obj (eql (second (content (first (content w1)))))) &key)
-               (format *standard-output* "~&Item 2 clicked"))
+               (v:info :app "Item 2 clicked"))
 
              (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w1)))))) &key)
-               (format *standard-output* "~&Item 3 clicked")
+               (v:info :app "Item 3 clicked")
                (setf (process boss) nil))
 
              (defmethod on-char (key mods (object (eql boss)) &key)
@@ -100,9 +102,9 @@
                              (cffi:foreign-slot-value event '(:struct al:display-event) 'al::height)))
 
                  (otherwise
-                  ;; (format *standard-output* "~&event: ~a"
-                  ;;         (cffi:foreign-slot-value event '(:union al:event) 'al::type))
-                  )))
+                  (v:debug :event "event: ~a"
+                          (cffi:foreign-slot-value event '(:union al:event) 'al::type)))
+                 ))
 
              (setf (border w1) (defborder :color (al:map-rgb-f 1 1 0)))
              (setf (border (second (content (first (content w1))))) (defborder :color (al:map-rgb-f 0 1 1)))
@@ -115,7 +117,6 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             (pprint boss)
              (process-events queue boss)))
       
       (progn

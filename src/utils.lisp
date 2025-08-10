@@ -1,17 +1,5 @@
 (in-package :cl-yag)
 
-;;;; CONSTANTS ----------------------------------------------------------------
-
-(defconstant +KEY-MAX+ (foreign-enum-value 'al::keycodes :key-max))
-
-(defconstant +KEY-DOWN+ (foreign-enum-value 'al::keycodes :down))
-(defconstant +KEY-LEFT+ (foreign-enum-value 'al::keycodes :left))
-(defconstant +KEY-RIGHT+ (foreign-enum-value 'al::keycodes :right))
-(defconstant +KEY-UP+ (foreign-enum-value 'al::keycodes  :up))
-(defconstant +KEY-X+ (foreign-enum-value 'al::keycodes :x))
-(defconstant +KEY-ESC+ (foreign-enum-value 'al::keycodes  :escape))
-(defconstant +KEY-B+ (foreign-enum-value 'al::keycodes :b))
-
 ;; (defmacro must-init (test desc)
 ;;   (typecase test
 ;;     (foreign-pointer
@@ -28,21 +16,19 @@
 ;;     (otherwise
 ;;      (error "MUST-INIT unknown type: ~a (~a)" (type-of test) test))))
 
-(defun color2assoc (color)
-  "Return r, g, b, and a of allegro color as association list.
+(defmethod between ((lo integer) (hi integer))
+  (let* ((r (+ lo (* (random 1.0) (- hi lo))))
+		 (result (truncate r)))
+	result))
 
-(color2assoc (map-rgba-f 0.2 0.4 0.6 0.8)
-returns
-((:r 0.2) (:g 0.4) (:b 0.6) (:a 0.8))"
+(defmethod between ((lo float) (hi float))
+  (+ lo (* (random 1.0) (- hi lo))))
+
+(defun color2assoc (color)
   (let ((rgba (color2list color)))
     `((:r ,(first rgba)) (:g ,(second rgba)) (:b ,(third rgba)) (:a ,(fourth rgba)))))
 
 (defun color2list (color)
-  "Returns r, g, b, and a of allegro color as list.
-
-(color2list (map-rgba-f 0.2 0.4 0.6 0.8)
-returns
-(0.2 0.4 0.6 0.8)"
   (list
    (nth (1+ (position 'al::r color)) color)
    (nth (1+ (position 'al::g color)) color)
@@ -50,31 +36,21 @@ returns
    (nth (1+ (position 'al::a color)) color)))
 
 (defun color-a (color)
-  "Returns a of allegro color."
   (fourth (color2list color)))
 
 (defun color-b (color)
-  "Returns b of allegro color."
   (third (color2list color)))
 
 (defun color-g (color)
-  "Returns g of allegro color."
   (second (color2list color)))
 
 (defun color-inverse (color)
-  "Returns simple inverse of color."
   (al:map-rgb-f (- 1 (color-r color))
                 (- 1 (color-g color))
                 (- 1 (color-b color))))
 
 (defun color-r (color)
-  "Returns r of allegro color."
   (first (color2list color)))
-
-(defun dump-color (color stream)
-  (format stream "al:map-rgba-f ~d ~d ~d ~d" (color-r color) (color-g color) (color-b color) (color-a color)))
-
-(defgeneric must-init (test desc))
 
 (defmethod must-init ((test sb-sys::system-area-pointer) desc)
   (when (null-pointer-p test)
@@ -88,15 +64,14 @@ returns
         (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
         (error "Couldn't initialize ~s." desc))))
 
-(declaim (ftype (function (integer integer) integer) between))
-(defun between (lo hi)
-  (let* ((r (+ lo (* (random 1.0) (- hi lo))))
-		 (result (truncate r)))
-	result))
+(defun print-color (color &optional (stream nil))
+  (format stream "al:map-rgba-f ~d ~d ~d ~d" (color-r color) (color-g color) (color-b color) (color-a color)))
 
-(declaim (ftype (function (float float) float) between-f))
-(defun between-f (lo hi)
-  (+ lo (* (random 1.0) (- hi lo))))
+(defun print-raw-object (o)
+  (with-output-to-string (s)
+    (print-unreadable-object (o s :type t :identity t)
+      (format nil "")
+      (write-char #\Space))))
 
 (declaim (ftype (function (integer integer integer integer integer integer integer integer) boolean) rect-collide))
 (defun rect-collide (left1 top1 right1 bottom1 left2 top2 right2 bottom2)
@@ -105,4 +80,14 @@ returns
 		((> top1 bottom2) (return-from rect-collide nil))
 		((< bottom1 top2) (return-from rect-collide nil)))
   t)
+
+(defun show-package-functions (package-name)
+  (let ((package (find-package package-name)))
+    (when package
+      (format t "Functions in package ~a:~%" (package-name package))
+      (do-external-symbols (s package)
+        (when (fboundp s)
+          (format t "~s~%" s))))
+    (unless package
+      (format t "Package ~a not found.~%" package-name))))
 

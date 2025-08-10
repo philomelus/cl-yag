@@ -17,8 +17,9 @@
 
 (defmethod on-mouse-down (x y b (obj layout) &key)
   (dolist (child (content obj))
-    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
-    (on-mouse-down x y b child)))
+    (if (on-mouse-down x y b child)
+        (return-from on-mouse-down t)))
+  nil)
 
 (defmethod on-mouse-move (x y dx dy (obj layout) &key)
   (dolist (child (content obj))
@@ -26,7 +27,6 @@
 
 (defmethod on-mouse-up (x y b (obj layout) &key)
   (dolist (child (content obj))
-    ;; (format *standard-output* "~&on-mouse-move: window: passing to ~a" child)
     (on-mouse-up x y b child)))
 
 ;;;; column-layout ============================================================
