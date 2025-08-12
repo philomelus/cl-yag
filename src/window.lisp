@@ -44,34 +44,7 @@
   (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) (back-color obj))
 
   ;; Draw border
-  (let ((x (left obj))
-        (y (top obj)))
-    (let ((r (+ x (width obj) -1))
-          (b (+ y (height obj) -1)))
-      ;; Left side
-      (if (slot-boundp obj 'border-left)
-          (let ((bo (border-left obj)))
-            (case (style bo)
-              (:default
-               (al:draw-line x y x b (color bo) (width bo))))))
-      ;; Top side
-      (if (slot-boundp obj 'border-top)
-          (let ((bo (border-top obj)))
-            (case (style bo)
-              (:default
-               (al:draw-line x y r y (color bo) (width bo))))))
-      ;; Right side
-      (if (slot-boundp obj 'border-right)
-          (let ((bo (border-right obj)))
-            (case (style bo)
-              (:default
-               (al:draw-line r y r b (color bo) (width bo))))))
-      ;; Bottom side
-      (if (slot-boundp obj 'border-bottom)
-          (let ((bo (border-bottom obj)))
-            (case (style bo)
-              (:default
-               (al:draw-line x b r b (color bo) (width bo))))))))
+  (paint-border obj (find-theme obj))
 
   ;; Let children paint themselves
   (let ((children (content obj)))

@@ -1,0 +1,298 @@
+(in-package #:cl-yag)
+
+;;;; forward declaration =====================================================
+
+(defvar *theme-default*)
+
+;;;; macros ===================================================================
+
+(defmacro best-theme (what obj)
+  `(,what (find-theme ,obj)))
+
+(defun find-theme (o)
+  ;; Does object have theme?
+  (if (typep o 'theme-mixin)
+      ;; Yes, is it valid?
+      (if (not (eq nil (theme o)))
+          ;; Yes, so use it
+          (progn
+            (v:debug :theme "find-theme: using object: ~a" (print-raw-object o))
+            (return-from find-theme (theme o)))))
+
+  ;; No theme, does it have a parent?
+  (unless (typep o 'parent-mixin)
+    ;; No parent and no theme so use default
+    (v:debug :theme "find-theme: no theme, no parent, using default.")
+    (return-from find-theme *theme-default*))
+
+  ;; Object has parent, so a parent with a theme
+  (let ((p (parent o)))
+    (loop
+      ;; Valid parent?
+      (if (not (eq nil p))
+          ;; yes, does parent have theme?
+          (if (typep p 'theme-mixin)
+              ;; Yes, is it valid?
+              (if (not (eq nil (theme p)))
+                  ;; Yes, so use it
+                  (progn
+                    (v:debug :theme "find-theme: using parent: ~a" (print-raw-object p))
+                    (return-from find-theme (theme p))))
+              ;; Parent has invalid theme, does it have a parent?
+              (if (typep p 'parent-mixin)
+                  ;; Yes, so loop
+                  (setf p (parent p))
+                  ;; No valid theme and no parent, use default
+                  (progn
+                    (v:debug :theme "find-theme: invalid parent theme, no parent, use default.")
+                    (return-from find-theme *theme-default*))))
+          ;; Parent not valid, so use default
+          (progn
+            (v:debug :theme "find-theme: no theme, no parent, use default.")
+            (return-from find-theme *theme-default*))))))
+
+;;;; methods ==================================================================
+
+;; For any requested theme colors where the object doesn't have a theme itself,
+;; try to find a parent that has a theme.  If no parent has a theme, use
+;; the default theme.
+
+(defmethod theme-d (o)
+  (theme-d (find-theme o)))
+
+(defmethod theme-l (o)
+  (theme-l (find-theme o)))
+
+(defmethod theme-n (o)
+  (theme-n (find-theme o)))
+
+(defmethod theme-vd (o)
+  (theme-vd (find-theme o)))
+
+(defmethod theme-vl (o)
+  (theme-vl (find-theme o)))
+
+;;;; theme-base ===============================================================
+
+(defclass theme-base (color-fore-back-mixin)
+  ((dark :initarg :dark :initform (al:map-rgb 128 128 128) :reader theme-d)
+   (light :initarg :light :initform (al:map-rgb 223 223 223) :reader theme-l)
+   (normal :initarg :normal :initform (al:map-rgb 212 208 200) :reader theme-n)
+   (very-dark :initarg :very-dark :initform (al:map-rgb 95 95 95) :reader theme-vd)
+   (very-light :initarg :very-light :initform (al:map-rgb 245 245 245) :reader theme-vl)))
+
+(defmacro deftheme-base (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-base ,@rest))
+
+(defmethod print-object ((o theme-base) s)
+(pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deftheme-base ")
+
+    (pprint-indent :current 0 s)
+    (format s ":dark (~a) " (print-color (theme-d o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":light (~a) " (print-color (theme-l o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":normal (~a) " (print-color (theme-n o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":very-dark (~a) " (print-color (theme-vd o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":very-light (~a) " (print-color (theme-vl o)))
+    (pprint-newline :linear s)
+
+    (print-mixin o s)))
+
+;;;; theme-flat ===============================================================
+
+(defclass theme-flat (theme-base)
+  ())
+
+(defmacro deftheme-flat (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-flat ,@rest))
+
+;; If more slots are defined, then use this.  Otherwise let theme-base handle it.
+;; (defmethod print-object ((o theme-flat) s)
+;;   )
+
+(defmethod paint-border (object (theme theme-flat))
+  (when (typep object 'area-mixin)
+    (let ((x (left object))
+          (y (top object)))
+      (let ((r (+ x (width object) -1))
+            (b (+ y (height object) -1)))
+
+        (macrolet ((get-params (what)
+                     `(if (typep object 'border-mixin)
+                          (let ((bo (,what object)))
+                            (if (eql nil bo)
+                                (setf c (fore-color theme))
+                                (progn
+                                  (setf c (color bo))
+                                  (setf s (style bo))
+                                  (setf thic (width bo)))))
+                          (setf c (fore-color theme)))))
+          
+          ;; Left side
+          (let ((s :default)
+                (thic 1)
+                thic2
+                c)
+            (get-params border-left)
+            (setf thic2 (truncate (/ thic 2)))
+            (case s
+              (:default
+               (al:draw-line x (- y thic2)
+                             x (+ b thic2) c thic))
+              (:inset
+               (v:error :theme "flat border inset not implemented"))
+              (:outset
+               (v:error :theme "flat border outset not implemented"))
+              (otherwise
+               (v:error "unknown flat border style: ~a" s)
+               (error "unknown flat border style: ~a" s))))
+
+          ;; Top side
+          (let ((s :default)
+                (thic 1)
+                thic2
+                (c))
+            (get-params border-top)
+            (setf thic2 (truncate (/ thic 2)))
+            (case s
+              (:default
+               (al:draw-line (- x thic2) y (+ r thic2) y c thic))
+              (:inset
+               (v:error :theme "flat border inset not implemented"))
+              (:outset
+               (v:error :theme "flat border outset not implemented"))
+              (otherwise
+               (v:error "unknown flat border style: ~a" s)
+               (error "unknown flat border style: ~a" s))))
+
+          ;; Right side
+          (let ((s :default)
+                (thic 1)
+                thic2
+                (c))
+            (get-params border-right)
+            (setf thic2 (truncate (/ thic 2)))
+            (case s
+              (:default
+               (al:draw-line r (- y thic2)
+                             r (+ b thic2) c thic))
+              (:inset
+               (v:error :theme "flat border inset not implemented"))
+              (:outset
+               (v:error :theme "flat border outset not implemented"))
+              (otherwise
+               (v:error "unknown flat border style: ~a" s)
+               (error "unknown flat border style: ~a" s))))
+          
+          ;; Bottom side
+          (let ((s :default)
+                (thic 1)
+                thic2
+                c)
+            (get-params border-bottom)
+            (setf thic2 (truncate (/ thic 2)))
+            (case s
+              (:default
+               (al:draw-line (- x thic2) b (+ r thic2) b c thic))
+              (:inset
+               (v:error :theme "flat border inset not implemented"))
+              (:outset
+               (v:error :theme "flat border outset not implemented"))
+              (otherwise
+               (v:error "unknown flat border style: ~a" s)
+               (error "unknown flat border style: ~a" s))))
+          )))))
+
+;;;; border
+;;;; interior
+;;;; text
+;;;; up
+;;;; down
+
+;;;; theme-3d =================================================================
+
+(defclass theme-3d (theme-base)
+  ())
+
+(defmacro deftheme-3d (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-3d ,@rest))
+
+;; If more slots are defined, then use this.  Otherwise let theme-base handle it.
+;; (defmethod print-object ((o theme-3d) s)
+;;   )
+
+(defmethod paint-border (object (theme theme-3d))
+  )
+
+;;;; flat border
+;;;; inset border
+;;;; raised border
+
+;;;; flat interior
+;;;; inset interior
+;;;; raised interior
+
+;;;; themes ===================================================================
+
+;;; flat ------------------------------------------------------------
+
+(defmacro deftheme-flat-obj (normal dark light very-dark very-light)
+  `(make-instance 'theme-flat :dark ,dark :light ,light :normal ,normal :very-dark ,very-dark :very-light ,very-light))
+
+
+(defvar *theme-flat-aqua* (deftheme-flat-obj (make-color 0 255 255) (make-color 0 191 191) (make-color 127 255 255) (make-color 0 127 127) (make-color 191 255 255)))
+(defvar *theme-flat-blue* (deftheme-flat-obj (make-color 0 0 255) (make-color 0 0 191) (make-color 159 159 255) (make-color 0 0 159) (make-color 191 191 255)))
+(defvar *theme-flat-gray* (deftheme-flat-obj (make-color 212 208 200) (make-color 128 128 128) (make-color 223 223 223) (make-color 95 95 95) (make-color 245 245 245)))
+(defvar *theme-flat-green* (deftheme-flat-obj (make-color 0 255 0) (make-color 0 191 0) (make-color 127 255 127) (make-color 0 159 0) (make-color 191 255 191)))
+(defvar *theme-flat-purple* (deftheme-flat-obj (make-color 255 0 255) (make-color 191 0 191) (make-color 255 159 255) (make-color 159 0 159) (make-color 255 191 255)))
+(defvar *theme-flat-red* (deftheme-flat-obj (make-color 255 0 0) (make-color 191 0 0) (make-color 255 127 127) (make-color 159 0 0) (make-color 255 191 191)))
+(defvar *theme-flat-yellow* (deftheme-flat-obj (make-color 255 255 0) (make-color 191 191 0) (make-color 255 255 127) (make-color 127 127 0) (make-color 255 255 191)))
+
+;;; 3d --------------------------------------------------------------
+
+(defmacro deftheme-3d-obj (normal dark light very-dark very-light)
+  `(make-instance 'theme-3d :dark ,dark :light ,light :normal ,normal :very-dark ,very-dark :very-light ,very-light))
+
+(defvar *theme-3d-aqua* (deftheme-flat-obj (make-color 0 255 255) (make-color 0 191 191) (make-color 127 255 255) (make-color 0 127 127) (make-color 191 255 255)))
+(defvar *theme-3d-blue* (deftheme-flat-obj (make-color 0 0 255) (make-color 0 0 191) (make-color 159 159 255) (make-color 0 0 159) (make-color 191 191 255)))
+(defvar *theme-3d-gray* (deftheme-flat-obj (make-color 212 208 200) (make-color 128 128 128) (make-color 223 223 223) (make-color 95 95 95) (make-color 245 245 245)))
+(defvar *theme-3d-green* (deftheme-flat-obj (make-color 0 255 0) (make-color 0 191 0) (make-color 127 255 127) (make-color 0 159 0) (make-color 191 255 191)))
+(defvar *theme-3d-purple* (deftheme-flat-obj (make-color 255 0 255) (make-color 191 0 191) (make-color 255 159 255) (make-color 159 0 159) (make-color 255 191 255)))
+(defvar *theme-3d-red* (deftheme-flat-obj (make-color 255 0 0) (make-color 191 0 0) (make-color 255 127 127) (make-color 159 0 0) (make-color 255 191 191)))
+(defvar *theme-3d-yellow* (deftheme-flat-obj (make-color 255 255 0) (make-color 191 191 0) (make-color 255 255 127) (make-color 127 127 0) (make-color 255 255 191)))
+
+;;;------------------------------------------------------------------
+
+(defparameter *theme-default* *theme-flat-gray*)
+
+;;; These are here instead of src/mixins/theme.lisp because they need
+;;; the macro defitions
+
+(defmethod theme-d ((o theme-mixin))
+  (best-theme theme-d o))
+
+(defmethod theme-l ((o theme-mixin))
+  (best-theme theme-l o))
+
+(defmethod theme-n ((o theme-mixin))
+  (best-theme theme-n o))
+
+(defmethod theme-vd ((o theme-mixin))
+  (best-theme theme-vd o))
+
+(defmethod theme-vl ((o theme-mixin))
+  (best-theme theme-vl o))
+

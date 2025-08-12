@@ -1,30 +1,29 @@
-(in-package :cl-yag)
+(in-package :cl-yag-tests)
 
 ;;;; main =====================================================================
 
-(defun main-init ()
-  (must-init (al:init) "allegro")
-  (must-init (al:install-keyboard) "keyboard")
-  (must-init (al:install-mouse) "mouse")
-  (must-init (al:init-font-addon) "font addon")
-  (must-init (al:init-image-addon) "image addon")
-  (must-init (al:init-primitives-addon) "primitives addon"))
+(defun init ()
+  (cl-yag::must-init (al:init) "allegro")
+  (cl-yag::must-init (al:install-keyboard) "keyboard")
+  (cl-yag::must-init (al:install-mouse) "mouse")
+  (cl-yag::must-init (al:init-font-addon) "font addon")
+  (cl-yag::must-init (al:init-image-addon) "image addon")
+  (cl-yag::must-init (al:init-primitives-addon) "primitives addon"))
 
-(defun main-setup-display ()
+(defun setup-display ()
   (al:set-new-display-option :sample-buffers 1 :suggest)
   (al:set-new-display-option :samples 8 :suggest)
   (al:set-new-display-flags '(:resizable))
-  (al:create-display 960 720))
+  (al:create-display 1024 768))
 
 
-(defun main ()
-  (main-init)
+(defun text-tests-main ()
+  (init)
   (setf (v:repl-categories) (list :app :theme))
-  (let ((screen (main-setup-display))
+  (let ((screen (setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (font (al:create-builtin-font))
-        (buffer (al:create-bitmap 320 240))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
@@ -114,7 +113,6 @@
       
       (progn
         (cffi:foreign-free event)
-        (al:destroy-bitmap buffer)
         (al:destroy-display screen)
         (al:destroy-timer timer)
         (al:destroy-event-queue queue)

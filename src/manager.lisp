@@ -2,9 +2,14 @@
 
 ;;;; manager ==================================================================
 
-(defclass manager (content-mixin)
+(defclass manager (content-mixin
+                   theme-mixin)
   ((process :initform nil :type boolean :accessor process)
    (last-mouse-down :initform nil)))
+
+(defmethod paint ((obj manager) &key)
+  (dolist (child (content obj))
+    (on-paint child)))
 
 (defmethod print-object ((o manager) s)
   (pprint-indent :current 0 s)
@@ -69,10 +74,32 @@
       (cffi:foreign-free event)))
   (my-next-method))
 
-(defmethod paint ((obj manager) &key)
-  (dolist (child (content obj))
-    (on-paint child))
-  (my-next-method))
+(defmethod theme-d ((o manager))
+  (let ((to (theme o)))
+    (if (eql nil to)
+        (theme-d *theme-default*)
+        (theme-d to))))
 
+(defmethod theme-l ((o manager))
+  (let ((to (theme o)))
+    (if (eql nil to)
+        (theme-l *theme-default*)
+        (theme-l to))))
 
+(defmethod theme-n ((o manager))
+  (let ((to (theme o)))
+    (if (eql nil to)
+        (theme-n *theme-default*)
+        (theme-n to))))
 
+(defmethod theme-vd ((o manager))
+  (let ((to (theme o)))
+    (if (eql nil to)
+        (theme-vd *theme-default*)
+        (theme-vd to))))
+
+(defmethod theme-d ((o manager))
+  (let ((to (theme o)))
+    (if (eql nil to)
+        (theme-vl *theme-default*)
+        (theme-vl to))))

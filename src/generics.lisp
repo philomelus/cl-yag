@@ -34,7 +34,11 @@
 
 (defgeneric owner (obj))
 
-(defgeneric paint (obj &key &allow-other-keys))
+(defgeneric paint (obj &key &allow-other-keys)
+  (:method (obj &key)
+    (on-paint obj)))
+
+(defgeneric paint-border (object theme))
 
 (defgeneric print-mixin (object stream))
 
@@ -69,3 +73,7 @@
 (defgeneric (setf spacing-h) (value object))
 
 (defgeneric (setf spacing-v) (value object))
+
+(defgeneric (setf theme) (theme object)
+  (:method (theme object)
+    (v:warn :theme "no (setf theme) method for ~a" (print-raw-object object))))
