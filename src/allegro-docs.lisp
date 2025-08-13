@@ -38,3 +38,5 @@ print-color(al:map-rgb-f 0 0 0)
 would generate
 al:map-rgba-f 0.0 0.0 0.0 1.0"))
 
+;;;; function wrappers ========================================================
+

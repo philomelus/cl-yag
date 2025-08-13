@@ -32,6 +32,8 @@
 
 (defgeneric on-resize (obj x y w h &key &allow-other-keys))
 
+(defgeneric on-timer (timer count object))
+
 (defgeneric owner (obj))
 
 (defgeneric paint (obj &key &allow-other-keys)

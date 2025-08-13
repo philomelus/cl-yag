@@ -1,5 +1,78 @@
 (in-package #:cl-yag)
 
+;;;; cffi-object ==============================================================
+
+;; (cobj:define-cobject-class (:struct al:mouse-state))
+
+;; (cobj:define-cobject-class (:struct al:any-event))
+;; (cobj:define-cobject-class (:struct al:display-event))
+;; (cobj:define-cobject-class (:struct al:keyboard-event))
+;; (cobj:define-cobject-class (:struct al:mouse-event))
+;; (cobj:define-cobject-class (:struct al:timer-event))
+
+;; (cobj:define-cobject-class (:struct al:event-queue))
+
+;;;; allegro struct wrappers ==================================================
+
+;;; display-event ---------------------------------------------------
+
+(macrolet ((display-event (object field)
+             `(cffi:foreign-slot-value ,object '(:struct al:display-event) ,field)))
+  
+  (defun display-event-height (object)
+    (display-event object 'al::height))
+  (defun display-event-x (object)
+    (display-event object 'al::x))
+  (defun display-event-width (object)
+    (display-event object 'al::width))
+  (defun display-event-y (object)
+    (display-event object 'al::y)))
+
+;;; event -----------------------------------------------------------
+
+(macrolet ((event (object field)
+             `(cffi:foreign-slot-value ,object '(:union al:event) ,field)))
+  
+  (defun event-type (object)
+    (event object 'al::type)))
+
+;;; keyboard-event --------------------------------------------------
+
+(macrolet ((keyboard-event (object field)
+             `(cffi:foreign-slot-value ,object '(:struct al:keyboard-event) ,field)))
+  
+  (defun keyboard-event-keycode (object)
+    (keyboard-event object 'al::keycode))
+  (defun keyboard-event-modifiers (object)
+    (keyboard-event object 'al::modifiers)))
+
+;;; mouse-event -----------------------------------------------------
+
+(macrolet ((mouse-event (event field)
+             `(cffi:foreign-slot-value ,event '(:struct al:mouse-event) ,field)))
+  
+  (defun mouse-event-button (event)
+    (mouse-event event 'al::button))
+  (defun mouse-event-dx (event)
+    (mouse-event event 'al::dx))
+  (defun mouse-event-dy (event)
+    (mouse-event event 'al::dy))
+  (defun mouse-event-x (event)
+    (mouse-event event 'al::x))
+  (defun mouse-event-y (event)
+    (mouse-event event 'al::y)))
+
+;;; timer-event -----------------------------------------------------
+
+(macrolet ((timer-event (object field)
+             `(cffi:foreign-slot-value ,object '(:struct al:timer-event) ,field)))
+  (defun timer-event-source (object)
+    (timer-event object 'al::source))
+  (defun timer-event-count (object)
+    (timer-event object 'al::count)))
+
+;;;;===========================================================================
+
 (defun color2assoc (color)
   (let ((rgba (color2list color)))
     `((:r ,(first rgba)) (:g ,(second rgba)) (:b ,(third rgba)) (:a ,(fourth rgba)))))

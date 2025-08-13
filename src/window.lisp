@@ -44,7 +44,9 @@
   (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) (back-color obj))
 
   ;; Draw border
-  (paint-border obj (find-theme obj))
+  (let ((th (find-theme obj)))
+    (assert (not (eql nil th)))
+    (paint-border obj th))
 
   ;; Let children paint themselves
   (let ((children (content obj)))

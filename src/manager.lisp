@@ -7,6 +7,15 @@
   ((process :initform nil :type boolean :accessor process)
    (last-mouse-down :initform nil)))
 
+(defmethod initialize-instance :after ((object manager) &key)
+  ;; (if (eql nil (theme object))
+  ;;     (setf (theme object) *theme-default*))
+  )
+
+(defmethod on-timer (source count (object manager))
+  (dolist (child (content object))
+    (on-paint child)))
+
 (defmethod paint ((obj manager) &key)
   (dolist (child (content obj))
     (on-paint child)))
@@ -22,7 +31,7 @@
   (defmethod on-mouse-down-accept (o (m (eql object)))
     (v:info :event "on-mouse-down-accept: ~a" (print-raw-object o))
     (setf (slot-value object 'last-mouse-down) o))
-
+  
   (let ((event (cffi:foreign-alloc '(:union al:event))))
     (unwind-protect
          (setf (process object) t)
@@ -30,16 +39,16 @@
         (al:wait-for-event queue event)
         (case (event-type event)
           (:key-char
-           (let ((key (keyboard-event event 'al::keycode))
-                 (mods (keyboard-event event 'al::modifiers)))
+           (let ((key (keyboard-event-keycode event))
+                 (mods (keyboard-event-modifiers event)))
              (on-char key mods object)))
           
           (:mouse-axis
            (block mouse-axis
              (let ((x (mouse-event-x event))
                    (y (mouse-event-y event))
-                   (dx (mouse-event event 'al::dx))
-                   (dy (mouse-event event 'al::dy)))
+                   (dx (mouse-event-dx event))
+                   (dy (mouse-event-dy event)))
                (dolist (child (content object))
                  (if (on-mouse-move x y dx dy child)
                      (return-from mouse-axis))))))
@@ -68,10 +77,11 @@
                  (on-mouse-up x y b child)))))
 
           (otherwise
-           (v:debug :event "unhandled event: ~a" event)
+           (v:debug :event "unhandled event: ~a" (event-type event))
            (unhandled-event event object))))
       
       (cffi:foreign-free event)))
+  
   (my-next-method))
 
 (defmethod theme-d ((o manager))

@@ -140,6 +140,7 @@
                 
                 ;; Misc
                 #:container-calc-area
+                #:must-init
                 #:print-raw-object
                 #:rect-collide
                 
@@ -149,6 +150,11 @@
                 #:color-g
                 #:color-inverse
                 #:color-r
+                #:display-event-height
+                #:display-event-width
+                #:display-event-x
+                #:display-event-y
+                #:event-type
                 #:get-text-dimensions
                 #:make-color
                 #:print-color

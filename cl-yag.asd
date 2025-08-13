@@ -9,7 +9,7 @@
 
   ;; Dependencies.
   :depends-on ("cl-liballegro"
-               ;; "cffi-object"
+               "cffi-object"
                "documentation-utils"
                "verbose")
 

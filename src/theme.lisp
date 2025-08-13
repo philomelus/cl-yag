@@ -26,26 +26,41 @@
     (return-from find-theme *theme-default*))
 
   ;; Object has parent, so a parent with a theme
-  (let ((p (parent o)))
+  (let ((count 0)
+        (p (parent o)))
     (loop
       ;; Valid parent?
       (if (not (eq nil p))
           ;; yes, does parent have theme?
           (if (typep p 'theme-mixin)
               ;; Yes, is it valid?
-              (if (not (eq nil (theme p)))
+              (progn
+                (unless (eq nil (theme p))
                   ;; Yes, so use it
-                  (progn
-                    (v:debug :theme "find-theme: using parent: ~a" (print-raw-object p))
-                    (return-from find-theme (theme p))))
-              ;; Parent has invalid theme, does it have a parent?
+                  (v:debug :theme "find-theme: using parent ~d: ~a" count (print-raw-object p))
+                  (return-from find-theme (theme p)))
+              
+                ;; Parent has invalid theme, does it have a parent?
+                (if (typep p 'parent-mixin)
+                    ;; Yes, so loop
+                    (progn
+                      (setf p (parent p))
+                      (incf count 1))
+                    ;; No valid theme and no parent, use default
+                    (progn
+                      (v:debug :theme "find-theme: invalid parent theme, no parent, use default.")
+                      (return-from find-theme *theme-default*))))
+              ;; No, so does it have a parent?
               (if (typep p 'parent-mixin)
-                  ;; Yes, so loop
-                  (setf p (parent p))
-                  ;; No valid theme and no parent, use default
+                  ;; Doesn't have a theme, but has a parent
                   (progn
-                    (v:debug :theme "find-theme: invalid parent theme, no parent, use default.")
+                    (setf p (parent p))
+                    (incf count 1))
+                  ;; Doesn't have a theme and has no parent, use default
+                  (progn
+                    (v:debug :theme "find-theme: no contained theme, no parent, use default.")
                     (return-from find-theme *theme-default*))))
+          
           ;; Parent not valid, so use default
           (progn
             (v:debug :theme "find-theme: no theme, no parent, use default.")
@@ -58,19 +73,29 @@
 ;; the default theme.
 
 (defmethod theme-d (o)
-  (theme-d (find-theme o)))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-d th)))
 
 (defmethod theme-l (o)
-  (theme-l (find-theme o)))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-l th)))
 
 (defmethod theme-n (o)
-  (theme-n (find-theme o)))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-n th)))
 
 (defmethod theme-vd (o)
-  (theme-vd (find-theme o)))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-vd th)))
 
 (defmethod theme-vl (o)
-  (theme-vl (find-theme o)))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-vl th)))
 
 ;;;; theme-base ===============================================================
 
@@ -282,17 +307,27 @@
 ;;; the macro defitions
 
 (defmethod theme-d ((o theme-mixin))
-  (best-theme theme-d o))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-d th)))
 
 (defmethod theme-l ((o theme-mixin))
-  (best-theme theme-l o))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-l th)))
 
 (defmethod theme-n ((o theme-mixin))
-  (best-theme theme-n o))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-n th)))
 
 (defmethod theme-vd ((o theme-mixin))
-  (best-theme theme-vd o))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-vd th)))
 
 (defmethod theme-vl ((o theme-mixin))
-  (best-theme theme-vl o))
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (theme-vl th)))
 

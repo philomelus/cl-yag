@@ -19,7 +19,7 @@
 
 (defun main ()
   (main-init)
-  (setf (v:repl-categories) (list :app :theme))
+  ;; (setf (v:repl-categories) (list :app :theme))
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
@@ -28,31 +28,31 @@
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
-         (progn                         ; Not needed, because of the let ...
-           (let* ((w1 (defwindow 200 200 400 400
-                        ((defcolumn-layout ((defactive-text :title "Asteroids" :font font
-                                                            :h-align :center :v-align :middle
-                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                              )
-                                            (defactive-text :title "Blastem" :font font
-                                                            :h-align :center :v-align :middle
-                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
-                                              )
-                                            (defactive-text :title "Quit" :font font
-                                                            :h-align :center :v-align :middle
-                                                            :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
-                                              ))))))
-                  (boss (make-instance 'manager :content (list w1)))
+         (progn                   ; Not needed, because of the let ...
+           (let* ((a2 (defactive-text :title "Asteroids" :font font
+                                      :h-align :center :v-align :middle
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
+                        ))
+                  (a3 (defactive-text :title "Blastem" :font font
+                                      :h-align :center :v-align :middle
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
+                        ))
+                  (a4 (defactive-text :title "Quit" :font font
+                                      :h-align :center :v-align :middle
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
+                        ))
+                  (w (defwindow 200 200 400 400 ((defcolumn-layout (a2 a3 a4)))))
+                  (boss (make-instance 'manager :content (list w)))
                   (selected-object nil))
              
-             (defmethod on-mouse-click (x y b (obj (eql (first (content (first (content w1)))))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (first (content (first (content w)))))) &key)
                (v:info :app "Item 1 clicked")
                (setf selected-object obj))
 
-             (defmethod on-mouse-click (x y b (obj (eql (second (content (first (content w1)))))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (second (content (first (content w)))))) &key)
                (v:info :app "Item 2 clicked"))
 
-             (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w1)))))) &key)
+             (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w)))))) &key)
                (v:info :app "Item 3 clicked")
                (setf (process boss) nil))
 
@@ -62,7 +62,7 @@
              
              (defmethod unhandled-event (event (object (eql boss)))
                (declare (ignore object))
-               (case (cffi:foreign-slot-value event '(:union al:event) 'al::type)
+               (case (event-type event)
                  (:timer
                   (al:clear-to-color (al:map-rgb-f 0.25 0.25 0.25))
                   (paint boss)
@@ -71,35 +71,24 @@
                  (:display-close (setf (process boss) nil))
                  
                  (:display-resize
-                  (on-resize w1 (cffi:foreign-slot-value event '(:struct al:display-event) 'al::x)
-                       (cffi:foreign-slot-value event '(:struct al:display-event) 'al::y)
-                             (cffi:foreign-slot-value event '(:struct al:display-event) 'al::width)
-                             (cffi:foreign-slot-value event '(:struct al:display-event) 'al::height)))
+                  (on-resize w (display-event-x event) (display-event-y event)
+                             (display-event-width event) (display-event-height event)))
 
                  (otherwise
-                  (v:debug :event "event: ~a"
-                          (cffi:foreign-slot-value event '(:union al:event) 'al::type)))
-                 ))
+                  (v:debug :event "event: ~a" (event-type event)))))
 
-             (let* ((wc (content w1))
-                    (cl (first wc))
-                    (cc (content cl))
-                    (a1 (first cc))
-                    (a2 (second cc))
-                    (a3 (third cc))
-                    (white (al:map-rgb-f 1 1 1)))
 
-               (setf (border w1) (defborder :color (al:map-rgb-f 1 1 0) :width 10))
-               (setf (border a2) (defborder :color (theme-vl *theme-flat-yellow*)))
-               
-               (setf (theme boss) *theme-flat-blue*)
-               (setf (theme a1) *theme-flat-red*)
-               (setf (theme a2) *theme-flat-green*)
+             (setf (border w) (defborder :color (al:map-rgb-f 1 1 0) :width 10))
+             (setf (border a3) (defborder :color (theme-vl *theme-flat-yellow*)))
+             
+             (setf (theme boss) *theme-flat-blue*)
+             (setf (theme a2) *theme-flat-red*)
+             (setf (theme a3) *theme-flat-green*)
 
-               (setf (fore-color a1) white)
+             (let* ((white (al:map-rgb-f 1 1 1)))
                (setf (fore-color a2) white)
                (setf (fore-color a3) white)
-               )
+               (setf (fore-color a4) white))
 
              (al:start-timer timer)
              (al:clear-keyboard-state screen)
@@ -109,7 +98,7 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             ;; (print w1 *standard-output*)
+             ;; (print w *standard-output*)
              (process-events queue boss)))
       
       (progn

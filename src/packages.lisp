@@ -158,9 +158,23 @@
            #:color-g
            #:color-inverse
            #:color-r
+           #:display-event-height
+           #:display-event-x
+           #:display-event-width
+           #:display-event-y
+           #:event-type
            #:get-text-dimensions
+           #:keyboard-event-keycode
+           #:keyboard-event-modifiers
            #:make-color
+           #:mouse-event-button
+           #:mouse-event-dx
+           #:mouse-event-dy
+           #:mouse-event-x
+           #:mouse-event-y
            #:print-color
+           #:timer-event-count
+           #:timer-event-source
 
            ;; Globals
            #:*theme-flat-aqua*
