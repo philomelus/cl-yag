@@ -160,9 +160,25 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-char (key mods (obj active-text) &key)
-  (v:info :event "on-char: active-text: got ~a ~b" key mods)
-  (when (member key (shortcuts obj))
-    (on-command obj)))
+  (let ((sc (shortcuts obj)))
+    (unless (eql nil sc)
+      ;; Get keys and modifiers
+      (let ((k (first sc))
+            (m (second sc)))
+        
+        ;; Make sure keys and mods are lists
+        (when (typep k 'keyword)
+          (setf k (list k)))
+        (when (typep m 'keyword)
+          (setf m (list m)))
+
+        (let ((is-k (member key k))
+              (is-m (intersection mods m)))
+          
+          (if (and (> (length is-k) 0)
+                   (or (= (length m) 0)
+                       (> (length is-m) 0)))
+              (on-command obj)))))))
 
 (defmethod on-mouse-down (x y b (obj active-text) &key)
   (if (and (= b +MOUSE-BUTTON-LEFT+)
