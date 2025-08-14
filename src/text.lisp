@@ -121,6 +121,9 @@
   ((color-down :initarg :color-down :initform nil :type list :accessor color-down)
    (color-hover :initarg :color-hover :initform nil :type list :accessor color-hover)
    (color-up :initarg :color-up :initform nil :type list :accessor color-up)
+   (shortcuts :initarg :shortcuts :initform nil :type list :accessor shortcuts)
+   
+   ;; Internal stuff
    (inside :initform nil :type boolean)
    (down :initform nil :type boolean)
    (was-down :initform nil :type boolean)
@@ -156,6 +159,11 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod on-char (key mods (obj active-text) &key)
+  (v:info :event "on-char: active-text: got ~a ~b" key mods)
+  (when (member key (shortcuts obj))
+    (on-command obj)))
+
 (defmethod on-mouse-down (x y b (obj active-text) &key)
   (if (and (= b +MOUSE-BUTTON-LEFT+)
            (within x y obj)
@@ -181,7 +189,7 @@
             (v:debug :event "on-mouse-up: active-text: :x ~d :y ~d :b ~d" x y b)
             (setf (slot-value obj 'was-down) nil
                   (slot-value obj 'down) t)
-            (on-mouse-click x y b obj)
+            (on-command obj)
             (setf (slot-value obj 'down) nil)
             (return-from on-mouse-up t))
           (progn

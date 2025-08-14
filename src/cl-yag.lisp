@@ -31,6 +31,7 @@
          (progn                   ; Not needed, because of the let ...
            (let* ((a2 (defactive-text :title "Asteroids" :font font
                                       :h-align :center :v-align :middle
+                                      :shortcuts '(:a)
                                       :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
                         ))
                   (a3 (defactive-text :title "Blastem" :font font
@@ -45,20 +46,22 @@
                   (boss (make-instance 'manager :content (list w)))
                   (selected-object nil))
              
-             (defmethod on-mouse-click (x y b (obj (eql (first (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
                (v:info :app "Item 1 clicked")
                (setf selected-object obj))
 
-             (defmethod on-mouse-click (x y b (obj (eql (second (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql (second (content (first (content w)))))) &key)
                (v:info :app "Item 2 clicked"))
 
-             (defmethod on-mouse-click (x y b (obj (eql (third (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql (third (content (first (content w)))))) &key)
                (v:info :app "Item 3 clicked")
                (setf (process boss) nil))
 
              (defmethod on-char (key mods (object (eql boss)) &key)
                (if (equal key :escape)
-                   (setf (process boss) nil)))
+                   (setf (process boss) nil)
+                   ;; Pass on or else non-specific object's won't get told
+                   (my-next-method)))
              
              (defmethod unhandled-event (event (object (eql boss)))
                (declare (ignore object))

@@ -21,6 +21,11 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod on-char (key mods (obj window) &key)
+  (v:info :event "on-char: window: got ~a ~b" key mods)
+  (dolist (child (content obj))
+    (on-char key mods child)))
+
 (defmethod on-mouse-down (x y b (obj window) &key)
   (dolist (child (content obj))
     (if (on-mouse-down x y b child)

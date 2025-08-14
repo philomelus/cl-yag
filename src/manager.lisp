@@ -7,14 +7,10 @@
   ((process :initform nil :type boolean :accessor process)
    (last-mouse-down :initform nil)))
 
-(defmethod initialize-instance :after ((object manager) &key)
-  ;; (if (eql nil (theme object))
-  ;;     (setf (theme object) *theme-default*))
-  )
-
-(defmethod on-timer (source count (object manager))
-  (dolist (child (content object))
-    (on-paint child)))
+(defmethod on-char (key mods (obj manager) &key)
+  (v:info :event "on-char: manager: got ~a ~b" key mods)
+  (dolist (child (content obj))
+    (on-char key mods child)))
 
 (defmethod paint ((obj manager) &key)
   (dolist (child (content obj))
@@ -29,7 +25,7 @@
 
 (defmethod process-events (queue (object manager) &key &allow-other-keys)
   (defmethod on-mouse-down-accept (o (m (eql object)))
-    (v:info :event "on-mouse-down-accept: ~a" (print-raw-object o))
+    (v:debug :event "on-mouse-down-accept: ~a" (print-raw-object o))
     (setf (slot-value object 'last-mouse-down) o))
   
   (let ((event (cffi:foreign-alloc '(:union al:event))))
@@ -41,8 +37,21 @@
           (:key-char
            (let ((key (keyboard-event-keycode event))
                  (mods (keyboard-event-modifiers event)))
+             (v:debug :event ":key-char ~a ~a" key mods)
              (on-char key mods object)))
           
+          (:key-down
+           (let ((key (keyboard-event-keycode event))
+                 (mods (keyboard-event-modifiers event)))
+             (v:info :event ":key-down ~a ~a" key mods)
+             (on-key-down key mods object))           )
+          
+          (:key-up
+           (let ((key (keyboard-event-keycode event))
+                 (mods (keyboard-event-modifiers event)))
+             (v:info :event ":key-up ~a ~a" key mods)
+             (on-key-up key mods object))           )
+
           (:mouse-axis
            (block mouse-axis
              (let ((x (mouse-event-x event))

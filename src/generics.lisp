@@ -16,9 +16,22 @@
 
 (defgeneric must-init (test desc))
 
-(defgeneric on-char (key mods object &key &allow-other-keys))
+(defgeneric on-char (key mods object &key &allow-other-keys)
+  (:method (key mods object &Key)
+    ;; Should never trigger
+    (my-next-method)))
 
-(defgeneric on-mouse-click (x y b o &key &allow-other-keys))
+(defgeneric on-command (o &key &allow-other-keys))
+
+(defgeneric on-key-down (key mod obj &key &allow-other-keys)
+  (:method (key mod obj &key)
+    ;; Should never trigger
+    (my-next-method)))
+
+(defgeneric on-key-up (key mod obj &key &allow-other-keys)
+  (:method (key mod obj &key)
+    ;; Should never trigger
+    (my-next-method)))
 
 (defgeneric on-mouse-down (x y b o &key &allow-other-keys))
 
@@ -38,7 +51,9 @@
 
 (defgeneric paint (obj &key &allow-other-keys)
   (:method (obj &key)
-    (on-paint obj)))
+    (on-paint obj)
+    ;; Should never trigger
+    (my-next-method)))
 
 (defgeneric paint-border (object theme))
 
@@ -78,4 +93,6 @@
 
 (defgeneric (setf theme) (theme object)
   (:method (theme object)
-    (v:warn :theme "no (setf theme) method for ~a" (print-raw-object object))))
+    (v:warn :theme "no (setf theme) method for ~a" (print-raw-object object))
+    ;; Should never trigger
+    (my-next-method)))

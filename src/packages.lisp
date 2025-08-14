@@ -131,7 +131,9 @@
            #:container-calc-child-top
            #:container-calc-child-width
            #:on-char
-           #:on-mouse-click
+           #:on-command
+           #:on-key-down
+           #:on-key-up
            #:on-mouse-down
            #:on-mouse-down-accept
            #:on-mouse-move

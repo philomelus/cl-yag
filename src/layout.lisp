@@ -15,6 +15,11 @@
     (format s "deflayout ")
     (print-mixin o s)))
 
+(defmethod on-char (key mods (obj layout) &key)
+  (v:info :event "on-char: layout: got ~a ~b" key mods)
+  (dolist (child (content obj))
+    (on-char key mods child)))
+
 (defmethod on-mouse-down (x y b (obj layout) &key)
   (dolist (child (content obj))
     (if (on-mouse-down x y b child)
