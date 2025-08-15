@@ -39,7 +39,7 @@
                   ;; Yes, so use it
                   (v:debug :theme "find-theme: using parent ~d: ~a" count (print-raw-object p))
                   (return-from find-theme (theme p)))
-              
+
                 ;; Parent has invalid theme, does it have a parent?
                 (if (typep p 'parent-mixin)
                     ;; Yes, so loop
@@ -60,7 +60,7 @@
                   (progn
                     (v:debug :theme "find-theme: no contained theme, no parent, use default.")
                     (return-from find-theme *theme-default*))))
-          
+
           ;; Parent not valid, so use default
           (progn
             (v:debug :theme "find-theme: no theme, no parent, use default.")
@@ -163,85 +163,48 @@
                                 (progn
                                   (setf c (color bo))
                                   (setf s (style bo))
-                                  (setf thic (width bo)))))
-                          (setf c (fore-color theme)))))
-          
+                                  (setf thic (width bo))
+                                  (setf thic2 (truncate (/ thic 2))))))
+                          (setf c (fore-color theme))))
+                   (horiz (what adj)
+                     `(let ((s :default)
+                            (thic 1)
+                            (thic2 0)
+                            c)
+                        (get-params ,what)
+                        (case s
+                          (:default
+                           (let ((xx ,adj))
+                             (al:draw-line xx y xx b c thic)))
+                          (otherwise
+                           (v:error "unknown flat border style: ~a" s)
+                           (error "unknown flat border style: ~a" s)))))
+                   (vert (what adj)
+                     `(let ((s :default)
+                            (thic 1)
+                            (thic2 0)
+                            c)
+                        (get-params ,what)
+                        (case s
+                          (:default
+                           (let ((yy ,adj))
+                             (al:draw-line x yy r yy c thic)))
+                          (otherwise
+                           (v:error "unknown flat border style: ~a" s)
+                           (error "unknown flat border style: ~a" s))))))
+
           ;; Left side
-          (let ((s :default)
-                (thic 1)
-                thic2
-                c)
-            (get-params border-left)
-            (setf thic2 (truncate (/ thic 2)))
-            (case s
-              (:default
-               (al:draw-line x (- y thic2)
-                             x (+ b thic2) c thic))
-              (:inset
-               (v:error :theme "flat border inset not implemented"))
-              (:outset
-               (v:error :theme "flat border outset not implemented"))
-              (otherwise
-               (v:error "unknown flat border style: ~a" s)
-               (error "unknown flat border style: ~a" s))))
+          (horiz border-left (+ x thic2))
 
           ;; Top side
-          (let ((s :default)
-                (thic 1)
-                thic2
-                (c))
-            (get-params border-top)
-            (setf thic2 (truncate (/ thic 2)))
-            (case s
-              (:default
-               (al:draw-line (- x thic2) y (+ r thic2) y c thic))
-              (:inset
-               (v:error :theme "flat border inset not implemented"))
-              (:outset
-               (v:error :theme "flat border outset not implemented"))
-              (otherwise
-               (v:error "unknown flat border style: ~a" s)
-               (error "unknown flat border style: ~a" s))))
+          (vert border-top (+ y thic2))
 
           ;; Right side
-          (let ((s :default)
-                (thic 1)
-                thic2
-                (c))
-            (get-params border-right)
-            (setf thic2 (truncate (/ thic 2)))
-            (case s
-              (:default
-               (al:draw-line r (- y thic2)
-                             r (+ b thic2) c thic))
-              (:inset
-               (v:error :theme "flat border inset not implemented"))
-              (:outset
-               (v:error :theme "flat border outset not implemented"))
-              (otherwise
-               (v:error "unknown flat border style: ~a" s)
-               (error "unknown flat border style: ~a" s))))
+          (horiz border-right (- r (1- thic2)))
           
           ;; Bottom side
-          (let ((s :default)
-                (thic 1)
-                thic2
-                c)
-            (get-params border-bottom)
-            (setf thic2 (truncate (/ thic 2)))
-            (case s
-              (:default
-               (al:draw-line (- x thic2) b (+ r thic2) b c thic))
-              (:inset
-               (v:error :theme "flat border inset not implemented"))
-              (:outset
-               (v:error :theme "flat border outset not implemented"))
-              (otherwise
-               (v:error "unknown flat border style: ~a" s)
-               (error "unknown flat border style: ~a" s))))
-          )))))
+          (vert border-bottom (- b (1- thic2))))))))
 
-;;;; border
 ;;;; interior
 ;;;; text
 ;;;; up
