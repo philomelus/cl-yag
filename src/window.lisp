@@ -22,7 +22,6 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-char (key mods (obj window) &key)
-  (v:info :event "on-char: window: got ~a ~b" key mods)
   (dolist (child (content obj))
     (on-char key mods child)))
 
