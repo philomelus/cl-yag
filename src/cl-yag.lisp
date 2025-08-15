@@ -16,7 +16,6 @@
   (al:set-new-display-flags '(:resizable))
   (al:create-display 960 720))
 
-
 (defun main ()
   (main-init)
   ;; (setf (v:repl-categories) (list :app :theme))
@@ -27,23 +26,26 @@
         (buffer (al:create-bitmap 320 240))
         (event (cffi:foreign-alloc '(:union al:event))))
     
+    (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+    
     (unwind-protect
          (progn                   ; Not needed, because of the let ...
-           (let* ((a2 (defactive-text :title "Asteroids" :font font
+           (let* ((rh (defruler :vertical nil :major 25 :minor 5 :left 200 :top 179 :width 400 :height 10 :color (al:map-rgb-f 1 1 1)))
+                  (rv (defruler :vertical t :major 25 :minor 5 :left 179 :top 200 :width 10 :height 400 :color (al:map-rgb-f 1 1 1)))
+                  (a2 (defactive-text :title "Asteroids" :font font
                                       :h-align :center :v-align :middle
-                                      :shortcuts '(:a)
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                        ))
+                                      :shortcuts (list '(:a :shift) '(:a :none))
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
                   (a3 (defactive-text :title "Blastem" :font font
                                       :h-align :center :v-align :middle
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
-                        ))
+                                      :shortcuts (list '(:b :shift) '(:b :none))
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
                   (a4 (defactive-text :title "Quit" :font font
                                       :h-align :center :v-align :middle
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+ 
-                        ))
+                                      :shortcuts (list '(:q :shift) '(:q :none))
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
                   (w (defwindow 200 200 400 400 ((defcolumn-layout (a2 a3 a4)))))
-                  (boss (make-instance 'manager :content (list w)))
+                  (boss (make-instance 'manager :content (list w rh rv)))
                   (selected-object nil))
              
              (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
@@ -80,14 +82,13 @@
                  (otherwise
                   (v:debug :event "event: ~a" (event-type event)))))
 
-
-             (setf (border w) (defborder :color (al:map-rgb-f 1 1 0) :width 10))
-             (setf (border a3) (defborder :color (theme-vl *theme-flat-yellow*)))
-             
              (setf (theme boss) *theme-flat-blue*)
              (setf (theme a2) *theme-flat-red*)
              (setf (theme a3) *theme-flat-green*)
 
+             (setf (border w) (defborder :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
+             (setf (border a3) (defborder :color (theme-vl *theme-flat-yellow*) :width 10))
+             
              (let* ((white (al:map-rgb-f 1 1 1)))
                (setf (fore-color a2) white)
                (setf (fore-color a3) white)
@@ -101,7 +102,6 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             ;; (print w *standard-output*)
              (process-events queue boss)))
       
       (progn
