@@ -8,7 +8,7 @@
    (last-mouse-down :initform nil)))
 
 (defmethod on-char (key mods (obj manager) &key)
-  (v:info :event "on-char: manager: got ~a ~b" key mods)
+  (v:debug :event "on-char: manager: got ~a ~b" key mods)
   (dolist (child (content obj))
     (on-char key mods child)))
 
@@ -43,13 +43,13 @@
           (:key-down
            (let ((key (keyboard-event-keycode event))
                  (mods (keyboard-event-modifiers event)))
-             (v:info :event ":key-down ~a ~a" key mods)
+             (v:debug :event ":key-down ~a ~a" key mods)
              (on-key-down key mods object))           )
           
           (:key-up
            (let ((key (keyboard-event-keycode event))
                  (mods (keyboard-event-modifiers event)))
-             (v:info :event ":key-up ~a ~a" key mods)
+             (v:debug :event ":key-up ~a ~a" key mods)
              (on-key-up key mods object))           )
 
           (:mouse-axis
