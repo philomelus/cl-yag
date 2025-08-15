@@ -27,6 +27,7 @@
            #:defborder
            #:defcolumn-layout
            #:defmanager
+           #:defruler
            #:deftext
            #:deftheme-3d
            #:deftheme-base
@@ -34,6 +35,7 @@
            #:defwindow
            #:layout
            #:manager                    ;class
+           #:ruler
            #:text
            #:text-base
            #:theme-3d
@@ -57,6 +59,7 @@
            #:manager-mixin
            #:padding-mixin
            #:parent-mixin
+           #:shortcuts-mixin
            #:spacing-mixin
            #:v-align-mixin
            #:theme-mixin
