@@ -16,7 +16,6 @@
     (print-mixin o s)))
 
 (defmethod on-char (key mods (obj layout) &key)
-  (v:info :event "on-char: layout: got ~a ~b" key mods)
   (dolist (child (content obj))
     (on-char key mods child)))
 
