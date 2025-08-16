@@ -66,8 +66,7 @@
                      parent-mixin
                      title-mixin)
   ((fore-color :initform nil)
-   (back-color :initform nil)
-   (original-area :initform (list) :type list)))
+   (back-color :initform nil)))
 
 (defmacro deftext-base (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
@@ -77,22 +76,6 @@
   (pprint-logical-block (s nil)
     (format s "deftext-base ")
     (print-mixin o s)))
-
-(defmethod initialize-instance :after ((obj text-base) &key)
-  (setf (slot-value obj 'original-area) (list (slot-value obj 'left) (slot-value obj 'top)
-                                              (slot-value obj 'width) (slot-value obj 'height))))
-
-(defmethod (setf height) :after (value (obj text-base))
-  (setf (fourth (slot-value obj 'original-area)) value))
-
-(defmethod (setf left) :after (value (obj text-base))
-  (setf (first (slot-value obj 'original-area)) value))
-
-(defmethod (setf top) :after (value (obj text-base))
-  (setf (second (slot-value obj 'original-area)) value))
-
-(defmethod (setf width) :after (value (obj text-base))
-  (setf (third (slot-value obj 'original-area)) value))
 
 ;;;; text =====================================================================
 
@@ -126,8 +109,7 @@
    ;; Internal stuff
    (inside :initform nil :type boolean)
    (down :initform nil :type boolean)
-   (was-down :initform nil :type boolean)
-   (original-area :initform (list) :type list)))
+   (was-down :initform nil :type boolean)))
 
 (defmacro defactive-text (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
