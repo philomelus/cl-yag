@@ -153,9 +153,7 @@
            #:within
            
            ;; Misc
-           #:container-calc-area
            #:print-raw-object
-           #:rect-collide
            
            ;; Allegro specific
            #:color-a
