@@ -25,19 +25,24 @@
   (pprint-newline :linear s)
   (my-next-method))
 
-(defun find-parent-area-mixin (obj)
-  "Returns first parent that is a subclass of area-mixin, or nil."
-  (if (not (typep obj 'parent-mixin))
-      (return-from find-parent-area-mixin nil))  
-  (let ((par-obj (parent obj)))
+(defun find-parent-area-mixin (object)
+  (assert (typep object 'parent-mixin))
+  (let ((p (parent object)))
     (loop
-      (if (eq nil par-obj)
-          (return-from find-parent-area-mixin nil))
-      (if (typep par-obj 'area-mixin)
-          (return-from find-parent-area-mixin par-obj))
-      (if (not (typep par-obj 'parent-mixin))
-          (return-from find-parent-area-mixin nil))
-      (setf par-obj (parent par-obj)))))
+      (when (typep p 'manager)
+        (error "found manager when looking for area-mixin"))
+      
+      (when (eql p nil)
+        (error "no parent when looking for area-mixin"))
+      
+      ;; If it has area
+      (if (typep p 'area-mixin)
+          (return p))
+
+      ;; Get next parent
+      (assert (typep p 'area-mixin))
+      (setf p (parent p))
+      )))
 
 ;;; methods ---------------------------------------------------------
 
@@ -46,22 +51,17 @@
 
 (defmethod height ((obj area-mixin))
   (let ((h (slot-value obj 'height)))
-    (if (= h +LAYOUT-HEIGHT-CALC+)
-        (setf h 0))
-    (when (typep obj 'parent-mixin)
-      (let ((p (parent obj)))
-       (when (typep p 'container-mixin)
-         (setf h (container-calc-child-height obj p)))))
+    ;; Calculate if requested
+    (when (= h +LAYOUT-HEIGHT-CALC+)
+      (calc-area obj (parent obj))
+      (setf h (slot-value obj 'height)))
     h))
 
 (defmethod left ((obj area-mixin))
   (let ((l (slot-value obj 'left)))
-    (if (= l +LAYOUT-LEFT-CALC+)
-        (setf l 0))
-    (when (typep obj 'parent-mixin)
-      (let ((p (parent obj)))
-        (when (typep p 'container-mixin)
-         (setf l (container-calc-child-left obj p)))))
+    (when (= l +LAYOUT-LEFT-CALC+)
+      (calc-area obj (parent obj))
+      (setf l (slot-value obj 'left)))
     l))
 
 (defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
@@ -89,22 +89,16 @@
 
 (defmethod top ((obj area-mixin))
   (let ((top (slot-value obj 'top)))
-    (if (= top +LAYOUT-TOP-CALC+)
-        (setf top 0))
-    (when (typep obj 'parent-mixin)
-      (let ((p (parent obj)))
-        (when (typep p 'container-mixin)
-          (setf top (container-calc-child-top obj p)))))
+    (when (= top +LAYOUT-TOP-CALC+)
+      (calc-area obj (parent obj))
+      (setf top (slot-value obj 'top)))
     top))
 
 (defmethod width ((obj area-mixin))
   (let ((w (slot-value obj 'width)))
-    (if (= w +LAYOUT-WIDTH-CALC+)
-        (setf w 0))
-    (when (typep obj 'parent-mixin)
-      (let ((p (parent obj)))
-        (when (typep p 'container-mixin)
-          (setf w (container-calc-child-width obj p)))))
+    (when (= w +LAYOUT-WIDTH-CALC+)
+        (calc-area obj (parent obj))
+        (setf w (slot-value obj 'width)))
     w))
 
 (defmethod within (x y (obj area-mixin) &key)

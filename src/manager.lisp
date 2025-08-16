@@ -7,6 +7,9 @@
   ((process :initform nil :type boolean :accessor process)
    (last-mouse-down :initform nil)))
 
+(defmacro defmanager (&rest rest &key &allow-other-keys)
+  `(make-instance 'manager ,@rest))
+
 (defmethod on-char (key mods (obj manager) &key)
   (v:debug :event "on-char: manager: got ~a ~b" key mods)
   (dolist (child (content obj))

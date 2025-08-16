@@ -3,11 +3,15 @@
 ;;;; layout ===================================================================
 
 (defclass layout (container-mixin
-                  parent-mixin)
-  ())
+                  parent-mixin
+                  ready-mixin)
+  ((left :initform +LAYOUT-LEFT-CALC+ :initarg nil)
+   (top :initform +LAYOUT-TOP-CALC+ :initarg nil)
+   (width :initform +LAYOUT-WIDTH-CALC+ :initarg nil)
+   (height :initform +LAYOUT-HEIGHT-CALC+ :initarg nil)))
 
-(defmacro defcolumn-layout (content &rest rest &key &allow-other-keys)
-  `(make-instance 'column-layout :content (list ,@content) ,@rest))
+(defmacro defcolumn-layout (&rest rest &key &allow-other-keys)
+  `(make-instance 'column-layout ,@rest))
 
 (defmethod print-object ((o layout) s)
   (pprint-indent :current 0 s)
@@ -17,7 +21,8 @@
 
 (defmethod on-char (key mods (obj layout) &key)
   (dolist (child (content obj))
-    (on-char key mods child)))
+    (on-char key mods child))
+  (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj layout) &key)
   (dolist (child (content obj))
@@ -47,34 +52,104 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod calc-area (child (parent column-layout) &key)
+  ;; Start with existing child area
+  (let ((cl (slot-value child 'left))
+        (ct (slot-value child 'top))
+        (cw (slot-value child 'width))
+        (ch (slot-value child 'height))
+        (pl (slot-value parent 'left))
+        (pt (slot-value parent 'top))
+        (pw (slot-value parent 'width))
+        (ph (slot-value parent 'height)))
+
+    ;; Calculate our area if needed
+    (if (or (= pl +LAYOUT-LEFT-CALC+)
+            (= pt +LAYOUT-TOP-CALC+)
+            (= pw +LAYOUT-WIDTH-CALC+)
+            (= ph +LAYOUT-HEIGHT-CALC+))
+        ;; Locate first parent with area
+        (let ((pam (find-parent-area-mixin parent)))
+          ;; Start with its area
+          (let ((pal (slot-value pam 'left))
+                (pat (slot-value pam 'top))
+                (paw (slot-value pam 'width))
+                (pah (slot-value pam 'height)))
+            ;; If it also has borders
+            (when (typep pam 'border-mixin)
+              ;; Adjust for border sizes
+              (let ((pam-bl (border-left pam))
+                    (pam-bt (border-top pam))
+                    (pam-br (border-right pam))
+                    (pam-bb (border-bottom pam)))
+                (unless (eql pam-bl nil)
+                  (incf pal (width pam-bl))
+                  (decf paw (width pam-bl)))
+                (unless (eql pam-bt nil)
+                  (incf pat (width pam-bt))
+                  (decf pah (width pam-bt)))
+                (unless (eql pam-br nil)
+                  (decf paw (width pam-br)))
+                (unless (eql pam-bb nil)
+                  (decf pah (width pam-bb)))))
+
+            ;; If it also has spacing
+            (when (typep pam 'spacing-mixin)
+              ;; Adjust for spacing
+              (let ((pam-sl (spacing-left pam))
+                    (pam-st (spacing-top pam)))
+                (incf pal pam-sl)
+                (incf pat pam-st)
+                (decf paw (+ pam-sl (spacing-right pam)))
+                (decf pah (+ pam-st (spacing-bottom pam)))))
+
+            ;; Save out area where needed
+            (when (= pl +LAYOUT-LEFT-CALC+)
+              (setf (slot-value parent 'left) pal)
+              (setf pl pal))
+            (when (= pt +LAYOUT-TOP-CALC+)
+              (setf (slot-value parent 'top) pat)
+              (setf pt pat))
+            (when (= pw +LAYOUT-WIDTH-CALC+)
+              (setf (slot-value parent 'width) paw)
+              (setf pw paw))
+            (when (= ph +LAYOUT-HEIGHT-CALC+)
+              (setf (slot-value parent 'height) pah)
+              (setf ph pah))))
+
+        ;; Calcualte child size
+        (let ((cp (position child (content parent)))
+              (num-children (length (content parent)))
+              child-hs)
+          (assert (not (eql cp nil)))
+          ;; Calculate our childrens heights
+          (loop :for i :from 0 :to (length (content parent)) do
+            (push (+ (truncate (/ ph num-children)) (if (> (mod ph num-children) 0) 1 0)) child-hs))
+
+          ;; Update left if desired
+          (when (= cl +LAYOUT-LEFT-CALC+)
+            (setf (slot-value child 'left) pl))
+
+          ;; Update top if desired
+          (when (= ct +LAYOUT-TOP-CALC+)
+            (when (> cp 0)
+              (loop :for i :from 0 :to (1- cp) do
+                (incf pt (nth i child-hs))))
+            (setf (slot-value child 'top) pt))
+          
+          ;; Update width if desired
+          (when (= cw +LAYOUT-WIDTH-CALC+)
+            (setf (slot-value child 'width) pw))
+
+          ;; Update height if desired
+          (when (= ch +LAYOUT-HEIGHT-CALC+)
+            (setf (slot-value child 'height) (nth cp child-hs))))))
+  
+  (my-next-method))
+
 (defmethod on-paint ((obj column-layout) &key)
   (dolist (c (content obj))
     (on-paint c))
+  ;; (on-paint (first (content obj)))
   (my-next-method))
-
-(defmethod container-calc-child-height (child (container column-layout) &key)
-  (let ((c (content container))
-        (h (slot-value container 'height)))
-    (let ((p (position child c))
-          (l (length c)))
-      (assert (not (eq p nil)))
-      (let ((ch (truncate (/ h l))))
-        (if (> (mod h l) 0)
-            (incf ch 1))
-        ch))))
-
-(defmethod container-calc-child-left (child (container column-layout) &key)
-  (slot-value container 'left))
-
-(defmethod container-calc-child-top (child (container column-layout) &key)
-  (let ((h (slot-value container 'top))
-        (c (content container)))
-    (let ((p (position child c)))
-      (if (> p 0)
-          (loop :for i :from 0 :to (1- p) :do
-            (incf h (container-calc-child-height (nth i c) container))))
-      h)))
-
-(defmethod container-calc-child-width (child (container column-layout) &key)
-  (slot-value container 'width))
 

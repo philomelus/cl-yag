@@ -6,15 +6,7 @@
 
 (defgeneric bottom (obj &key &allow-other-keys))
 
-(defgeneric calc-area (parent object &key &allow-other-keys))
-
-(defgeneric container-calc-child-height (obj container &key &allow-other-keys))
-
-(defgeneric container-calc-child-left (obj container &key &allow-other-keys))
-
-(defgeneric container-calc-child-top (obj container &key &allow-other-keys))
-
-(defgeneric container-calc-child-width (obj container &key &allow-other-keys))
+(defgeneric calc-area (object parent &key &allow-other-keys))
 
 (defgeneric must-init (test desc))
 

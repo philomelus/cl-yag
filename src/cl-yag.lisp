@@ -2,6 +2,10 @@
 
 ;;;; main =====================================================================
 
+;; (defmethod on-paint :after (object &key)
+;;   (v:info :pain "on-paint: ~a" (print-raw-object object))
+;;   (my-next-method))
+
 (defun main-init ()
   (must-init (al:init) "allegro")
   (must-init (al:install-keyboard) "keyboard")
@@ -35,22 +39,30 @@
                   (a2 (defactive-text :title "Asteroids" :font font
                                       :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
+                                      :left +LAYOUT-LEFT-CALC+
+                                      :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+
+                                      :height +LAYOUT-HEIGHT-CALC+))
                   (a3 (defactive-text :title "Blastem" :font font
                                       :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
+                                      :left +LAYOUT-LEFT-CALC+
+                                      :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+
+                                      :height +LAYOUT-HEIGHT-CALC+))
                   (a4 (defactive-text :title "Quit" :font font
                                       :h-align :center :v-align :middle
                                       :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+))
-                  (w (defwindow 200 200 400 400 ((defcolumn-layout (a2 a3 a4)))))
-                  (boss (make-instance 'manager :content (list w rh rv)))
-                  (selected-object nil))
+                                      :left +LAYOUT-LEFT-CALC+
+                                      :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+
+                                      :height +LAYOUT-HEIGHT-CALC+))
+                  (cl (defcolumn-layout :content (list a2 a3 a4)))
+                  (w (defwindow 200 200 400 400 :content (list cl)))
+                  (boss (defmanager :content (list w rh rv))))
              
              (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
-               (v:info :app "Item 1 clicked")
-               (setf selected-object obj))
+               (v:info :app "Item 1 clicked"))
 
              (defmethod on-command ((obj (eql (second (content (first (content w)))))) &key)
                (v:info :app "Item 2 clicked"))
@@ -61,6 +73,7 @@
 
              (defmethod on-char (key mods (object (eql boss)) &key)
                (if (equal key :escape)
+                   ;; Go away now!
                    (setf (process boss) nil)
                    ;; Pass on or else non-specific object's won't get told
                    (my-next-method)))

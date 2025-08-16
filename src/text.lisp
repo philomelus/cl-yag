@@ -64,6 +64,7 @@
                      color-fore-back-mixin
                      font-mixin
                      parent-mixin
+                     shortcuts-mixin
                      title-mixin)
   ((fore-color :initform nil)
    (back-color :initform nil)))
@@ -141,27 +142,6 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod on-char (key mods (obj active-text) &key)
-  (let ((sc (shortcuts obj)))
-    (unless (eql nil sc)
-      ;; Get keys and modifiers
-      (let ((k (first sc))
-            (m (second sc)))
-        
-        ;; Make sure keys and mods are lists
-        (when (typep k 'keyword)
-          (setf k (list k)))
-        (when (typep m 'keyword)
-          (setf m (list m)))
-
-        (let ((is-k (member key k))
-              (is-m (intersection mods m)))
-          
-          (if (and (> (length is-k) 0)
-                   (or (= (length m) 0)
-                       (> (length is-m) 0)))
-              (on-command obj)))))))
-
 (defmethod on-mouse-down (x y b (obj active-text) &key)
   (if (and (= b +MOUSE-BUTTON-LEFT+)
            (within x y obj)
@@ -204,27 +184,51 @@
         (cu (color-up obj))
         (fg (fore-color obj))
         (bg (back-color obj)))
-    (if (eql cd ())
+
+    ;; Make sure colors are correct
+    (if (eql cd nil)
         (setf cd (theme-vd obj)))
-    (if (eql ch ())
+    (if (eql ch nil)
         (setf ch (theme-vl obj)))
-    (if (eql cu ())
+    (if (eql cu nil)
         (setf cu (theme-n obj)))
     (if (eql bg nil)
         (setf bg (theme-l obj)))
     (if (eql fg nil)
         (setf fg (theme-vl obj)))
+
+    (let ((left (left obj)))
+      
+      ;; Draw background
+      (al:draw-filled-rectangle left (top obj) (right obj) (bottom obj) bg)
     
-    ;; Draw background
-    (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) bg)
+      ;; Draw border
+      (paint-border obj (find-theme obj))
     
-    ;; Draw text
-    (al:draw-text (font obj) (if down cd fg)
-                  (text-calc-left obj) (text-calc-top obj) 0 (title obj))
+      ;; Draw text
+      (al:draw-text (font obj) (if down cd fg)
+                    (text-calc-left obj) (text-calc-top obj) 0 (title obj))
     
-    ;; Hilight if needed
-    (if in
-        (al:draw-rectangle (+ (left obj) 2) (+ (top obj) 2) (- (right obj) 3) (- (bottom obj) 3) ch 1)))
+      ;; Hilight if needed
+      (when in
+        (let ((left (+ (left obj) 2))
+              (top (+ (top obj) 2))
+              (right (- (right obj) 3))
+              (bottom (- (bottom obj) 3))
+              (bl (border-left obj))
+              (bt (border-top obj))
+              (br (border-right obj))
+              (bb (border-bottom obj)))
+          (unless (eql bl nil)
+            (incf left (width bl)))
+          (unless (eql bt nil)
+            (incf top (width bt)))
+          (unless (eql br nil)
+            (decf right (width br)))
+          (unless (eql bb nil)
+            (decf bottom (width bb)))
+          (al:draw-rectangle left top right bottom ch 1)))))
+  
   (my-next-method))
 
 (defmethod (setf theme) ((theme theme-base) (o active-text))

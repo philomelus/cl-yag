@@ -28,6 +28,18 @@
    (border-top :initarg :border-top :initform nil :accessor border-top)
    (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
 
+;; (defmethod left ((object border-mixin))
+;;   (v:info :layout "border left requested")
+;;   )
+
+;; (defmethod (setf left) :after (value (object border-mixin))
+;;   (v:info :layout "left: border-mixin: adjusting for left border width")
+  
+;;   ;; Adjust left side for border width
+;;   (let ((bl (border-left object)))
+;;     (unless (eql nil bl)
+;;       (decf (slot-value object 'left) (width (border-left bl))))))
+
 (defmethod print-mixin ((o border-mixin) s)
   (pprint-indent :current 0 s)
   (format s ":border-left ")
@@ -79,7 +91,7 @@
   (my-next-method))
 
 ;; Only allow valid keywords
-;; #+safety
+#+safety
 (defmethod (setf style) :after (newval (obj border))
   (let ((msg "Expected :default, :none, :in, :out, or :flat but got ~s"))
     (typecase newval

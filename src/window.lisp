@@ -9,8 +9,8 @@
                   parent-mixin)
   ())
 
-(defmacro defwindow (l top w h content &rest rest &key &allow-other-keys)
-  `(make-instance 'window :left ,l :top ,top :width ,w :height ,h :content (list ,@content) ,@rest))
+(defmacro defwindow (l top w h &rest rest &key &allow-other-keys)
+  `(make-instance 'window :left ,l :top ,top :width ,w :height ,h ,@rest))
 
 (defmethod print-object ((o window) s)
   (pprint-indent :current 0 s)
@@ -23,7 +23,8 @@
 
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
-    (on-char key mods child)))
+    (on-char key mods child))
+  (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj window) &key)
   (dolist (child (content obj))
@@ -48,14 +49,11 @@
   (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) (back-color obj))
 
   ;; Draw border
-  (let ((th (find-theme obj)))
-    (assert (not (eql nil th)))
-    (paint-border obj th))
-
+  (paint-border obj (find-theme obj))
+  
   ;; Let children paint themselves
   (let ((children (content obj)))
     (dolist (c children)
-      (progn
-        (on-paint c))))
+      (on-paint c)))
   (my-next-method))
 
