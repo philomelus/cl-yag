@@ -16,6 +16,14 @@
 ;;     (otherwise
 ;;      (error "MUST-INIT unknown type: ~a (~a)" (type-of test) test))))
 
+(declaim (ftype (function (number) number) 2+))
+(defun 2+ (value)
+  (+ value 2))
+
+(declaim (ftype (function (number) number) 2-))
+(defun 2- (value)
+  (- value 2))
+
 (defmethod between ((lo integer) (hi integer))
   (let* ((r (+ lo (* (random 1.0) (- hi lo))))
 		 (result (truncate r)))

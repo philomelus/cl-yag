@@ -16,8 +16,9 @@
 
 (defun main-setup-display ()
   (al:set-new-display-option :sample-buffers 1 :suggest)
-  (al:set-new-display-option :samples 8 :suggest)
+  (al:set-new-display-option :samples 0 :require)
   (al:set-new-display-flags '(:resizable))
+  (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
   (al:create-display 960 720))
 
 (defun main ()
@@ -29,12 +30,14 @@
         (font (al:create-builtin-font))
         (event (cffi:foreign-alloc '(:union al:event))))
     
-    (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
     
     (unwind-protect
          (progn                   ; Not needed, because of the let ...
-           (let* ((rh (defruler :vertical nil :major 25 :minor 5 :left 200 :top 179 :width 400 :height 10 :color (al:map-rgb-f 1 1 1)))
-                  (rv (defruler :vertical t :major 25 :minor 5 :left 179 :top 200 :width 10 :height 400 :color (al:map-rgb-f 1 1 1)))
+           (let* ((rh (defruler :vertical nil :major 10 :minor 2 :left 200 :top 190 :width 400 :height 10
+                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:1))))
+                  (rv (defruler :vertical t :major 10 :minor 2 :left 190 :top 200 :width 10 :height 400
+                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:2))))
+                  (g (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620 :shortcuts (list '(:3))))
                   (a2 (defactive-text :title "Asteroids" :font font
                                       :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
@@ -57,9 +60,9 @@
                                       :width +LAYOUT-WIDTH-CALC+
                                       :height +LAYOUT-HEIGHT-CALC+))
                   (cl (defcolumn-layout :content (list a2 a3 a4)))
-                  (w (defwindow 200 200 400 400 :content (list cl)))
-                  (boss (defmanager :content (list w rh rv))))
-             
+                  (w (defwindow 200 200 200 300 :content (list cl)))
+                  (boss (defmanager :content (list w rh rv g))))
+
              (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
                (v:info :app "Item 1 clicked"))
 
@@ -94,18 +97,31 @@
                  (otherwise
                   (v:debug :event "event: ~a" (event-type event)))))
 
-             (setf (theme boss) *theme-flat-blue*)
-             (setf (theme a2) *theme-flat-red*)
-             (setf (theme a3) *theme-flat-green*)
+             (setf (theme boss) *theme-3d-gray*)
+             (setf (theme a2) *theme-3d-red*)
+             (setf (theme a3) *theme-3d-green*)
 
-             (setf (border w) (defborder-flat :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
-             (setf (border a3) (defborder-flat :color (theme-vl *theme-flat-yellow*) :width 10))
+             ;; (setf (border w) (defborder-flat :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
+             (setf (border w) (defborder-3d :width 2 :theme *theme-3d-gray* :style :outset))
+             ;; (setf (border a3) (defborder-flat :color (theme-vl *theme-flat-yellow*) :width 10))
+             (setf (border a3) (defborder-3d :theme *theme-3d-yellow* :width 2))
+             (setf (back-color a3) (theme-vd *theme-3d-yellow*))
+             (setf (fore-color a3) (theme-vl *theme-3d-yellow*))
              
-             (let* ((white (al:map-rgb-f 1 1 1)))
-               (setf (fore-color a2) white)
-               (setf (fore-color a3) white)
-               (setf (fore-color a4) white))
+             (let* ((white (al:map-rgb-f 1 1 1))
+                    (black (al:map-rgb-f 0 0 0)))
+               (setf (fore-color a2) black)
+               ;; (setf (fore-color a3) black)
+               (setf (fore-color a4) black)
+               (setf (back-color a2) white)
+               ;; (setf (back-color a3) white)
+               (setf (back-color a4) white)
+               (setf (back-color w) black)
+               )
 
+             (setf (major-color g) (al:map-rgb-f 0 0.35 0))
+             (setf (minor-color g) (al:map-rgb-f 0 0.30 0))
+             
              (al:start-timer timer)
              (al:clear-keyboard-state screen)
 
@@ -114,8 +130,10 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
-             ;; (print boss *standard-output*)
-             (process-events queue boss)))
+             (process-events queue boss)
+
+             ;; (print cl *standard-output*)
+             ))
       
       (progn
         (cffi:foreign-free event)

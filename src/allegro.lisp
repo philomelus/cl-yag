@@ -28,9 +28,33 @@
 (defconstant +MOUSE-BUTTON-RIGHT+ 2)
 (defconstant +MOUSE-BUTTON-MIDDLE+ 3)
 
-(defconstant +OP-ADD+ (foreign-enum-value 'al::blend-operations ':add))
-(defconstant +BLEND-ONE+ (foreign-enum-value 'al::blend-mode ':one))
-(defconstant +BLEND-INVERSE-ALPHA+ (foreign-enum-value 'al::blend-mode ':inverse-alpha))
+;; blend operations
+(defconstant +OP-ADD+ (cffi:foreign-enum-value 'al::blend-operations ':add))
+(defconstant +OP-SRC-MINUS-DEST+ (cffi:foreign-enum-value 'al::blend-operations ':src-minus-dest))
+(defconstant +OP-DEST-MINUS-SRC+ (cffi:foreign-enum-value 'al::blend-operations ':dest-minus-src))
+
+;; blend modes
+(defconstant +BLEND-ZERO+ (cffi:foreign-enum-value 'al::blend-mode ':zero))
+(defconstant +BLEND-ONE+ (cffi:foreign-enum-value 'al::blend-mode ':one))
+(defconstant +BLEND-ALPHA+ (cffi:foreign-enum-value 'al::blend-mode ':alpha))
+(defconstant +BLEND-INVERSE-ALPHA+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-alpha))
+(defconstant +BLEND-SRC-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':src-color))
+(defconstant +BLEND-DEST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':dest-color))
+(defconstant +BLEND-INVERSE-SRC-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-src-color))
+(defconstant +BLEND-INVERSE-DEST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-dest-color))
+(defconstant +BLEND-CONST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':const-color))
+(defconstant +BLEND-INVERSE-CONS-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-cons-color))
+
+;; Pixel formats
+(defconstant +P-F-RGB-888+ (cffi:foreign-enum-value 'al::pixel-format ':rgb-888))
+(defconstant +P-F-BGR-888+ (cffi:foreign-enum-value 'al::pixel-format ':bgr-888))
+(defconstant +P-F-ABGR-8888+ (cffi:foreign-enum-value 'al::pixel-format ':abgr-8888))
+(defconstant +P-F-ARGB-8888+ (cffi:foreign-enum-value 'al::pixel-format ':argb-8888))
+
+;; locking-flags
+(defconstant +LOCK_READWRITE+ (cffi:foreign-enum-value 'al::locking-flags ':readwrite))
+(defconstant +LOCK_READONLY+ (cffi:foreign-enum-value 'al::locking-flags ':readonly))
+(defconstant +LOCK_WRITEONLY+ (cffi:foreign-enum-value 'al::locking-flags ':writeonly))
 
 ;;;; allegro struct wrappers ==================================================
 
@@ -145,6 +169,13 @@
 
 ;;;; function wrappers ========================================================
 
+(defun get-blender ()
+  (cffi:with-foreign-objects ((op :int) (src :int) (dst :int))
+    (al:get-blender op src dst)
+    (values (cffi:mem-ref op :int)
+            (cffi:mem-ref src :int)
+            (cffi:mem-ref dst :int))))
+
 (defun get-text-dimensions (font title)
   (cffi:with-foreign-objects ((x :int) (y :int) (w :int) (h :int))
     (al:get-text-dimensions font title x y w h)
@@ -152,5 +183,24 @@
             (cffi:mem-ref y :int)
             (cffi:mem-ref w :int)
             (cffi:mem-ref h :int))))
-
     
+(defun unmap-rgba (c)
+  (cffi:with-foreign-objects ((r :float) (g :float) (b :float) (a :float))
+    (al:unmap-rgba-f c r g b a)
+    (values (cffi:mem-ref r :float)
+            (cffi:mem-ref g :float)
+            (cffi:mem-ref b :float)
+            (cffi:mem-ref a :float))))
+
+;;;; helper macros =============================================================
+
+(defmacro with-blender ((op src dst) &body body)
+  (let ((sop (gensym))
+        (ssrc (gensym))
+        (sdst (gensym)))
+    `(progn
+       (multiple-value-bind (,sop ,ssrc ,sdst) (get-blender)
+         (al:set-blender ,op ,src ,dst)
+         ,@body
+         (al:set-blender ,sop ,ssrc ,sdst)))))
+

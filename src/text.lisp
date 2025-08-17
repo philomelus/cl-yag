@@ -206,15 +206,16 @@
       (paint-border obj (find-theme obj))
     
       ;; Draw text
-      (al:draw-text (font obj) (if down cd fg)
-                    (text-calc-left obj) (text-calc-top obj) 0 (title obj))
+      (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+        (al:draw-text (font obj) (if down bg fg)
+                      (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
     
       ;; Hilight if needed
       (when in
         (let ((left (+ (left obj) 2))
               (top (+ (top obj) 2))
-              (right (- (right obj) 3))
-              (bottom (- (bottom obj) 3))
+              (right (- (right obj) 1))
+              (bottom (- (bottom obj) 1))
               (bl (border-left obj))
               (bt (border-top obj))
               (br (border-right obj))

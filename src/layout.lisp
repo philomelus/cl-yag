@@ -36,7 +36,7 @@
     (on-mouse-up x y b child)))
 
 (defun calc-layout-area (object)
-  ;; Start with existing child area
+  ;; Start with existing area
   (let ((ll (slot-value object 'left))
         (lt (slot-value object 'top))
         (lw (slot-value object 'width))
@@ -49,6 +49,8 @@
             (= lh +LAYOUT-HEIGHT-CALC+))
         ;; Locate first parent with area
         (let ((pam (find-parent-area-mixin object)))
+          (v:info :calc-area "Calculating size from ~a" (print-raw-object pam))
+          
           ;; Start with its area
           (let ((pal (slot-value pam 'left))
                 (pat (slot-value pam 'top))
@@ -84,12 +86,16 @@
 
             ;; Save out area where needed
             (when (= ll +LAYOUT-LEFT-CALC+)
+              (v:info :calc-area "left:~d for ~a" pal (print-raw-object object))
               (setf (slot-value object 'left) pal))
             (when (= lt +LAYOUT-TOP-CALC+)
+              (v:info :calc-area "top:~d for ~a" pat (print-raw-object object))
               (setf (slot-value object 'top) pat))
             (when (= lw +LAYOUT-WIDTH-CALC+)
+              (v:info :calc-area "width:~d for ~a" paw (print-raw-object object))
               (setf (slot-value object 'width) paw))
             (when (= lh +LAYOUT-HEIGHT-CALC+)
+              (v:info :calc-area "height:~d for ~a" pah (print-raw-object object))
               (setf (slot-value object 'height) pah)))))))
 
 ;;;; column-layout ============================================================
@@ -128,10 +134,46 @@
           (num-children (length (content parent)))
           child-hs)
       (assert (not (eql cp nil)))
-      ;; Calculate our childrens heights
-      (loop :for i :from 0 :to (length (content parent)) do
-        (push (+ (truncate (/ ph num-children)) (if (> (mod ph num-children) 0) 1 0)) child-hs))
+      
+      (let ((num-to-adjust (mod ph num-children))
+            (base-child-height (truncate (/ ph num-children))))
+        ;; Calculate our childrens heights
+        (loop :for i :from 0 :to (length (content parent)) do
+          ;; (push (+ (truncate (/ ph num-children)) (if (> (- num-children num-to-adjust) cp) 1 0)) child-hs)
+          (push base-child-height child-hs))
 
+        ;; Make adjustments as needed
+        ;; Basically, if there are an odd number of remainders, distribute
+        ;; equally starting in the middle.  If its an even number of remainders,
+        ;; distribute it event from the ends.
+
+        ;; Increment height of middle if there are odd number of left over units
+        (when (oddp num-to-adjust)
+          (incf (nth (truncate (/ num-children 2)) child-hs))
+          (decf num-to-adjust))
+
+        ;; Increment height of items at both ends until all left over units are used
+        (assert (evenp num-to-adjust))
+        (when (> num-to-adjust 0)
+          (do ((front 0 (incf front))
+               (back (1- num-children) (decf back)))
+              ((= num-to-adjust 0))
+            (incf (nth front child-hs))
+            (incf (nth back child-hs))
+            (decf num-to-adjust 2))))
+
+      ;; TODO: A decision needs to be made here.  We are calculating all the child
+      ;;       sizes.  Why do it multiple times?  Currently, as each the first
+      ;;       child coordinate or size is requested, it comes here and calculates it.
+      ;;       But since we have to calculate all of the children to determine any
+      ;;       specific child height, shouldn't we just go ahead and update all
+      ;;       children that area still needing calculations?  It can be determined
+      ;;       simply by checking for the coordinates/sizes as the calc constants.
+      ;;       Seems like a good idea to me, but I'm not commited.  Yet.
+      
+      ;; NOTE: The above will apply to all layouts that do this type of calculation.
+      ;;       For example, the grid layout will need to do it for both directions.
+      
       ;; Update left if desired
       (when (= cl +LAYOUT-LEFT-CALC+)
         (setf (slot-value child 'left) pl))
