@@ -21,7 +21,9 @@
                              (:file "macros")
                              (:file "generics")
                              (:file "utils")
+
                              (:file "allegro")
+                             
                              (:file "mixins/active")
                              (:file "mixins/align")
                              (:file "mixins/area")
@@ -41,12 +43,16 @@
                              (:file "mixins/theme")
                              (:file "mixins/title")
                              (:file "mixins/visible")
+                             
                              (:file "layout")
                              (:file "theme")
+
+                             (:file "grid")
                              (:file "manager")
                              (:file "ruler")
                              (:file "text")
                              (:file "window")
+                             
                              (:file "cl-yag")
                              ;; (:file "cl-yag-docs")
                              ;; (:file "allegro-docs")
