@@ -27,7 +27,6 @@
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (font (al:create-builtin-font))
-        (buffer (al:create-bitmap 320 240))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
@@ -119,7 +118,6 @@
       
       (progn
         (cffi:foreign-free event)
-        (al:destroy-bitmap buffer)
         (al:destroy-display screen)
         (al:destroy-timer timer)
         (al:destroy-event-queue queue)

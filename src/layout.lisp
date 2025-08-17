@@ -10,9 +10,6 @@
    (width :initform +LAYOUT-WIDTH-CALC+ :initarg nil)
    (height :initform +LAYOUT-HEIGHT-CALC+ :initarg nil)))
 
-(defmacro defcolumn-layout (&rest rest &key &allow-other-keys)
-  `(make-instance 'column-layout ,@rest))
-
 (defmethod print-object ((o layout) s)
   (pprint-indent :current 0 s)
   (pprint-logical-block (s nil)
@@ -38,38 +35,20 @@
   (dolist (child (content obj))
     (on-mouse-up x y b child)))
 
-;;;; column-layout ============================================================
-
-(defclass column-layout (layout
-                         padding-mixin)
-  ())
-
-(defmethod print-object ((o column-layout) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "defcolumn-layout ")
-    (print-mixin o s)))
-
-;;; methods ---------------------------------------------------------
-
-(defmethod calc-area (child (parent column-layout) &key)
+(defun calc-layout-area (object)
   ;; Start with existing child area
-  (let ((cl (slot-value child 'left))
-        (ct (slot-value child 'top))
-        (cw (slot-value child 'width))
-        (ch (slot-value child 'height))
-        (pl (slot-value parent 'left))
-        (pt (slot-value parent 'top))
-        (pw (slot-value parent 'width))
-        (ph (slot-value parent 'height)))
+  (let ((ll (slot-value object 'left))
+        (lt (slot-value object 'top))
+        (lw (slot-value object 'width))
+        (lh (slot-value object 'height)))
 
     ;; Calculate our area if needed
-    (if (or (= pl +LAYOUT-LEFT-CALC+)
-            (= pt +LAYOUT-TOP-CALC+)
-            (= pw +LAYOUT-WIDTH-CALC+)
-            (= ph +LAYOUT-HEIGHT-CALC+))
+    (if (or (= ll +LAYOUT-LEFT-CALC+)
+            (= lt +LAYOUT-TOP-CALC+)
+            (= lw +LAYOUT-WIDTH-CALC+)
+            (= lh +LAYOUT-HEIGHT-CALC+))
         ;; Locate first parent with area
-        (let ((pam (find-parent-area-mixin parent)))
+        (let ((pam (find-parent-area-mixin object)))
           ;; Start with its area
           (let ((pal (slot-value pam 'left))
                 (pat (slot-value pam 'top))
@@ -104,46 +83,74 @@
                 (decf pah (+ pam-st (spacing-bottom pam)))))
 
             ;; Save out area where needed
-            (when (= pl +LAYOUT-LEFT-CALC+)
-              (setf (slot-value parent 'left) pal)
-              (setf pl pal))
-            (when (= pt +LAYOUT-TOP-CALC+)
-              (setf (slot-value parent 'top) pat)
-              (setf pt pat))
-            (when (= pw +LAYOUT-WIDTH-CALC+)
-              (setf (slot-value parent 'width) paw)
-              (setf pw paw))
-            (when (= ph +LAYOUT-HEIGHT-CALC+)
-              (setf (slot-value parent 'height) pah)
-              (setf ph pah))))
+            (when (= ll +LAYOUT-LEFT-CALC+)
+              (setf (slot-value object 'left) pal))
+            (when (= lt +LAYOUT-TOP-CALC+)
+              (setf (slot-value object 'top) pat))
+            (when (= lw +LAYOUT-WIDTH-CALC+)
+              (setf (slot-value object 'width) paw))
+            (when (= lh +LAYOUT-HEIGHT-CALC+)
+              (setf (slot-value object 'height) pah)))))))
 
-        ;; Calcualte child size
-        (let ((cp (position child (content parent)))
-              (num-children (length (content parent)))
-              child-hs)
-          (assert (not (eql cp nil)))
-          ;; Calculate our childrens heights
-          (loop :for i :from 0 :to (length (content parent)) do
-            (push (+ (truncate (/ ph num-children)) (if (> (mod ph num-children) 0) 1 0)) child-hs))
+;;;; column-layout ============================================================
 
-          ;; Update left if desired
-          (when (= cl +LAYOUT-LEFT-CALC+)
-            (setf (slot-value child 'left) pl))
+(defclass column-layout (layout
+                         padding-mixin)
+  ())
 
-          ;; Update top if desired
-          (when (= ct +LAYOUT-TOP-CALC+)
-            (when (> cp 0)
-              (loop :for i :from 0 :to (1- cp) do
-                (incf pt (nth i child-hs))))
-            (setf (slot-value child 'top) pt))
-          
-          ;; Update width if desired
-          (when (= cw +LAYOUT-WIDTH-CALC+)
-            (setf (slot-value child 'width) pw))
+(defmacro defcolumn-layout (&rest rest &key &allow-other-keys)
+  `(make-instance 'column-layout ,@rest))
 
-          ;; Update height if desired
-          (when (= ch +LAYOUT-HEIGHT-CALC+)
-            (setf (slot-value child 'height) (nth cp child-hs))))))
+(defmethod print-object ((o column-layout) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "defcolumn-layout ")
+    (print-mixin o s)))
+
+;;; methods ---------------------------------------------------------
+
+(defmethod calc-area (child (parent column-layout) &key)
+  ;; Calculate parent area if needed
+  (calc-layout-area parent)
+
+  ;; Start with existing child area
+  (let ((cl (slot-value child 'left))
+        (ct (slot-value child 'top))
+        (cw (slot-value child 'width))
+        (ch (slot-value child 'height))
+        (pl (slot-value parent 'left))
+        (pt (slot-value parent 'top))
+        (pw (slot-value parent 'width))
+        (ph (slot-value parent 'height)))
+    
+    ;; Calcualte child size
+    (let ((cp (position child (content parent)))
+          (num-children (length (content parent)))
+          child-hs)
+      (assert (not (eql cp nil)))
+      ;; Calculate our childrens heights
+      (loop :for i :from 0 :to (length (content parent)) do
+        (push (+ (truncate (/ ph num-children)) (if (> (mod ph num-children) 0) 1 0)) child-hs))
+
+      ;; Update left if desired
+      (when (= cl +LAYOUT-LEFT-CALC+)
+        (setf (slot-value child 'left) pl))
+
+      ;; Update top if desired
+      (when (= ct +LAYOUT-TOP-CALC+)
+        (when (> cp 0)
+          (loop :for i :from 0 :to (1- cp) do
+            (incf pt (nth i child-hs))))
+        (setf (slot-value child 'top) pt))
+      
+      ;; Update width if desired
+      (when (= cw +LAYOUT-WIDTH-CALC+)
+        (setf (slot-value child 'width) pw))
+
+      ;; Update height if desired
+      (when (= ch +LAYOUT-HEIGHT-CALC+)
+        (setf (slot-value child 'height) (nth cp child-hs))))
+    )
   
   (my-next-method))
 
@@ -153,3 +160,87 @@
   ;; (on-paint (first (content obj)))
   (my-next-method))
 
+;;;; grid-layout ==============================================================
+
+(defclass grid-layout (layout
+                       padding-mixin
+                       spacing-mixin)
+  ((rows :initarg :rows :initform 1 :accessor rows)
+   (columns :initarg :columns :initform 1 :accessor columns)))
+
+(defmacro defgrid-layout (&rest rest &key &allow-other-keys)
+  `(make-instance 'grid-layout ,@rest))
+
+(defmethod print-object ((o grid-layout) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+
+    (format s "defgrid-layout ")
+    
+    (pprint-indent :current 0 s)
+    (format s ":columns ~d " (columns o))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":rows ~d " (rows o))
+    (pprint-newline :linear s)
+    
+    (print-mixin o s)))
+
+(defmethod calc-area (child (parent grid-layout) &key)
+  ;; Calculate our area if needed
+  (calc-layout-area parent)
+
+  ;; Start with existing child area
+  (let ((cl (slot-value child 'left))
+        (ct (slot-value child 'top))
+        (cw (slot-value child 'width))
+        (ch (slot-value child 'height))
+        (pl (slot-value parent 'left))
+        (pt (slot-value parent 'top))
+        (pw (slot-value parent 'width))
+        (ph (slot-value parent 'height))
+        (cp (position child (content parent)))
+        (child-num-h (rows parent))
+        (child-num-v (columns parent))          
+        child-hs child-ws)
+
+    (assert (not (eql cp nil)))
+    
+    ;; Calculate our childrens heights
+    (loop :for i :from 0 :to (rows parent) do
+      (push (+ (truncate (/ ph child-num-v)) (if (> (mod ph child-num-v) 0) 1 0)) child-hs))
+
+    ;; Calculate our childrens widths
+    (loop :for i :from 0 :to (columns parent) do
+      (push (+ (truncate (/ pw child-num-h) (if (> (mod pw child-num-h) 0) 1 0))) child-ws))
+
+    ;; TODO: Spacing not taken into consideration yet
+    
+    ;; Determine row and column of child
+    (let* ((row (truncate (/ cp (rows parent))))
+           (col (+ (- cp row) (mod cp (rows parent)))))
+      
+      ;; Update left if desired
+      (when (= cl +LAYOUT-LEFT-CALC+)
+        (when (> col 0)
+          (loop :for i :from 0 :to (1- col) do
+            (incf pl (nth i child-ws))))
+        (setf (slot-value child 'left) pl))
+
+      ;; Update top if desired
+      (when (= ct +LAYOUT-TOP-CALC+)
+        (when (> row 0)
+          (loop :for i :from 0 :to (1- row) do
+            (incf pt (nth i child-hs))))
+        (setf (slot-value child 'top) pt))
+      
+      ;; Update width if desired
+      (when (= cw +LAYOUT-WIDTH-CALC+)
+        (setf (slot-value child 'width) (nth col child-ws)))
+
+      ;; Update height if desired
+      (when (= ch +LAYOUT-HEIGHT-CALC+)
+        (setf (slot-value child 'height) (nth row child-hs)))))
+  
+  (my-next-method))
