@@ -98,8 +98,8 @@
              (setf (theme a2) *theme-flat-red*)
              (setf (theme a3) *theme-flat-green*)
 
-             (setf (border w) (defborder :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
-             (setf (border a3) (defborder :color (theme-vl *theme-flat-yellow*) :width 10))
+             (setf (border w) (defborder-flat :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
+             (setf (border a3) (defborder-flat :color (theme-vl *theme-flat-yellow*) :width 10))
              
              (let* ((white (al:map-rgb-f 1 1 1)))
                (setf (fore-color a2) white)
@@ -114,6 +114,7 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
+             ;; (print boss *standard-output*)
              (process-events queue boss)))
       
       (progn

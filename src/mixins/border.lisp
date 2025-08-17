@@ -1,26 +1,60 @@
 (in-package #:cl-yag)
 
-;;;; border-mixin ===============================================================
+;;;; border-base ==============================================================
 
-(defclass border ()
-  ((color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor color)
-   (style :initarg :style :initform :default :type keyword :accessor style)
-   (width :initarg :width :initform 1 :type integer :accessor width)))
+(defclass border-base ()
+  ((width :initarg :width :initform 1 :type integer :accessor width)))
 
-(defmacro defborder (&rest rest &key &allow-other-keys)
-  `(make-instance 'border ,@rest))
-
-;; TODO:  This should allow the border slots to be wrapped.  Haven't figured out
-;;        how to do so at this point ...
-(defun print-border (o s)
+(defmethod print-object ((object border-base) s)
   (pprint-logical-block (s nil)
-    (format s "(defborder ")
-    (if (eq o nil)
-        (format s "nil) ")
+    (format s "(defborder-base ")
+    (if (eq object nil)
+        (format s "NIL) ")
+        (format s ":width ~d) " (width object)))))
+
+;;;; border-flat ==============================================================
+
+(defclass border-flat (border-base)
+  ((color :initarg :color :initform nil :type list :accessor color)))
+
+(defmacro defborder-flat (&rest rest &key &allow-other-keys)
+  `(make-instance 'border-flat ,@rest))
+
+(defmethod print-object ((object border-flat) s)
+  (pprint-logical-block (s nil)
+    (format s "(defborder-flat ")
+    (if (eq object nil)
+        (format s "NIL) ")
+        (with-slots (width color) object
+          (format s ":width ~d " width)
+          (if (eql color nil)
+              (format s ":color NIL) ")
+              (format s ":color ~a) " (print-color color)))))))
+
+;;;; border-3d ================================================================
+
+(defclass border-3d (border-base)
+  ((style :initarg :style :initform :default :type keyword :accessor style)
+   (theme :initarg :theme :initform nil :accessor theme)))
+
+(defmacro defborder-3d (&rest rest &key &allow-other-keys)
+  `(make-instance 'border-3d ,@rest))
+
+(defmethod print-object ((object border-3d) s)
+  (pprint-logical-block (s nil)
+    (format s "(defborder-3d ")
+    (if (eq object nil)
+        (format s "NIL) ")
         (progn
-          (format s ":color (~a) " (print-color (color o)))
-          (format s ":style :~a " (string-downcase (style o)))
-          (format s ":width ~d) " (width o))))))
+          (format s ":width ~d " (width object))
+          (format s ":style :~a " (style object))
+          (format s ":theme ")
+          (let ((th (theme object)))
+            (if (eql th nil)
+                (format s "NIL) ")
+                (format s "~a) " (print-raw-object th))))))))
+
+;;;; border-mixin =============================================================
 
 (defclass border-mixin ()
   ((border-left :initarg :border-left :initform nil :accessor border-left)
@@ -28,25 +62,13 @@
    (border-top :initarg :border-top :initform nil :accessor border-top)
    (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
 
-;; (defmethod left ((object border-mixin))
-;;   (v:info :layout "border left requested")
-;;   )
-
-;; (defmethod (setf left) :after (value (object border-mixin))
-;;   (v:info :layout "left: border-mixin: adjusting for left border width")
-  
-;;   ;; Adjust left side for border width
-;;   (let ((bl (border-left object)))
-;;     (unless (eql nil bl)
-;;       (decf (slot-value object 'left) (width (border-left bl))))))
-
 (defmethod print-mixin ((o border-mixin) s)
   (pprint-indent :current 0 s)
   (format s ":border-left ")
   (let ((oo (border-left o)))
     (if (eq nil oo)
         (format s "nil ")
-        (print-border oo s)))
+        (prin1 oo s)))
   (pprint-newline :linear s)
   
   (pprint-indent :current 0 s)
@@ -54,7 +76,7 @@
   (let ((oo (border-right o)))
     (if (eq nil oo)
         (format s "nil ")
-        (print-border oo s)))
+        (prin1 oo s)))
   (pprint-newline :linear s)
 
   (pprint-indent :current 0 s)
@@ -62,7 +84,7 @@
   (let ((oo (border-top o)))
     (if (eq nil oo)
         (format s "nil ")
-        (print-border oo s)))
+        (prin1 oo s)))
   (pprint-newline :linear s)
 
   (pprint-indent :current 0 s)
@@ -70,33 +92,22 @@
   (let ((oo (border-bottom o)))
     (if (eq nil oo)
         (format s "nil ")
-        (print-border oo s)))
+        (prin1 oo s)))
   (pprint-newline :linear s)
 
   (my-next-method))
 
-(defmethod (setf border) ((value border) (object border-mixin))
+(defmethod (setf border) ((value border-base) (object border-mixin))
   (setf (border-h object) value)
   (setf (border-v object) value)
   (my-next-method))
 
-(defmethod (setf border-h) ((value border) (object border-mixin))
+(defmethod (setf border-h) ((value border-base) (object border-mixin))
   (setf (border-left object) value)
   (setf (border-right object) value)
   (my-next-method))
 
-(defmethod (setf border-v) ((value border) (object border-mixin))
+(defmethod (setf border-v) ((value border-base) (object border-mixin))
   (setf (border-top object) value)
   (setf (border-bottom object) value)
   (my-next-method))
-
-;; Only allow valid keywords
-#+safety
-(defmethod (setf style) :after (newval (obj border))
-  (let ((msg "Expected :default, :none, :in, :out, or :flat but got ~s"))
-    (typecase newval
-      (keyword (unless (member newval '(:default :none :in :out :flat))
-                 (error msg newval)))
-      (t (error msg newval))))
-  (my-next-method))
-

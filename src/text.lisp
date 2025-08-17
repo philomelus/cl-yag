@@ -231,7 +231,7 @@
   
   (my-next-method))
 
-(defmethod (setf theme) ((theme theme-base) (o active-text))
+(defmethod (setf theme) ((theme theme-flat) (o active-text))
   (setf (color-down o) (theme-vd theme))
   (setf (color-hover o) (theme-vl theme))
   (setf (color-up o) (theme-n theme))
@@ -251,10 +251,6 @@
     (setf (color (border-bottom o)) (theme-l theme)))
   )
 
-;; TODO: Dunno what to do yet
-(defmethod (setf theme) ((theme theme-flat) (o active-text))
-  (my-next-method))
-
-;; TODO: Dunno what to do yet
-(defmethod (setf theme) ((theme theme-3d) (o active-text))
-  (my-next-method))
+;; ;; TODO: Dunno what to do yet
+;; (defmethod (setf theme) ((theme theme-3d) (o active-text))
+;;   (my-next-method))
