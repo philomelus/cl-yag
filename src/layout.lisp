@@ -49,7 +49,6 @@
             (= lh +LAYOUT-HEIGHT-CALC+))
         ;; Locate first parent with area
         (let ((pam (find-parent-area-mixin object)))
-          (v:info :calc-area "Calculating size from ~a" (print-raw-object pam))
           
           ;; Start with its area
           (let ((pal (slot-value pam 'left))
@@ -86,16 +85,12 @@
 
             ;; Save out area where needed
             (when (= ll +LAYOUT-LEFT-CALC+)
-              (v:info :calc-area "left:~d for ~a" pal (print-raw-object object))
               (setf (slot-value object 'left) pal))
             (when (= lt +LAYOUT-TOP-CALC+)
-              (v:info :calc-area "top:~d for ~a" pat (print-raw-object object))
               (setf (slot-value object 'top) pat))
             (when (= lw +LAYOUT-WIDTH-CALC+)
-              (v:info :calc-area "width:~d for ~a" paw (print-raw-object object))
               (setf (slot-value object 'width) paw))
             (when (= lh +LAYOUT-HEIGHT-CALC+)
-              (v:info :calc-area "height:~d for ~a" pah (print-raw-object object))
               (setf (slot-value object 'height) pah)))))))
 
 ;;;; column-layout ============================================================
