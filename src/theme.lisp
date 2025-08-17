@@ -192,11 +192,6 @@
 
     (print-mixin o s)))
 
-;;;; interior
-;;;; text
-;;;; up
-;;;; down
-
 ;;;; theme-3d =================================================================
 
 (defclass theme-3d (theme-base)
@@ -283,124 +278,81 @@
 
 ;; 3d left and top
 (defmethod paint-border-left ((border border-3d) (object area-mixin) (theme theme-base))
-  (case (style border)
-    (:inset
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (l1 (1+ left))
-                 (l2 (2+ left)))
+  (with-accessors ((b-theme theme) (b-width width)) border
+    (with-slots (normal dark light very-dark very-light) theme
+      (with-accessors ((left left) (top top) (o-width width) (height height)) object
+        (let ((b (+ top height))
+              (l1 (1+ left))
+              (l2 (2+ left)))
+          (case (style border)
+            (:inset
              (al:draw-line l1 (1+ top) l1 (1- b) very-dark -0.5)
-             (al:draw-line l2 (1+ top) l2 (2- b) dark -0.5))))))
+             (al:draw-line l2 (1+ top) l2 (2- b) dark -0.5))
     
-    ((:outset :default)
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (l1 (1+ left))
-                 (l2 (2+ left)))
+            ((:outset :default)
              (al:draw-line l1 (1+ top) l1 (1- b) normal -0.5)
-             (al:draw-line l2 (1+ top) l2 (2- b) very-light -0.5))))))
+             (al:draw-line l2 (1+ top) l2 (2- b) very-light -0.5))
     
-    (:flat
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (l1 (1+ left))
-                 (l2 (2+ left)))
+            (:flat
              (al:draw-line l1 (1+ top) l1 (1- b) very-dark -0.5)
              (al:draw-line l2 (1+ top) l2 (2- b) dark -0.5))))))))
 
 (defmethod paint-border-top ((border border-3d) (object area-mixin) (theme theme-base))
-  (case (style border)
-    (:inset
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (t1 (1+ top))
-                 (t2 (2+ top)))
+  (with-accessors ((b-theme theme) (b-width width)) border
+    (with-slots (normal dark light very-dark very-light) theme
+      (with-accessors ((left left) (top top) (o-width width) (height height)) object
+        (let ((r (+ left o-width))
+              (t1 (1+ top))
+              (t2 (2+ top)))
+          (case (style border)
+            (:inset
              (al:draw-line left t1 (1- r) t1 very-dark -0.5)
-             (al:draw-line (1+ left) t2 (2- r) t2 dark -0.5))))))
-    
-    ((:outset :default)
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (t1 (1+ top))
-                 (t2 (2+ top)))
+             (al:draw-line (1+ left) t2 (2- r) t2 dark -0.5))
+            
+            ((:outset :default)
              (al:draw-line left t1 (1- r) t1 normal -0.5)
-             (al:draw-line (1+ left) t2 (2- r) t2 very-light -0.5))))))
-    
-    (:flat
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (t1 (1+ top))
-                 (t2 (2+ top)))
+             (al:draw-line (1+ left) t2 (2- r) t2 very-light -0.5))
+            
+            (:flat
              (al:draw-line left t1 (1- r) t1 very-dark -0.5)
              (al:draw-line (1+ left) t2 (2- r) t2 dark -0.5))))))))
 
 ;; 3d right and bottom
 (defmethod paint-border-bottom ((border border-3d) (object area-mixin) (theme theme-base))
-  (case (style border)
-    (:inset
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (r (+ left o-width)))
+  (with-accessors ((b-theme theme) (b-width width)) border
+    (with-slots (normal dark light very-dark very-light) theme
+      (with-accessors ((left left) (top top) (o-width width) (height height)) object
+        (let ((b (+ top height))
+              (r (+ left o-width)))
+          (case (style border)
+            (:inset
              (al:draw-line left b r b very-light -0.5)
-             (al:draw-line (1+ left) (1- b) (1- r) (1- b) normal -0.5))))))
-    
-    ((:outset :default)
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (r (+ left o-width)))
+             (al:draw-line (1+ left) (1- b) (1- r) (1- b) normal -0.5))
+            
+            ((:outset :default)
              (al:draw-line left b r b very-dark -0.5)
-             (al:draw-line (1+ left) (1- b) (1- r) (1- b) dark -0.5))))))
-    (:flat
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((b (+ top height))
-                 (r (+ left o-width)))
+             (al:draw-line (1+ left) (1- b) (1- r) (1- b) dark -0.5))
+            
+            (:flat
              (al:draw-line left b r b very-dark -0.5)
              (al:draw-line (1+ left) (1- b) (1- r) (1- b) dark -0.5))))))))
 
 (defmethod paint-border-right ((border border-3d) (object area-mixin) (theme theme-base))
-  (case (style border)
-    (:inset
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (b (+ top height)))
+  (with-accessors ((b-theme theme) (b-width width)) border
+    (with-slots (normal dark light very-dark very-light) theme
+      (with-accessors ((left left) (top top) (o-width width) (height height)) object
+        (let ((r (+ left o-width))
+              (b (+ top height)))
+          (case (style border)
+            (:inset
              (al:draw-line r top r (1- b) very-light -2.5)
-             (al:draw-line (1- r) (1+ top) (1- r) (2- b) normal -0.5))))))
-    
-    ((:outset :default)
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (b (+ top height)))
+             (al:draw-line (1- r) (1+ top) (1- r) (2- b) normal -0.5))
+            
+            ((:outset :default)
              (al:draw-line r top r (1- b) very-dark -2.5)
-             (al:draw-line (1- r) (1+ top) (1- r) (2- b) dark -0.5))))))
-   
-    (:flat
-     (with-accessors ((b-theme theme) (b-width width)) border
-       (with-slots (normal dark light very-dark very-light) theme
-         (with-accessors ((left left) (top top) (o-width width) (height height)) object
-           (let ((r (+ left o-width))
-                 (b (+ top height)))
+             (al:draw-line (1- r) (1+ top) (1- r) (2- b) dark -0.5))
+            
+            (:flat
              (al:draw-line r top r (1- b) very-dark -2.5)
              (al:draw-line (1- r) (1+ top) (1- r) (2- b) dark -0.5))))))))
 
