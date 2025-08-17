@@ -34,7 +34,8 @@
 ;;;; border-3d ================================================================
 
 (defclass border-3d (border-base)
-  ((style :initarg :style :initform :default :type keyword :accessor style)
+  ((width :initform 2)
+   (style :initarg :style :initform :default :type keyword :accessor style)
    (theme :initarg :theme :initform nil :accessor theme)))
 
 (defmacro defborder-3d (&rest rest &key &allow-other-keys)
@@ -53,6 +54,11 @@
             (if (eql th nil)
                 (format s "NIL) ")
                 (format s "~a) " (print-raw-object th))))))))
+
+#+safety
+(defmethod (setf style) :after (value (object border-3d))
+  (unless (member value '(:flat :inset :outset :default))
+    (error "expected :flat, :inset, :outset, or :default, got: ~a" value)))
 
 ;;;; border-mixin =============================================================
 

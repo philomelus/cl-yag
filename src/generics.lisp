@@ -50,6 +50,10 @@
     (my-next-method)))
 
 (defgeneric paint-border (object theme))
+(defgeneric paint-border-bottom (border object theme))
+(defgeneric paint-border-left (border object theme))
+(defgeneric paint-border-right (border object theme))
+(defgeneric paint-border-top (border object theme))
 
 (defgeneric print-mixin (object stream))
 

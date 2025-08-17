@@ -171,51 +171,68 @@
 
     (print-mixin o s)))
 
-(defmethod paint-border (object (theme theme-flat))
-  (when (typep object 'area-mixin)
-    (let ((x (left object))
-          (y (top object)))
-      (let ((r (+ x (width object) -1))
-            (b (+ y (height object) -1)))
+(macrolet ((paint-border-side-flat (&body body)
+             `(with-accessors ((color color) (b-width width)) border
+                (assert (> b-width 0))
+                (with-accessors ((left left) (top top) (o-width width) (height height)) object
+                  (let ((c color)
+                        (w b-width)
+                        (w2 (truncate (/ b-width 2))))
+                    (if (eql c nil)
+                        (setq c (theme-n theme)))
+                    ,@body)))))
+  (defmethod paint-border-left ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-side-flat
+      (let ((xx (+ left w2)))
+        (al:draw-line xx top xx (1- (+ top height)) c w)  )))
+  (defmethod paint-border-top ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-side-flat
+      (let ((yy (+ top w2)))
+        (al:draw-line left yy (1- (+ left o-width)) yy c w)))))
 
-        (macrolet ((get-params (what)
-                     `(if (typep object 'border-mixin)
-                          (let ((bo (,what object)))
-                            (if (eql nil bo)
-                                (setf c (fore-color theme))
-                                (progn
-                                  (setf c (color bo))
-                                  (if (eql c nil)
-                                      (setf c (fore-color theme)))
-                                  (setf thic (width bo))
-                                  (setf thic2 (truncate (/ thic 2))))))
-                          (setf c (fore-color theme))))
-                   (horiz (what adj)
-                     `(let ((thic 1)
-                            (thic2 0)
-                            c)
-                        (get-params ,what)
-                        (let ((xx ,adj))
-                          (al:draw-line xx y xx b c thic))))
-                   (vert (what adj)
-                     `(let ((thic 1)
-                            (thic2 0)
-                            c)
-                        (get-params ,what)
-                        (let ((yy ,adj))
-                          (al:draw-line x yy r yy c thic)))))
+(macrolet ((paint-border-side-flat (other-border &body body)
+             `(with-accessors ((color color) (b-width width)) border
+                (assert (> b-width 0))
+                (with-accessors ((left left) (top top) (o-width width) (height height) (bo ,other-border)) object
+                  (let ((c color)
+                        (w b-width)
+                        (w2 (truncate (/ b-width 2)))
+                        (bow 0))
+                    (if (eql c nil)
+                        (setq c (theme-n theme)))
+                    (unless (eql bo nil)
+                      (setq bow (width bo)))
+                    ,@body)))))
+  (defmethod paint-border-bottom ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-side-flat border-bottom
+      (let ((yy (+ (1- (+ top (- height bow))) w2)))
+        (al:draw-line left yy (1- (+ left o-width)) yy c w))))
 
-          ;; Left side
-          (horiz border-left (+ x thic2))
+  (defmethod paint-border-right ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-side-flat border-left
+      (let ((xx (+ (1- (+ left (- o-width bow))) w2)))
+        (al:draw-line xx top xx (1- (+ top height)) c w)))))
 
-          ;; Top side
-          (vert border-top (+ y thic2))
+(defmethod paint-border ((object area-mixin) (theme theme-flat))
+  ;; Left side
+  (let ((b (border-left object)))
+    (unless (eql b nil)
+      (paint-border-left b object theme)))
 
-          ;; Right side
-          (horiz border-right (- r (1- thic2)))
+  ;; Top side
+  (let ((b (border-top object)))
+    (unless (eql b nil)
+      (paint-border-top b object theme)))
+
+  ;; Right side
+  (let ((b (border-right object)))
+    (unless (eql b nil)
+      (paint-border-right b object theme)))
           
-          ;; Bottom side
-          (vert border-bottom (- b (1- thic2))))))))
+  ;; Bottom side
+  (let ((b (border-bottom object)))
+    (unless (eql b nil)
+      (paint-border-bottom b object theme))))
 
 ;;;; interior
 ;;;; text
