@@ -8,7 +8,8 @@
    (major-color :initarg :major-color :initform nil :accessor major-color)
    (minor :initarg :minor :initform 5 :accessor minor)
    (minor-color :initarg :minor-color :initform nil :accessor minor-color)
-   (vertical :initarg :vertical :initform nil :accessor vertical)))
+   (vertical :initarg :vertical :initform nil :accessor vertical)
+   (invert :initarg :invert :initform nil :accessor invert :documentation "When t, draw on right/bottom instead of left/top")))
 
 (defmacro defruler (&rest rest &key &allow-other-keys)
   `(make-instance 'ruler ,@rest))
@@ -46,6 +47,10 @@
     (format s ":vertical ~a " (if (vertical o) "t" "nil"))
     (pprint-newline :linear s)
 
+    (pprint-indent :current 0 s)
+    (format s ":invert ~a " (if (invert o) "T" "NIL"))
+    (pprint-newline :linear s)
+    
     (print-mixin o s)))
 
 (defmethod on-command ((object ruler) &key)
@@ -68,10 +73,10 @@
            ;; Draw vertical ruler
            (progn
              (let* ((bottom (+ top height))
-                    (x (+ left width))
+                    (x (if (invert object) (- left width) (+ left width)))
                     (xr (1- x)))
                (al:draw-line x (1- top) x bottom color -0.5)
-               ;; Draw minor first
+               
                ;; NOTE:  Not effecient, as major will overwirte the common minor's,
                ;;        so some minors are drawn when not needed.  The exact
                ;;        algorithm to do both at same time escapes me at the moment
@@ -80,11 +85,13 @@
                ;;        increment both at the same time.  Updating major for every
                ;;        partial minor would work, technically, but then floating
                ;;        point errors would be an issue...
-               (let ((xn (- x (truncate (/ width 2)))))
+               
+               ;; Draw minor first
+               (let ((xn (if (invert object) (+ x (truncate (/ width 2))) (- x (truncate (/ width 2))))))
                  (do ((yn top (+ yn minor)))
                      ((> yn bottom))
                    (al:draw-line xn yn xr yn mnc -0.5)))
-               (let ((xj (- x width)))
+               (let ((xj (if (invert object) (+ x width) (- x width))))
                  (do ((yj top (+ yj major)))
                      ((> yj bottom))
                    (al:draw-line xj yj xr yj mjc -0.5)))))
@@ -92,11 +99,11 @@
            ;; Draw horizontal ruler
            (progn
              (let* ((right (+ left width))
-                    (y (+ top height))
+                    (y (if (invert object) (- top height) (+ top height)))
                     (yb (1- y)))
                ;; Draw mai line
                (al:draw-line (1- left) y right y color -0.5)
-               ;; Draw minor divisions
+               
                ;; NOTE:  Not effecient, as major will overwirte the common minor's,
                ;;        so some minors are drawn when not needed.  The exact
                ;;        algorithm to do both at same time escapes me at the moment
@@ -105,12 +112,14 @@
                ;;        increment both at the same time.  Updating major for every
                ;;        partial minor would work, technically, but then floating
                ;;        point errors would be an issue...
-               (let ((yn (- y (truncate (/ height 2)))))
+               
+               ;; Draw minor divisions
+               (let ((yn (if (invert object) (+ y (truncate (/ height 2))) (- y (truncate (/ height 2))))))
                  (do ((xn left (+ xn minor)))
                      ((> xn right))
                    (al:draw-line xn yn xn yb mnc -0.5)))
                ;; Draw major divisions
-               (let ((yj (- y height)))
+               (let ((yj (if (invert object) (+ y height) (- y height))))
                  (do ((xj left (+ xj major)))
                      ((> xj right))
                    (al:draw-line xj yj xj yb mjc -0.5))))))))))
