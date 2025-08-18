@@ -23,13 +23,11 @@
 
 (defun main ()
   (main-init)
-  ;; (setf (v:repl-categories) (list :app :theme))
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (font (al:create-builtin-font))
         (event (cffi:foreign-alloc '(:union al:event))))
-    
     
     (unwind-protect
          (progn                   ; Not needed, because of the let ...
@@ -42,27 +40,19 @@
                   (rb (defruler :vertical nil :major 10 :minor 2 :left 200 :top 510 :width 400 :height 10
                                 :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:4)) :invert t))
                   (g (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620 :shortcuts (list '(:5))))
-                  (a2 (defactive-text :title "Asteroids" :font font
-                                      :h-align :center :v-align :middle
+                  (a2 (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left +LAYOUT-LEFT-CALC+
-                                      :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+
-                                      :height +LAYOUT-HEIGHT-CALC+))
-                  (a3 (defactive-text :title "Blastem" :font font
-                                      :h-align :center :v-align :middle
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                  (a3 (defactive-text :title "Blastem" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
-                                      :left +LAYOUT-LEFT-CALC+
-                                      :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+
-                                      :height +LAYOUT-HEIGHT-CALC+))
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
                   (a4 (defactive-text :title "Quit" :font font
-                                      :h-align :center :v-align :middle
-                                      :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left +LAYOUT-LEFT-CALC+
-                                      :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+
-                                      :height +LAYOUT-HEIGHT-CALC+))
+                                      :h-align :center :v-align :middle :shortcuts (list '(:q :shift) '(:q :none))
+                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
+                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                  ;; (cl (defcolumn-layout :content (list a2 a3 a4)))
                   (cl (defcolumn-layout :content (list a2 a3 a4)))
                   (w (defwindow 200 200 200 300 :content (list cl)))
                   (boss (defmanager :content (list w rt rl rr rb g))))
@@ -109,31 +99,15 @@
                  (otherwise
                   (v:debug :event "event: ~a" (event-type event)))))
 
-             ;; (setf (theme boss) *theme-3d-blue*)
+             (setf (theme boss) *theme-3d-blue*)
              ;; (setf (theme a2) *theme-3d-red*)
              ;; (setf (theme a3) *theme-3d-green*)
 
              ;; (setf (border w) (defborder-flat :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
              ;; (setf (border w) (defborder-3d :width 10 :theme *theme-3d-gray*))
-             ;; (setf (border a3) (defborder-flat :color (theme-vl *theme-flat-yellow*) :width 10))
+             (setf (border w) (defborder-3d :width 10))
+             ;; (setf (border a3) (defborder-flat :color (al:map-rgb-f 1 1 0) :width 10))
              ;; (setf (border a3) (defborder-3d :width 6 :theme *theme-3d-yellow*))
-             ;; (setf (back-color a3) (theme-vd *theme-3d-yellow*))
-             ;; (setf (fore-color a3) (theme-vl *theme-3d-yellow*))
-             
-             ;; (let* ((white (al:map-rgb-f 1 1 1))
-             ;;        (black (al:map-rgb-f 0 0 0)))
-             ;;   (setf (fore-color a2) white)
-             ;;   (setf (fore-color a3) black)
-             ;;   (setf (fore-color a4) white)
-             ;;   (setf (fore-color w) white)
-             ;;   (setf (back-color a2) black)
-             ;;   (setf (back-color a3) (theme-n *theme-3d-yellow*))
-             ;;   (setf (back-color a4) black)
-             ;;   (setf (back-color w) black))
-             
-
-             ;; (setf (major-color g) (al:map-rgb-f 0 0.35 0))
-             ;; (setf (minor-color g) (al:map-rgb-f 0 0.30 0))
              
              (al:start-timer timer)
              (al:clear-keyboard-state screen)

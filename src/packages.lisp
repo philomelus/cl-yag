@@ -112,11 +112,11 @@
            #:spacing-v
            #:style
            #:theme
-           #:theme-d
-           #:theme-l
-           #:theme-n
-           #:theme-vd
-           #:theme-vl
+           #:theme-3d-d
+           #:theme-3d-l
+           #:theme-3d-n
+           #:theme-3d-vd
+           #:theme-3d-vl
            #:top
            #:title
            #:v-align
@@ -169,7 +169,6 @@
            #:get-text-dimensions
            #:keyboard-event-keycode
            #:keyboard-event-modifiers
-           #:make-color
            #:mouse-event-button
            #:mouse-event-dx
            #:mouse-event-dy

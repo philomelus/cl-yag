@@ -20,7 +20,7 @@
 (defmethod print-mixin ((o color-fore-back-mixin) s)
   (pprint-indent :current 0 s)
   (if (eql nil (fore-color o))
-      (format s ":fore-color nil")
+      (format s ":fore-color nil ")
       (format s ":fore-color (~a) " (print-color (fore-color o))))
   (pprint-newline :linear s)
   (pprint-indent :current 0 s)

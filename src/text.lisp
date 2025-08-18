@@ -103,7 +103,7 @@
 
 (defclass active-text (text-base)
   ((color-down :initarg :color-down :initform nil :type list :accessor color-down)
-   (color-hover :initarg :color-hover :initform nil :type list :accessor color-hover)
+   (color-hover :initarg :color-hover :initform (al:map-rgb-f 0.5 0.5 0.5) :type list :accessor color-hover)
    (color-up :initarg :color-up :initform nil :type list :accessor color-up)
    (shortcuts :initarg :shortcuts :initform nil :type list :accessor shortcuts)
    
@@ -185,21 +185,29 @@
         (fg (fore-color obj))
         (bg (back-color obj)))
 
-    ;; Make sure colors are correct
+    ;; TODO: Still not happy with theming here.
+    ;;       Setting a global theme doesn't affect this.
+    ;;       Should setting the global theme maybe force all active objects
+    ;;       to be given new themes?  Something like an "theme-update" generic
+    ;;       that all objects can respond to.  I dunno yet.
+    
     (if (eql cd nil)
-        (setf cd (theme-vd obj)))
-    (if (eql ch nil)
-        (setf ch (theme-vl obj)))
+        (if (eql bg nil)
+            (progn
+              (setq cd (back-color (find-theme obj)))
+              (setq bg cd))
+            (setq cd fg)))
     (if (eql cu nil)
-        (setf cu (theme-n obj)))
-    (if (eql bg nil)
-        (setf bg (theme-l obj)))
-    (if (eql fg nil)
-        (setf fg (theme-vl obj)))
+        (if (eql fg nil)
+            (progn
+              (setq cu (fore-color (find-theme obj)))
+              (setq fg cu))
+            (setq cu fg)))
 
     (let ((left (left obj)))
       
       ;; Draw background
+      (assert (not (eql bg nil)))
       (al:draw-filled-rectangle left (top obj) (right obj) (bottom obj) bg)
     
       ;; Draw border
@@ -207,11 +215,13 @@
     
       ;; Draw text
       (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-        (al:draw-text (font obj) (if down bg fg)
+        (assert (not (eql (if down cd cu) nil)))
+        (al:draw-text (font obj) (if down cd cu)
                       (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
     
       ;; Hilight if needed
       (when in
+        (assert (not (eql ch nil)))
         (let ((left (+ (left obj) 2))
               (top (+ (top obj) 2))
               (right (- (right obj) 1))
@@ -232,26 +242,3 @@
   
   (my-next-method))
 
-(defmethod (setf theme) ((theme theme-flat) (o active-text))
-  ;; (setf (color-down o) (theme-vd theme))
-  ;; (setf (color-hover o) (theme-vl theme))
-  ;; (setf (color-up o) (theme-n theme))
-  ;; (setf (back-color o) (theme-d theme))
-  ;; (setf (fore-color o) (theme-l theme))
-  
-  ;; (unless (eq nil (border-left o))
-  ;;   (setf (color (border-left o)) (theme-l theme)))
-  
-  ;; (unless (eq nil (border-right o))
-  ;;   (setf (color (border-right o)) (theme-l theme)))
-  
-  ;; (unless (eq nil(border-top o))
-  ;;   (setf (color (border-top o)) (theme-l theme)))
-  
-  ;; (unless (eq nil (border-bottom o))
-  ;;   (setf (color (border-bottom o)) (theme-l theme)))
-  )
-
-;; ;; TODO: Dunno what to do yet
-;; (defmethod (setf theme) ((theme theme-3d) (o active-text))
-;;   (my-next-method))

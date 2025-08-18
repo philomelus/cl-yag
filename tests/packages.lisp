@@ -100,11 +100,11 @@
   ;;               #:spacing-v
   ;;               #:style
                 #:theme                 ;generic
-  ;;               #:theme-d
-  ;;               #:theme-l
-  ;;               #:theme-n
-  ;;               #:theme-vd
-                #:theme-vl
+  ;;               #:theme-3d-d
+  ;;               #:theme-3d-l
+  ;;               #:theme-3d-n
+  ;;               #:theme-3d-vd
+                #:theme-3d-vl
   ;;               #:top
   ;;               #:title
   ;;               #:v-align

@@ -66,77 +66,31 @@
             (v:debug :theme "find-theme: no theme, no parent, use default.")
             (return-from find-theme *theme-default*))))))
 
-;;;; methods ==================================================================
-
-;; For any requested theme colors where the object doesn't have a theme itself,
-;; try to find a parent that has a theme.  If no parent has a theme, use
-;; the default theme.
-
-(defmethod theme-d (o)
-  (let ((th (find-theme o)))
-    (assert (not (eql nil th)))
-    (theme-d th)))
-
-(defmethod theme-l (o)
-  (let ((th (find-theme o)))
-    (assert (not (eql nil th)))
-    (theme-l th)))
-
-(defmethod theme-n (o)
-  (let ((th (find-theme o)))
-    (assert (not (eql nil th)))
-    (theme-n th)))
-
-(defmethod theme-vd (o)
-  (let ((th (find-theme o)))
-    (assert (not (eql nil th)))
-    (theme-vd th)))
-
-(defmethod theme-vl (o)
-  (let ((th (find-theme o)))
-    (assert (not (eql nil th)))
-    (theme-vl th)))
-
 ;;;; theme-base ===============================================================
 
-(defclass theme-base (color-fore-back-mixin)
-  ((dark :initarg :dark :initform (al:map-rgb 127 127 127) :reader theme-d)
-   (light :initarg :light :initform (al:map-rgb 223 223 223) :reader theme-l)
-   (normal :initarg :normal :initform (al:map-rgb 212 208 200) :reader theme-n)
-   (very-dark :initarg :very-dark :initform (al:map-rgb 95 95 95) :reader theme-vd)
-   (very-light :initarg :very-light :initform (al:map-rgb 245 245 245) :reader theme-vl)
-   (fore-color :initform (make-color 0 0 0))
-   (back-color :initform (make-color 255 255 255))))
+(defclass theme-base ()
+  ((back-color :initarg :back-color :initform nil :accessor back-color)
+   (fore-color :initarg :fore-color :initform nil :accessor fore-color)))
 
 (defmacro deftheme-base (&rest rest &key &allow-other-keys)
   `(make-instance 'theme-base ,@rest))
 
 (defmethod print-object ((o theme-base) s)
-(pprint-indent :current 0 s)
+  (pprint-indent :current 0 s)
   (pprint-logical-block (s nil)
     (format s "deftheme-base ")
-
+    
     (pprint-indent :current 0 s)
-    (format s ":dark (~a) " (print-color (theme-d o)))
+    (if (eql nil (fore-color o))
+        (format s ":fore-color nil ")
+        (format s ":fore-color (~a) " (print-color (fore-color o))))
     (pprint-newline :linear s)
-
+    
     (pprint-indent :current 0 s)
-    (format s ":light (~a) " (print-color (theme-l o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":normal (~a) " (print-color (theme-n o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-dark (~a) " (print-color (theme-vd o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-light (~a) " (print-color (theme-vl o)))
-    (pprint-newline :linear s)
-
-    (print-mixin o s)))
+    (if (eql nil (back-color o))
+        (format s ":back-color nil ")
+        (format s ":back-color (~a) " (print-color (back-color o))))
+    (pprint-newline :linear s)))
 
 (defmethod paint-border ((object area-mixin) (theme theme-base))
   ;; Left side
@@ -162,7 +116,8 @@
 ;;;; theme-flat ===============================================================
 
 (defclass theme-flat (theme-base)
-  ())
+  ((frame-color :initarg :frame-color :initform nil :accessor frame-color)
+   (interior-color :initarg :interior-color :initform nil :accessor interior-color)))
 
 (defmacro deftheme-flat (&rest rest &key &allow-other-keys)
   `(make-instance 'theme-flat ,@rest))
@@ -172,64 +127,9 @@
   (pprint-logical-block (s nil)
     (format s "deftheme-flat ")
 
-    (pprint-indent :current 0 s)
-    (format s ":dark (~a) " (print-color (theme-d o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":light (~a) " (print-color (theme-l o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":normal (~a) " (print-color (theme-n o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-dark (~a) " (print-color (theme-vd o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-light (~a) " (print-color (theme-vl o)))
-    (pprint-newline :linear s)
-
     (print-mixin o s)))
 
-;;;; theme-3d =================================================================
-
-(defclass theme-3d (theme-base)
-  ())
-
-(defmacro deftheme-3d (&rest rest &key &allow-other-keys)
-  `(make-instance 'theme-3d ,@rest))
-
-(defmethod print-object ((o theme-3d) s)
-(pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "deftheme-3d ")
-
-    (pprint-indent :current 0 s)
-    (format s ":dark (~a) " (print-color (theme-d o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":light (~a) " (print-color (theme-l o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":normal (~a) " (print-color (theme-n o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-dark (~a) " (print-color (theme-vd o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":very-light (~a) " (print-color (theme-vl o)))
-    (pprint-newline :linear s)
-
-    (print-mixin o s)))
-
-;;;; common methods ===========================================================
+;;; methods ---------------------------------------------------------
 
 ;; Flat left and top
 (macrolet ((paint-border-side-flat (&body body)
@@ -240,18 +140,19 @@
                         (w b-width)
                         (w2 (truncate (/ b-width 2))))
                     (if (eql c nil)
-                        (setq c (theme-n theme)))
+                        (setq c (frame-color theme)))
                     ,@body)))))
   
   (defmethod paint-border-left ((border border-flat) (object area-mixin) (theme theme-base))
     (paint-border-side-flat
       (let ((xx (+ left w2)))
-        (al:draw-line xx top xx (1- (+ top height)) c w))))
+        (assert (not (eql c nil)))
+        (al:draw-line xx top xx (+ top height) c w))))
   
   (defmethod paint-border-top ((border border-flat) (object area-mixin) (theme theme-base))
     (paint-border-side-flat
       (let ((yy (+ top w2)))
-        (al:draw-line left yy (1- (+ left o-width)) yy c w)))))
+        (al:draw-line left yy (+ left o-width) yy c w)))))
 
 ;; Flat right and bottom
 (macrolet ((paint-border-side-flat (other-border &body body)
@@ -263,20 +164,88 @@
                         (w2 (truncate (/ b-width 2)))
                         (bow 0))
                     (if (eql c nil)
-                        (setq c (theme-n theme)))
+                        (setq c (frame-color theme)))
                     (unless (eql bo nil)
                       (setq bow (width bo)))
                     ,@body)))))
   
   (defmethod paint-border-bottom ((border border-flat) (object area-mixin) (theme theme-base))
     (paint-border-side-flat border-bottom
-      (let ((yy (+ (1- (+ top (- height bow))) w2)))
-        (al:draw-line left yy (1- (+ left o-width)) yy c w))))
+      (let ((yy (+ (+ top (- height bow)) w2)))
+        (al:draw-line left yy (+ left o-width) yy c w))))
 
   (defmethod paint-border-right ((border border-flat) (object area-mixin) (theme theme-base))
     (paint-border-side-flat border-left
-      (let ((xx (+ (1- (+ left (- o-width bow))) w2)))
-        (al:draw-line xx top xx (1- (+ top height)) c w)))))
+      (let ((xx (+ (+ left (- o-width bow)) w2)))
+        (al:draw-line xx top xx (+ top height) c w)))))
+
+;;;; theme-3d =================================================================
+
+(defclass theme-3d (theme-base)
+  ((dark :initarg :dark :initform (al:map-rgb 127 127 127) :reader theme-3d-d)
+   (light :initarg :light :initform (al:map-rgb 223 223 223) :reader theme-3d-l)
+   (normal :initarg :normal :initform (al:map-rgb 212 208 200) :reader theme-3d-n)
+   (very-dark :initarg :very-dark :initform (al:map-rgb 95 95 95) :reader theme-3d-vd)
+   (very-light :initarg :very-light :initform (al:map-rgb 245 245 245) :reader theme-3d-vl)))
+
+(defmacro deftheme-3d (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-3d ,@rest))
+
+(defmethod print-object ((o theme-3d) s)
+(pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deftheme-3d ")
+
+    (pprint-indent :current 0 s)
+    (format s ":dark (~a) " (print-color (theme-3d-d o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":light (~a) " (print-color (theme-3d-l o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":normal (~a) " (print-color (theme-3d-n o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":very-dark (~a) " (print-color (theme-3d-vd o)))
+    (pprint-newline :linear s)
+
+    (pprint-indent :current 0 s)
+    (format s ":very-light (~a) " (print-color (theme-3d-vl o)))
+    (pprint-newline :linear s)
+
+    (print-mixin o s)))
+
+;;;; methods ==================================================================
+
+(defmethod theme-3d-d (o)
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (slot-value th 'dark)))
+
+(defmethod theme-3d-l (o)
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (slot-value th 'light)))
+
+(defmethod theme-3d-n (o)
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (slot-value th 'normal)))
+
+(defmethod theme-3d-vd (o)
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (slot-value th 'very-dark)))
+
+(defmethod theme-3d-vl (o)
+  (let ((th (find-theme o)))
+    (assert (not (eql nil th)))
+    (slot-value th 'very-light)))
+
+;;;; common methods ===========================================================
 
 ;; 3d left and top
 (defmethod paint-border-left ((border border-3d) (object area-mixin) (theme theme-base))
@@ -362,31 +331,36 @@
 
 ;;; flat ------------------------------------------------------------
 
-(defmacro deftheme-flat-obj (normal dark light very-dark very-light &optional (fore-color '(make-color 255 255 255)) (back-color '(make-color 0 0 0)))
-  `(make-instance 'theme-flat :dark ,dark :light ,light :normal ,normal :very-dark ,very-dark
-                              :very-light ,very-light :fore-color ,fore-color :back-color ,back-color))
+;; (defmacro deftheme-flat-obj (normal dark light very-dark very-light &optional (fore-color '(make-color 255 255 255)) (back-color '(make-color 0 0 0)))
+;;   `(make-instance 'theme-flat :dark ,dark :light ,light :normal ,normal :very-dark ,very-dark
+;;                               :very-light ,very-light :fore-color ,fore-color :back-color ,back-color))
 
-(defvar *theme-flat-aqua* (deftheme-flat-obj (make-color 0 255 255) (make-color 0 191 191) (make-color 127 255 255) (make-color 0 127 127) (make-color 191 255 255)))
-(defvar *theme-flat-blue* (deftheme-flat-obj (make-color 0 0 255) (make-color 0 0 191) (make-color 159 159 255) (make-color 0 0 159) (make-color 191 191 255)))
-(defvar *theme-flat-gray* (deftheme-flat-obj (make-color 212 208 200) (make-color 128 128 128) (make-color 223 223 223) (make-color 95 95 95) (make-color 245 245 245) (make-color 0 0 0) (make-color 255 255 255)))
-(defvar *theme-flat-green* (deftheme-flat-obj (make-color 0 255 0) (make-color 0 191 0) (make-color 127 255 127) (make-color 0 159 0) (make-color 191 255 191)))
-(defvar *theme-flat-purple* (deftheme-flat-obj (make-color 255 0 255) (make-color 191 0 191) (make-color 255 159 255) (make-color 159 0 159) (make-color 255 191 255)))
-(defvar *theme-flat-red* (deftheme-flat-obj (make-color 255 0 0) (make-color 191 0 0) (make-color 255 127 127) (make-color 159 0 0) (make-color 255 191 191)))
-(defvar *theme-flat-yellow* (deftheme-flat-obj (make-color 255 255 0) (make-color 191 191 0) (make-color 255 255 127) (make-color 127 127 0) (make-color 255 255 191)))
+(defmacro deftheme-flat-obj (frame interior &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0)))
+  `(make-instance 'theme-flat :frame-color ,frame :interior-color ,interior :fore-color ,fore :back-color ,back))
+
+;; (defvar *theme-flat-aqua* (deftheme-flat-obj (make-color 0 255 255) (make-color 0 191 191) (make-color 127 255 255) (make-color 0 127 127) (make-color 191 255 255)))
+;; (defvar *theme-flat-blue* (deftheme-flat-obj (make-color 0 0 255) (make-color 0 0 191) (make-color 159 159 255) (make-color 0 0 159) (make-color 191 191 255)))
+;; (defvar *theme-flat-gray* (deftheme-flat-obj (make-color 212 208 200) (make-color 128 128 128) (make-color 223 223 223) (make-color 95 95 95) (make-color 245 245 245) (make-color 0 0 0) (make-color 255 255 255)))
+;; (defvar *theme-flat-green* (deftheme-flat-obj (make-color 0 255 0) (make-color 0 191 0) (make-color 127 255 127) (make-color 0 159 0) (make-color 191 255 191)))
+;; (defvar *theme-flat-purple* (deftheme-flat-obj (make-color 255 0 255) (make-color 191 0 191) (make-color 255 159 255) (make-color 159 0 159) (make-color 255 191 255)))
+;; (defvar *theme-flat-red* (deftheme-flat-obj (make-color 255 0 0) (make-color 191 0 0) (make-color 255 127 127) (make-color 159 0 0) (make-color 255 191 191)))
+;; (defvar *theme-flat-yellow* (deftheme-flat-obj (make-color 255 255 0) (make-color 191 191 0) (make-color 255 255 127) (make-color 127 127 0) (make-color 255 255 191)))
+
+(defvar *theme-flat-gray* (deftheme-flat-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)))
 
 ;;; 3d --------------------------------------------------------------
 
-(defmacro deftheme-3d-obj (normal dark light very-dark very-light &optional (fore-color '(make-color 255 255 255)) (back-color '(make-color 0 0 0)))
+(defmacro deftheme-3d-obj (normal dark light very-dark very-light &optional (fore-color '(al:map-rgb-f 1.0 1.0 1.0)) (back-color '(al:map-rgb 0 0 0)))
   `(make-instance 'theme-3d :dark ,dark :light ,light :normal ,normal :very-dark ,very-dark
                             :very-light ,very-light :fore-color ,fore-color :back-color ,back-color))
 
-(defvar *theme-3d-aqua* (deftheme-3d-obj (make-color 0 255 255) (make-color 0 191 191) (make-color 127 255 255) (make-color 0 127 127) (make-color 191 255 255)))
-(defvar *theme-3d-blue* (deftheme-3d-obj (make-color 0 0 255) (make-color 0 0 191) (make-color 159 159 255) (make-color 0 0 159) (make-color 191 191 255)))
-(defvar *theme-3d-gray* (deftheme-3d-obj (make-color 212 208 200) (make-color 128 128 128) (make-color 223 223 223) (make-color 95 95 95) (make-color 245 245 245) (make-color 0 0 0) (make-color 255 255 255)))
-(defvar *theme-3d-green* (deftheme-3d-obj (make-color 0 255 0) (make-color 0 191 0) (make-color 127 255 127) (make-color 0 159 0) (make-color 191 255 191)))
-(defvar *theme-3d-purple* (deftheme-3d-obj (make-color 255 0 255) (make-color 191 0 191) (make-color 255 159 255) (make-color 159 0 159) (make-color 255 191 255)))
-(defvar *theme-3d-red* (deftheme-3d-obj (make-color 255 0 0) (make-color 191 0 0) (make-color 255 127 127) (make-color 159 0 0) (make-color 255 191 191)))
-(defvar *theme-3d-yellow* (deftheme-3d-obj (make-color 255 255 0) (make-color 191 191 0) (make-color 255 255 127) (make-color 127 127 0) (make-color 255 255 191)))
+(defvar *theme-3d-aqua* (deftheme-3d-obj (al:map-rgb 0 255 255) (al:map-rgb 0 191 191) (al:map-rgb 127 255 255) (al:map-rgb 0 127 127) (al:map-rgb 191 255 255)))
+(defvar *theme-3d-blue* (deftheme-3d-obj (al:map-rgb 0 0 255) (al:map-rgb 0 0 191) (al:map-rgb 159 159 255) (al:map-rgb 0 0 159) (al:map-rgb 191 191 255)))
+(defvar *theme-3d-gray* (deftheme-3d-obj (al:map-rgb 212 208 200) (al:map-rgb 128 128 128) (al:map-rgb 223 223 223) (al:map-rgb 95 95 95) (al:map-rgb 245 245 245) (al:map-rgb 0 0 0) (al:map-rgb 255 255 255)))
+(defvar *theme-3d-green* (deftheme-3d-obj (al:map-rgb 0 255 0) (al:map-rgb 0 191 0) (al:map-rgb 127 255 127) (al:map-rgb 0 159 0) (al:map-rgb 191 255 191)))
+(defvar *theme-3d-purple* (deftheme-3d-obj (al:map-rgb 255 0 255) (al:map-rgb 191 0 191) (al:map-rgb 255 159 255) (al:map-rgb 159 0 159) (al:map-rgb 255 191 255)))
+(defvar *theme-3d-red* (deftheme-3d-obj (al:map-rgb 255 0 0) (al:map-rgb 191 0 0) (al:map-rgb 255 127 127) (al:map-rgb 159 0 0) (al:map-rgb 255 191 191)))
+(defvar *theme-3d-yellow* (deftheme-3d-obj (al:map-rgb 255 255 0) (al:map-rgb 191 191 0) (al:map-rgb 255 255 127) (al:map-rgb 127 127 0) (al:map-rgb 255 255 191)))
 
 ;;;------------------------------------------------------------------
 
