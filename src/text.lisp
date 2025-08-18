@@ -233,23 +233,23 @@
   (my-next-method))
 
 (defmethod (setf theme) ((theme theme-flat) (o active-text))
-  (setf (color-down o) (theme-vd theme))
-  (setf (color-hover o) (theme-vl theme))
-  (setf (color-up o) (theme-n theme))
-  (setf (back-color o) (theme-d theme))
-  (setf (fore-color o) (theme-l theme))
+  ;; (setf (color-down o) (theme-vd theme))
+  ;; (setf (color-hover o) (theme-vl theme))
+  ;; (setf (color-up o) (theme-n theme))
+  ;; (setf (back-color o) (theme-d theme))
+  ;; (setf (fore-color o) (theme-l theme))
   
-  (unless (eq nil (border-left o))
-    (setf (color (border-left o)) (theme-l theme)))
+  ;; (unless (eq nil (border-left o))
+  ;;   (setf (color (border-left o)) (theme-l theme)))
   
-  (unless (eq nil (border-right o))
-    (setf (color (border-right o)) (theme-l theme)))
+  ;; (unless (eq nil (border-right o))
+  ;;   (setf (color (border-right o)) (theme-l theme)))
   
-  (unless (eq nil(border-top o))
-    (setf (color (border-top o)) (theme-l theme)))
+  ;; (unless (eq nil(border-top o))
+  ;;   (setf (color (border-top o)) (theme-l theme)))
   
-  (unless (eq nil (border-bottom o))
-    (setf (color (border-bottom o)) (theme-l theme)))
+  ;; (unless (eq nil (border-bottom o))
+  ;;   (setf (color (border-bottom o)) (theme-l theme)))
   )
 
 ;; ;; TODO: Dunno what to do yet
