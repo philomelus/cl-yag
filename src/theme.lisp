@@ -411,7 +411,9 @@
 
 ;; Adjustments for global themes
 
-(defmacro deftheme-flat-all-obj (frame interior &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0)))
+(defmacro deftheme-flat-all-obj (frame interior
+                                 &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0))
+                                 &body body)
   (let ((object (gensym)))
     `(funcall (lambda (f i fc bc)
                 (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc)))
@@ -435,6 +437,11 @@
                   ;; window
                   (setf (frame-color ,object) f)
 
+                  ;; Custom initialization code
+                  (let ((object ,object))
+                    ,@body
+                    (setf ,object object))
+                  
                   ;; Make sure all slots get set
                   (dolist (slot (class-slots (find-class 'theme-flat-all)))
                     (when (eql (slot-value ,object (slot-definition-name slot)) nil)
@@ -449,7 +456,9 @@
   (deftheme-flat-all-obj (al:map-rgb 0 0 191) (al:map-rgb 0 0 255)))
 
 (defun theme-flat-gray ()
-  (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)))
+  (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)
+    ;; Override the up color
+    (setf (up-color object) (fore-color object))))
 
 (defun theme-flat-green ()
   (deftheme-flat-all-obj (al:map-rgb 0 191 0) (al:map-rgb 0 255 0)))
@@ -465,7 +474,9 @@
 
 ;;; 3d --------------------------------------------------------------
 
-(defmacro deftheme-3d-obj (normal dark light very-dark very-light &optional (fore-color '(al:map-rgb-f 1.0 1.0 1.0)) (back-color '(al:map-rgb 0 0 0)) &body body)
+(defmacro deftheme-3d-obj (normal dark light very-dark very-light
+                           &optional (fore-color '(al:map-rgb-f 1.0 1.0 1.0)) (back-color '(al:map-rgb 0 0 0))
+                           &body body)
   (let ((object (gensym)))
     `(funcall (lambda (n d l vd vl fc bc)
                 (let ((,object (make-instance 'theme-3d-all :normal n :dark d :light l :very-dark vd :very-light vl :fore-color fc :back-color bc)))

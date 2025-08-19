@@ -1,17 +1,17 @@
+(in-package :asdf-user)
 (defsystem "cl-yag"
   :author "Russell E. Gibson <russg@rnstech.com>"
   :version "0.0.1"
   :license "MIT"
   :description "Common Lisp GUI on top of liballegro."
-  :homepage "yeah, right, sure, I'll get right on that."
-  :bug-tracker "Pffftt"
+  :homepage "https://github.com/philomelus/cl-yag.git"
+  :bug-tracker "https://github.com/philomelus/cl-yag/issues"
   :source-control (:git "https://github.com/philomelus/cl-yag.git")
 
   ;; Dependencies.
   :depends-on ("cl-liballegro"
-               "cffi-object"
+               ;; "cffi-object"
                "closer-mop"
-               "documentation-utils"
                "verbose")
 
   ;; Project stucture.

@@ -30,6 +30,7 @@
            #:defactive-text
            #:defborder
            #:defcolumn-layout
+           #:defgrid
            #:defmanager
            #:defruler
            #:deftext
@@ -181,23 +182,32 @@
            #:print-color
            #:timer-event-count
            #:timer-event-source
+           #:+MOUSE-BUTTON-LEFT+
+           #:+MOUSE-BUTTON-RIGHT+
+           #:+MOUSE-BUTTON-MIDDLE+
+           #:+OP-ADD+
+           #:+OP-SRC-MINUS-DEST+
+           #:+OP-DEST-MINUS-SRC+
+           #:+BLEND-ZERO+
+           #:+BLEND-ONE+
+           #:+BLEND-ALPHA+
+           #:+BLEND-INVERSE-ALPHA+
+           #:+BLEND-SRC-COLOR+
+           #:+BLEND-DEST-COLOR+
+           #:+BLEND-INVERSE-SRC-COLOR+
+           #:+BLEND-INVERSE-DEST-COLOR+
+           #:+BLEND-CONST-COLOR+
+           #:+BLEND-INVERSE-CONS-COLOR+
+           #:+P-F-RGB-888+
+           #:+P-F-BGR-888+
+           #:+P-F-ABGR-8888+
+           #:+P-F-ARGB-8888+
+           #:+LOCK_READWRITE+
+           #:+LOCK_READONLY+
+           #:+LOCK_WRITEONLY+
 
            ;; Globals
-           #:*theme-flat-aqua*
-           #:*theme-flat-blue*
-           #:*theme-flat-gray*
-           #:*theme-flat-green*
-           #:*theme-flat-purple*
-           #:*theme-flat-red*
-           #:*theme-flat-yellow*
-           #:*theme-3d-aqua*
-           #:*theme-3d-blue*
-           #:*theme-3d-gray*
-           #:*theme-3d-green*
-           #:*theme-3d-purple*
-           #:*theme-3d-red*
-           #:*theme-3d-yellow*
-
+           #:*theme-default*
            ))
 
 (in-package #:cl-yag)
