@@ -1,0 +1,27 @@
+
+When creating a new graphical/interactive object, these are the things you don't want to forget:
+
+- Create a theme-mixin for all drawing related parameters
+  
+- Derive the object from the theme-mixin
+  
+- Update the theme-flat-all and theme-3d-all code, or add :after methods to update them
+
+- Crate the following methods, to make it easy for end users to use themes:
+  (defmethod (setf theme) ((theme theme-flat) (object -your-object-)))
+  (defmethod (setf theme) ((theme theme-3d) (object -your-object-)))
+  (defmethod (setf theme) ((theme -your-theme-mixin-) (object -your-object-)))
+
+  They should configure their drawing parameters from the specified theme objects.
+  For the 3d and flat versions, the point is to make them usable when no other
+  colors have been defined.  End users can override as needed for the real world,
+  but its nice to have something that just works when first starting new projects.
+  For example, for a button, using the frame color from a flat theme for showing
+  the button pressing.  If you used the interior color, nothing would appear and
+  could be annoying/frustrating to a new user (or worse, make them think it
+  doesn't work or they've done something wrong!).
+
+  
+
+  
+
