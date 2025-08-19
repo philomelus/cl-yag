@@ -2,11 +2,23 @@
 
 ;;;; window ===================================================================
 
-(defclass window (area-mixin
+;;; theme-mixin -----------------------------------------------------
+
+(defclass window-theme-mixin (color-fore-back-mixin)
+  ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
+
+(defmethod print-mixin ((object window-theme-mixin) stream)
+  (pprint-color-nil interior-color object stream)
+  (my-next-method))
+
+;;; window ----------------------------------------------------------
+
+(defclass window (window-theme-mixin
+                  area-mixin
                   border-mixin
-                  color-fore-back-mixin
                   content-mixin
-                  parent-mixin)
+                  parent-mixin
+                  padding-mixin)
   ())
 
 (defmacro defwindow (l top w h &rest rest &key &allow-other-keys)
@@ -45,15 +57,28 @@
   nil)
 
 (defmethod on-paint ((obj window) &key)
-  ;; Clear background
-  (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) (back-color obj))
+  (with-slots (content left top) obj
+    
+    ;; Fill interior if desired
+    (let ((ic (interior-color obj)))
+      (when (eql ic nil)
+        (setq ic (interior-color (find-theme obj))))
+      (with-border-area (l t_ r b) obj
+        (al:draw-filled-rectangle l t_ r b ic)))
+    
+    ;; Draw border
+    (paint-border obj (find-theme obj))
+    
+    ;; Let children paint
+    (let ((children content))
+      (dolist (c children)
+        (on-paint c))))
 
-  ;; Draw border
-  (paint-border obj (find-theme obj))
-  
-  ;; Let children paint themselves
-  (let ((children (content obj)))
-    (dolist (c children)
-      (on-paint c)))
   (my-next-method))
 
+(defmethod (setf theme) ((theme window-theme-mixin) (object window))
+  (with-slots ((i interior-color) (fc fore-color) (bc back-color))
+      theme
+    (setf (interior-color object) i)
+    (setf (back-color object) bc)
+    (setf (fore-color object) fc)))

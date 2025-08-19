@@ -13,6 +13,10 @@
                 #:null-pointer-p)
   ;; (:import-from #:cffi-object
   ;;               #:define-cobject-class)
+  (:import-from #:closer-mop
+                #:class-slots
+                #:find-class
+                #:slot-definition-name)
   (:export #:main
            ;; Constants
            #:+LAYOUT-HEIGHT-CALC+

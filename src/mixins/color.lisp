@@ -3,12 +3,27 @@
 ;;;; color-mixin ==============================================================
 
 (defclass color-mixin ()
-  ((color :initarg :color :initform (al:map-rgb-f 1 1 1) :type list :accessor color)))
+  ((color :initarg :color :initform nil :type list :accessor color)))
 
 (defmethod print-mixin ((o color-mixin) s)
-  (pprint-indent :current 0 s)
-  (format s ":color (~a) " (print-color (color o)))
-  (pprint-newline :linear s)
+  (pprint-color-nil color o s)
+  (my-next-method))
+
+;;;; color-3d-mixin ===========================================================
+
+(defclass color-3d-mixin ()
+  ((normal :initarg :normal :initform nil :accessor normal-color)
+   (dark :initarg :dark :initform nil :accessor dark-color)
+   (light :initarg :light :initform nil :accessor light-color)
+   (very-dark :initarg :very-dark :initform nil :accessor very-dark-color)
+   (very-light :initarg :very-light :initform nil :accessor very-light-color)))
+
+(defmethod print-mixin ((object color-3d-mixin) stream)
+  (pprint-color-nil normal object stream)
+  (pprint-color-nil dark object stream)
+  (pprint-color-nil light object stream)
+  (pprint-color-nil very-dark object stream)
+  (pprint-color-nil very-light object stream)
   (my-next-method))
 
 ;;;; color-fore-back-mixin ====================================================
@@ -18,15 +33,7 @@
    (back-color :initarg :back-color :initform nil :type list :accessor back-color)))
 
 (defmethod print-mixin ((o color-fore-back-mixin) s)
-  (pprint-indent :current 0 s)
-  (if (eql nil (fore-color o))
-      (format s ":fore-color nil ")
-      (format s ":fore-color (~a) " (print-color (fore-color o))))
-  (pprint-newline :linear s)
-  (pprint-indent :current 0 s)
-  (if (eql nil (back-color o))
-      (format s ":back-color nil ")
-      (format s ":back-color (~a) " (print-color (back-color o))))
-  (pprint-newline :linear s)
+  (pprint-color-nil fore-color o s)
+  (pprint-color-nil back-color o s)
   (my-next-method))
 

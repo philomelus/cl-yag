@@ -32,14 +32,17 @@
     (unwind-protect
          (progn                   ; Not needed, because of the let ...
            (let* ((rl (defruler :vertical t :major 10 :minor 2 :left 190 :top 200 :width 10 :height 400
-                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:1))))
+                                :shortcuts (list '(:1))))
                   (rt (defruler :vertical nil :major 10 :minor 2 :left 200 :top 190 :width 400 :height 10
-                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:2))))
+                                :shortcuts (list '(:2))))
                   (rr (defruler :vertical t :major 10 :minor 2 :left 510 :top 200 :width 10 :height 400
-                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:3)) :invert t))
+                                :shortcuts (list '(:3)) :invert t))
                   (rb (defruler :vertical nil :major 10 :minor 2 :left 200 :top 510 :width 400 :height 10
-                                :color (al:map-rgb-f 1 0 0) :shortcuts (list '(:4)) :invert t))
-                  (g (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620 :shortcuts (list '(:5))))
+                                :shortcuts (list '(:4)) :invert t))
+                  
+                  (g (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
+                              :shortcuts (list '(:5))))
+                  
                   (a2 (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
                                       :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
@@ -54,7 +57,8 @@
                                       :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
                   ;; (cl (defcolumn-layout :content (list a2 a3 a4)))
                   (cl (defcolumn-layout :content (list a2 a3 a4)))
-                  (w (defwindow 200 200 200 300 :content (list cl)))
+                  (w (defwindow 200 200 200 300 :content (list cl) ;;:interior-color (al:map-rgb-f 1 1 1)
+                       ))
                   (boss (defmanager :content (list w rt rl rr rb g))))
 
              ;; Adjust rulers
@@ -64,6 +68,29 @@
              (setf (height rr) (1+ (height w)))
              (setf (top rb) (+ (top w) (height w) 11))
              (setf (width rb) (width w))
+             ;; (setf (color rl) (al:map-rgb-f 1 0 0))
+             ;; (setf (color rt) (al:map-rgb-f 1 0 0))
+             ;; (setf (color rr) (al:map-rgb-f 1 0 0))
+             ;; (setf (color rb) (al:map-rgb-f 1 0 0))
+             
+             ;; Set grid color
+             ;; (setf (major-color g) (al:map-rgb-f 0 0.35 0))
+             ;; (setf (minor-color g) (al:map-rgb-f 0 0.25 0))
+
+             
+             ;; (setf (theme boss) *theme-3d-gray*)
+             ;; (setf (theme a2) *theme-3d-red*)
+             ;; (setf (theme a3) *theme-3d-green*)
+
+             ;; (setf (border w) (defborder-3d :width 10))
+             ;; (setf (border w) (defborder-3d :width 10))
+             ;; (setf (border w) (defborder-flat :width 10 :color (al:map-rgb-f 0 1 0)))
+             ;; (setf (border a3) (defborder-flat :color (al:map-rgb-f 1 1 0) :width 10))
+             ;; (setf (border a3) (defborder-3d :width 6 :theme *theme-3d-yellow*))
+
+             ;; (setf *theme-default* (theme-3d-gray))
+             
+             (setf (padding w) 10)
              
              (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
                (v:info :app "Item 1 clicked"))
@@ -99,16 +126,6 @@
                  (otherwise
                   (v:debug :event "event: ~a" (event-type event)))))
 
-             (setf (theme boss) *theme-3d-blue*)
-             ;; (setf (theme a2) *theme-3d-red*)
-             ;; (setf (theme a3) *theme-3d-green*)
-
-             ;; (setf (border w) (defborder-flat :color (al:map-rgb-f 0.75 0.75 0.75) :width 10))
-             ;; (setf (border w) (defborder-3d :width 10 :theme *theme-3d-gray*))
-             (setf (border w) (defborder-3d :width 10))
-             ;; (setf (border a3) (defborder-flat :color (al:map-rgb-f 1 1 0) :width 10))
-             ;; (setf (border a3) (defborder-3d :width 6 :theme *theme-3d-yellow*))
-             
              (al:start-timer timer)
              (al:clear-keyboard-state screen)
 
@@ -117,9 +134,11 @@
              (al:register-event-source queue (al:get-timer-event-source timer))
              (al:register-event-source queue (al:get-mouse-event-source))
 
+             ;; (print *theme-3d-gray*)
+             
              (process-events queue boss)
 
-             ;; (print rr *standard-output*)
+             ;; (print w)
              ))
       
       (progn

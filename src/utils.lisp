@@ -44,6 +44,11 @@
         (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
         (error "Couldn't initialize ~s." desc))))
 
+(defun print-object-as-string (object)
+  (with-output-to-string (s)
+    (princ object)
+    s))
+
 (defun print-raw-object (o &optional (name nil))
   (with-output-to-string (s)
     (if (eq nil name)

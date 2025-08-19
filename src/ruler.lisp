@@ -1,13 +1,24 @@
 (in-package #:cl-yag)
 
-(defclass ruler (area-mixin
-                 color-mixin
+;;;; theme-mixin ==============================================================
+
+(defclass ruler-theme-mixin (color-mixin)
+  ((major-color :initarg :major-color :initform nil :accessor major-color)
+   (minor-color :initarg :minor-color :initform nil :accessor minor-color)))
+
+(defmethod print-mixin ((object ruler-theme-mixin) stream)
+  (pprint-color-nil major-color object stream)
+  (pprint-color-nil major-color object stream)
+  (my-next-method))
+
+;;;; ruler ====================================================================
+
+(defclass ruler (ruler-theme-mixin
+                 area-mixin
                  shortcuts-mixin
                  visible-mixin)
   ((major :initarg :major :initform 10 :accessor major)
-   (major-color :initarg :major-color :initform nil :accessor major-color)
    (minor :initarg :minor :initform 5 :accessor minor)
-   (minor-color :initarg :minor-color :initform nil :accessor minor-color)
    (vertical :initarg :vertical :initform nil :accessor vertical)
    (invert :initarg :invert :initform nil :accessor invert :documentation "When t, draw on right/bottom instead of left/top")))
 
@@ -18,39 +29,10 @@
   (pprint-indent :current 0 s)
   (pprint-logical-block (s nil)
     (format s "defruler ")
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (major o))
-        (format s ":major nil ")
-        (format s ":major (~a) " (major o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (major-color o))
-        (format s ":major-color nil ")
-        (format s ":major-color (~a) " (print-color (major-color o))))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (minor o))
-        (format s ":minor nil ")
-        (format s ":minor (~a) " (minor o)))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (minor-color o))
-        (format s ":minor-color nil ")
-        (format s ":minor-color (~a) " (print-color (minor-color o))))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":vertical ~a " (if (vertical o) "t" "nil"))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (format s ":invert ~a " (if (invert o) "T" "NIL"))
-    (pprint-newline :linear s)
-    
+    (pprint-field-nil major o s)
+    (pprint-field-nil minor o s)
+    (pprint-field vertical o s)
+    (pprint-field invert o s)
     (print-mixin o s)))
 
 (defmethod on-command ((object ruler) &key)
@@ -59,68 +41,84 @@
       (setf (visible object) t)))
 
 (defmethod on-paint ((object ruler) &key)
-  (with-slots (visible vertical major major-color minor minor-color left top width height color) object
+  (with-slots (visible vertical major minor left top width height)
+      object
     (when visible
-     (let ((mjc major-color)
-           (mnc minor-color))
-       ;; Make sure colors are valid
-       (when (eql nil mjc)
-         (setf mjc color))
-       (when (eql nil mnc)
-         (setf mnc color))
+      (let ((mjc (major-color object))
+            (mnc (minor-color object))
+            (c (color object)))
+       
+        ;; Make sure colors are valid
+        (when (or (eql mjc nil)
+                  (eql mnc nil)
+                  (eql c nil))
+          (let ((theme (find-theme object)))
+            (when (eql c nil)
+              (setf c (color theme)))
+            (when (eql mjc nil)
+              (setf mjc (major-color theme)))
+            (when (eql mnc nil)
+              (setf mnc (minor-color theme)))))
       
-       (if vertical
-           ;; Draw vertical ruler
-           (progn
-             (let* ((bottom (+ top height))
-                    (x (if (invert object) (- left width) (+ left width)))
-                    (xr (1- x)))
-               (al:draw-line x (1- top) x bottom color -0.5)
+        (if vertical
+            ;; Draw vertical ruler
+            (progn
+              (let* ((bottom (+ top height))
+                     (x (if (invert object) (- left width) (+ left width)))
+                     (xr (1- x)))
+                (al:draw-line x (1- top) x bottom c -0.5)
                
-               ;; NOTE:  Not effecient, as major will overwirte the common minor's,
-               ;;        so some minors are drawn when not needed.  The exact
-               ;;        algorithm to do both at same time escapes me at the moment
-               ;;        so this is a kluge until I decide to fix it.
-               ;;        Drawing both in same loop doesn't work because we cannot
-               ;;        increment both at the same time.  Updating major for every
-               ;;        partial minor would work, technically, but then floating
-               ;;        point errors would be an issue...
+                ;; NOTE:  Not effecient, as major will overwirte the common minor's,
+                ;;        so some minors are drawn when not needed.  The exact
+                ;;        algorithm to do both at same time escapes me at the moment
+                ;;        so this is a kluge until I decide to fix it.
+                ;;        Drawing both in same loop doesn't work because we cannot
+                ;;        increment both at the same time.  Updating major for every
+                ;;        partial minor would work, technically, but then floating
+                ;;        point errors would be an issue...
                
-               ;; Draw minor first
-               (let ((xn (if (invert object) (+ x (truncate (/ width 2))) (- x (truncate (/ width 2))))))
-                 (do ((yn top (+ yn minor)))
-                     ((> yn bottom))
-                   (al:draw-line xn yn xr yn mnc -0.5)))
-               (let ((xj (if (invert object) (+ x width) (- x width))))
-                 (do ((yj top (+ yj major)))
-                     ((> yj bottom))
-                   (al:draw-line xj yj xr yj mjc -0.5)))))
+                ;; Draw minor first
+                (let ((xn (if (invert object) (+ x (truncate (/ width 2))) (- x (truncate (/ width 2))))))
+                  (do ((yn top (+ yn minor)))
+                      ((> yn bottom))
+                    (al:draw-line xn yn xr yn mnc -0.5)))
+                (let ((xj (if (invert object) (+ x width) (- x width))))
+                  (do ((yj top (+ yj major)))
+                      ((> yj bottom))
+                    (al:draw-line xj yj xr yj mjc -0.5)))))
         
-           ;; Draw horizontal ruler
-           (progn
-             (let* ((right (+ left width))
-                    (y (if (invert object) (- top height) (+ top height)))
-                    (yb (1- y)))
-               ;; Draw mai line
-               (al:draw-line (1- left) y right y color -0.5)
+            ;; Draw horizontal ruler
+            (progn
+              (let* ((right (+ left width))
+                     (y (if (invert object) (- top height) (+ top height)))
+                     (yb (1- y)))
+                ;; Draw mai line
+                (al:draw-line (1- left) y right y c -0.5)
                
-               ;; NOTE:  Not effecient, as major will overwirte the common minor's,
-               ;;        so some minors are drawn when not needed.  The exact
-               ;;        algorithm to do both at same time escapes me at the moment
-               ;;        so this is a kluge until I decide to fix it.
-               ;;        Drawing both in same loop doesn't work because we cannot
-               ;;        increment both at the same time.  Updating major for every
-               ;;        partial minor would work, technically, but then floating
-               ;;        point errors would be an issue...
+                ;; NOTE:  Not effecient, as major will overwirte the common minor's,
+                ;;        so some minors are drawn when not needed.  The exact
+                ;;        algorithm to do both at same time escapes me at the moment
+                ;;        so this is a kluge until I decide to fix it.
+                ;;        Drawing both in same loop doesn't work because we cannot
+                ;;        increment both at the same time.  Updating major for every
+                ;;        partial minor would work, technically, but then floating
+                ;;        point errors would be an issue...
                
-               ;; Draw minor divisions
-               (let ((yn (if (invert object) (+ y (truncate (/ height 2))) (- y (truncate (/ height 2))))))
-                 (do ((xn left (+ xn minor)))
-                     ((> xn right))
-                   (al:draw-line xn yn xn yb mnc -0.5)))
-               ;; Draw major divisions
-               (let ((yj (if (invert object) (+ y height) (- y height))))
-                 (do ((xj left (+ xj major)))
-                     ((> xj right))
-                   (al:draw-line xj yj xj yb mjc -0.5))))))))))
+                ;; Draw minor divisions
+                (let ((yn (if (invert object) (+ y (truncate (/ height 2))) (- y (truncate (/ height 2))))))
+                  (do ((xn left (+ xn minor)))
+                      ((> xn right))
+                    (al:draw-line xn yn xn yb mnc -0.5)))
+                ;; Draw major divisions
+                (let ((yj (if (invert object) (+ y height) (- y height))))
+                  (do ((xj left (+ xj major)))
+                      ((> xj right))
+                    (al:draw-line xj yj xj yb mjc -0.5))))))))))
+
+
+(defmethod (setf theme) ((theme ruler-theme-mixin) (object ruler))
+  (with-slots ((mj major-color) (mn minor-color) (c color)) theme
+    (setf (color object) c)
+    (setf (major-color object) mj)
+    (setf (minor-color object) mn)))
 

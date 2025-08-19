@@ -58,31 +58,36 @@
 
 ;;;; text-base ================================================================
 
-(defclass text-base (align-mixin
+(defclass text-base-theme-mixin (color-fore-back-mixin)
+  ())
+
+(defmethod print-mixin ((object text-base-theme-mixin) stream)
+  ;; Nothing to do, as base mixin will print fields
+  (my-next-method))
+
+;; This exists purely to allow a common base for all text objects.  If that
+;; changes, the other logic in this file may need revalidation.
+(defclass text-base (text-base-theme-mixin
+                     align-mixin
                      area-mixin
                      border-mixin
-                     color-fore-back-mixin
                      font-mixin
                      parent-mixin
-                     shortcuts-mixin
                      title-mixin)
-  ((fore-color :initform nil)
-   (back-color :initform nil)))
-
-(defmacro deftext-base (&rest rest &key &allow-other-keys)
-  `(make-instance 'active-text ,@rest))
-
-(defmethod print-object ((o text-base) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "deftext-base ")
-    (print-mixin o s)))
+  ())
 
 ;;;; text =====================================================================
 
+(defclass text-theme-mixin (text-base-theme-mixin)
+  ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
+
 (defclass text (text-base
-                color-mixin)
+                text-theme-mixin)
   ())
+
+(defmethod print-mixin ((object text-theme-mixin) stream)
+  (pprint-color-nil interior-color object stream)
+  (my-next-method))
 
 (defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
@@ -99,18 +104,36 @@
   (al:draw-text (font obj) (color obj) (text-calc-left obj) (text-calc-top obj) 0 (title obj))
   (my-next-method))
 
+(defmethod (setf theme) ((theme text-theme-mixin) (object text))
+  (with-slots ((ic interior-color) (fc fore-color) (bc back-color))
+      theme
+    (setf (interior-color object) ic)
+    (setf (fore-color object) fc)
+    (setf (back-color object) bc)))
+
 ;;;; active-text ==============================================================
 
-(defclass active-text (text-base)
-  ((color-down :initarg :color-down :initform nil :type list :accessor color-down)
-   (color-hover :initarg :color-hover :initform (al:map-rgb-f 0.5 0.5 0.5) :type list :accessor color-hover)
-   (color-up :initarg :color-up :initform nil :type list :accessor color-up)
-   (shortcuts :initarg :shortcuts :initform nil :type list :accessor shortcuts)
-   
-   ;; Internal stuff
-   (inside :initform nil :type boolean)
-   (down :initform nil :type boolean)
-   (was-down :initform nil :type boolean)))
+;;; theme-mixin -----------------------------------------------------
+
+(defclass active-text-theme-mixin (text-theme-mixin)
+  ((down-color :initarg :down-color :initform nil :accessor down-color)
+   (hover-color :initarg :hover-color :initform (al:map-rgb-f 0.5 0.5 0.5) :accessor hover-color)
+   (up-color :initarg :up-color :initform nil :accessor up-color)))
+
+(defmethod print-mixin ((object active-text-theme-mixin) stream)
+  (pprint-color-nil down-color object stream)
+  (pprint-color-nil hover-color object stream)
+  (pprint-color-nil up-color object stream)
+  (my-next-method))
+
+;;; active-text -----------------------------------------------------
+
+(defclass active-text (text-base
+                       active-text-theme-mixin
+                       shortcuts-mixin)
+  ((inside :initform nil :type boolean) ;internal use
+   (down :initform nil :type boolean)   ;internal use
+   (was-down :initform nil :type boolean))) ;internal use
 
 (defmacro defactive-text (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
@@ -119,25 +142,6 @@
   (pprint-indent :current 0 s)
   (pprint-logical-block (s nil)
     (format s "defactive-text ")
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (color-down o))
-        (format s ":color-down nil ")
-        (format s ":color-down (~a) " (print-color (color-down o))))
-    (pprint-newline :linear s)
-
-    (pprint-indent :current 0 s)
-    (if (eq nil (color-hover o))
-        (format s ":color-hover nil ")
-        (format s ":color-hover (~a) " (print-color (color-hover o))))
-    (pprint-newline :linear s)
-    
-    (pprint-indent :current 0 s)
-    (if (eq nil (color-up o))
-        (format s ":color-up nil ")
-        (format s ":color-up (~a) " (print-color (color-up o))))
-    (pprint-newline :linear s)
-
     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
@@ -177,68 +181,80 @@
   nil)
 
 (defmethod on-paint ((obj active-text) &key)
-  (let ((in (slot-value obj 'inside))
-        (down (or (slot-value obj 'down) (slot-value obj 'was-down)))
-        (cd (color-down obj))
-        (ch (color-hover obj))
-        (cu (color-up obj))
-        (fg (fore-color obj))
-        (bg (back-color obj)))
+  (with-slots ((in inside) (down was-down)) obj
+    (let ((cd (down-color obj))
+          (ch (hover-color obj))
+          (cu (up-color obj))
+          (fg (fore-color obj))
+          (bg (back-color obj))
+          (ic (interior-color obj)))
 
-    ;; TODO: Still not happy with theming here.
-    ;;       Setting a global theme doesn't affect this.
-    ;;       Should setting the global theme maybe force all active objects
-    ;;       to be given new themes?  Something like an "theme-update" generic
-    ;;       that all objects can respond to.  I dunno yet.
-    
-    (if (eql cd nil)
-        (if (eql bg nil)
-            (progn
-              (setq cd (back-color (find-theme obj)))
-              (setq bg cd))
-            (setq cd fg)))
-    (if (eql cu nil)
-        (if (eql fg nil)
-            (progn
-              (setq cu (fore-color (find-theme obj)))
-              (setq fg cu))
-            (setq cu fg)))
+      (when (or (eql cd nil)
+                (eql cu nil)
+                (eql cu nil)
+                (eql fg nil)
+                (eql bg nil)
+                (eql ic nil))
+        (let ((theme (find-theme obj)))
+          (when (eql cd nil)
+            (setq cd (down-color theme)))
+          (when (eql ch nil)
+            (setq ch (hover-color theme)))
+          (when (eql cu nil)
+            (setq cu (up-color theme)))
+          (when (eql fg nil)
+            (setq fg (fore-color theme)))
+          (when (eql bg nil)
+            (setq bg (back-color theme)))
+          (when (eql ic nil)
+            (setq ic (interior-color theme)))))
 
-    (let ((left (left obj)))
+      (let ((left (left obj)))
       
-      ;; Draw background
-      (assert (not (eql bg nil)))
-      (al:draw-filled-rectangle left (top obj) (right obj) (bottom obj) bg)
+        ;; Draw background
+        (assert (not (eql bg nil)))
+        (al:draw-filled-rectangle left (top obj) (right obj) (bottom obj) ic)
     
-      ;; Draw border
-      (paint-border obj (find-theme obj))
+        ;; Draw border
+        (paint-border obj (find-theme obj))
     
-      ;; Draw text
-      (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-        (assert (not (eql (if down cd cu) nil)))
-        (al:draw-text (font obj) (if down cd cu)
-                      (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
+        ;; Draw text
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+          (assert (not (eql (if down cd cu) nil)))
+          (al:draw-text (font obj) (if down cd cu)
+                        (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
     
-      ;; Hilight if needed
-      (when in
-        (assert (not (eql ch nil)))
-        (let ((left (+ (left obj) 2))
-              (top (+ (top obj) 2))
-              (right (- (right obj) 1))
-              (bottom (- (bottom obj) 1))
-              (bl (border-left obj))
-              (bt (border-top obj))
-              (br (border-right obj))
-              (bb (border-bottom obj)))
-          (unless (eql bl nil)
-            (incf left (width bl)))
-          (unless (eql bt nil)
-            (incf top (width bt)))
-          (unless (eql br nil)
-            (decf right (width br)))
-          (unless (eql bb nil)
-            (decf bottom (width bb)))
-          (al:draw-rectangle left top right bottom ch 1)))))
+        ;; Hilight if needed
+        (when in
+          (assert (not (eql ch nil)))
+          (let ((left (+ (left obj) 2))
+                (top (+ (top obj) 2))
+                (right (- (right obj) 1))
+                (bottom (- (bottom obj) 1))
+                (bl (border-left obj))
+                (bt (border-top obj))
+                (br (border-right obj))
+                (bb (border-bottom obj)))
+            (unless (eql bl nil)
+              (incf left (width bl)))
+            (unless (eql bt nil)
+              (incf top (width bt)))
+            (unless (eql br nil)
+              (decf right (width br)))
+            (unless (eql bb nil)
+              (decf bottom (width bb)))
+            (al:draw-rectangle left top right bottom ch 1))))))
   
   (my-next-method))
 
+(defmethod (setf theme) ((theme active-text-theme-mixin) (object active-text))
+  (with-slots ((dc down-color) (hc hover-color)
+               (ic interior-color) (uc up-color)
+               (fc fore-color) (bc back-color))
+      theme
+    (setf (down-color object) dc)
+    (setf (hover-color object) hc)
+    (setf (interior-color object) ic)
+    (setf (up-color object) uc)
+    (setf (fore-color object) fc)
+    (setf (back-color object) bc)))

@@ -73,15 +73,15 @@
                 (unless (eql pam-bb nil)
                   (decf pah (width pam-bb)))))
 
-            ;; If it also has spacing
-            (when (typep pam 'spacing-mixin)
-              ;; Adjust for spacing
-              (let ((pam-sl (spacing-left pam))
-                    (pam-st (spacing-top pam)))
+            ;; If it also has padding
+            (when (typep pam 'padding-mixin)
+              ;; Adjust for padding
+              (let ((pam-sl (padding-left pam))
+                    (pam-st (padding-top pam)))
                 (incf pal pam-sl)
                 (incf pat pam-st)
-                (decf paw (+ pam-sl (spacing-right pam)))
-                (decf pah (+ pam-st (spacing-bottom pam)))))
+                (decf paw (+ pam-sl (padding-right pam)))
+                (decf pah (+ pam-st (padding-bottom pam)))))
 
             ;; Save out area where needed
             (when (= ll +LAYOUT-LEFT-CALC+)
@@ -157,6 +157,8 @@
             (incf (nth back child-hs))
             (decf num-to-adjust 2))))
 
+      ;; TODO: Spacing is ignored
+      
       ;; TODO: A decision needs to be made here.  We are calculating all the child
       ;;       sizes.  Why do it multiple times?  Currently, as each the first
       ;;       child coordinate or size is requested, it comes here and calculates it.

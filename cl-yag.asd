@@ -10,20 +10,24 @@
   ;; Dependencies.
   :depends-on ("cl-liballegro"
                "cffi-object"
+               "closer-mop"
                "documentation-utils"
                "verbose")
 
   ;; Project stucture.
-  :serial t
   :components ((:module "src"
                 :components ((:file "packages")
+                             
                              (:file "constants")
                              (:file "macros")
                              (:file "generics")
+                             
                              (:file "utils")
 
+                             ;; Ease of use ...
                              (:file "allegro")
-                             
+
+                             ;; Composition objects
                              (:file "mixins/active")
                              (:file "mixins/align")
                              (:file "mixins/area")
@@ -43,33 +47,27 @@
                              (:file "mixins/theme")
                              (:file "mixins/title")
                              (:file "mixins/visible")
-                             
-                             (:file "layout")
-                             (:file "theme")
 
-                             (:file "grid")
                              (:file "manager")
+                             (:file "layout")
+
+                             ;; Interactive objects
+                             (:file "grid")
                              (:file "ruler")
                              (:file "text")
                              (:file "window")
-                             
-                             (:file "cl-yag")
-                             ;; (:file "cl-yag-docs")
-                             ;; (:file "allegro-docs")
-                             ;; (:file "constants-docs")
-                             ;; (:file "generics-docs")
-                             ;; (:file "layout-docs")
-                             ;; (:file "manager-docs")
-                             ;; (:file "text-docs")
-                             ;; (:file "theme-docs")
-                             ;; (:file "utils-docs")
-                             ;; (:file "window-docs")
-                             ))
-               )
+
+                             ;; theme needs to be last as it relies on all the
+                             ;; other objects -theme-mixins
+                             (:file "theme" :depends-on ("grid" "ruler" "text" "window"))
+
+                             ;; Used during development, and relies on ALL
+                             ;; other files
+                             (:file "cl-yag"))))
   
   :around-compile
   (lambda (next)
-    ;; (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 0) (speed 0)))    
-    (proclaim '(optimize (debug 3) (safety 3)))    
+    (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 1) (speed 1)))    
+    ;;(proclaim '(optimize (debug 3) (safety 3)))    
     (funcall next)))
 

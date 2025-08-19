@@ -63,6 +63,8 @@
 
 (defgeneric unhandled-event (event object) (:method (e o)))
 
+(defgeneric update-global-theme (theme) (:method (o)))
+
 (defgeneric within (x y obj &key &allow-other-keys))
 
 ;;;; setf =====================================================================
