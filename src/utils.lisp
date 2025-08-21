@@ -24,6 +24,9 @@
 (defun 2- (value)
   (- value 2))
 
+(defun asset (path)
+  (namestring (asdf:system-relative-pathname "cl-yag" (concatenate 'string "assets/" path))))
+
 (defmethod between ((lo integer) (hi integer))
   (let* ((r (+ lo (* (random 1.0) (- hi lo))))
 		 (result (truncate r)))

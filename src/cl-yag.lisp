@@ -11,6 +11,7 @@
   (must-init (al:install-keyboard) "keyboard")
   (must-init (al:install-mouse) "mouse")
   (must-init (al:init-font-addon) "font addon")
+  (must-init (al:init-ttf-addon) "ttf addon")
   (must-init (al:init-image-addon) "image addon")
   (must-init (al:init-primitives-addon) "primitives addon"))
 
@@ -26,7 +27,7 @@
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
-        (font (al:create-builtin-font))
+        (font (default-font))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect

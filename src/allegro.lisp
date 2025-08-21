@@ -45,6 +45,12 @@
 (defconstant +BLEND-CONST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':const-color))
 (defconstant +BLEND-INVERSE-CONS-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-cons-color))
 
+;; TTF font options
+
+(defconstant +TTF-NO-KERNING+ (cffi:foreign-enum-value 'al::ttf-flags ':no-kerning))
+(defconstant +TTF-MONOCHROME+ (cffi:foreign-enum-value 'al::ttf-flags ':monochrome))
+(defconstant +TTF-NO-AUTOHINT+ (cffi:foreign-enum-value 'al::ttf-flags ':no-autohint))
+
 ;; Pixel formats
 (defconstant +P-F-RGB-888+ (cffi:foreign-enum-value 'al::pixel-format ':rgb-888))
 (defconstant +P-F-BGR-888+ (cffi:foreign-enum-value 'al::pixel-format ':bgr-888))
