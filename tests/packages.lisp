@@ -5,12 +5,6 @@
    (#:v #:org.shirakumo.verbose))  
 
   ;; (:import-from #:cl-yag
-  ;;               ;; Constants
-  ;;               #:+LAYOUT-HEIGHT-CALC+
-  ;;               #:+LAYOUT-LEFT-CALC+
-  ;;               #:+LAYOUT-TOP-CALC+
-  ;;               #:+LAYOUT-WIDTH-CALC+
-
   ;;               ;; GUI classes / Macros
   ;;               #:defactive-text
   ;;               #:defborder

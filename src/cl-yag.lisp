@@ -46,16 +46,13 @@
                   
                   (a2 (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                                      :left :auto :top :auto :width :auto :height :auto))
                   (a3 (defactive-text :title "Blastem" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                                      :left :auto :top :auto :width :auto :height :auto))
                   (a4 (defactive-text :title "Quit" :font font
                                       :h-align :center :v-align :middle :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                      :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                                      :left :auto :top :auto :width :auto :height :auto))
                   ;; (cl (defcolumn-layout :content (list a2 a3 a4)))
                   (cl (defcolumn-layout :content (list a2 a3 a4)))
                   (w (defwindow 200 200 200 300 :content (list cl) ;;:interior-color (al:map-rgb-f 1 1 1)

@@ -1,52 +1,21 @@
 (in-package #:cl-yag)
 
-;;;; layout ===================================================================
-
-(defclass layout (container-mixin
-                  parent-mixin
-                  ready-mixin)
-  ((left :initform +LAYOUT-LEFT-CALC+ :initarg nil)
-   (top :initform +LAYOUT-TOP-CALC+ :initarg nil)
-   (width :initform +LAYOUT-WIDTH-CALC+ :initarg nil)
-   (height :initform +LAYOUT-HEIGHT-CALC+ :initarg nil)))
-
-(defmethod print-object ((o layout) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "deflayout ")
-    (print-mixin o s)))
-
-(defmethod on-char (key mods (obj layout) &key)
-  (dolist (child (content obj))
-    (on-char key mods child))
-  (my-next-method))
-
-(defmethod on-mouse-down (x y b (obj layout) &key)
-  (dolist (child (content obj))
-    (if (on-mouse-down x y b child)
-        (return-from on-mouse-down t)))
-  nil)
-
-(defmethod on-mouse-move (x y dx dy (obj layout) &key)
-  (dolist (child (content obj))
-    (on-mouse-move x y dx dy child)))
-
-(defmethod on-mouse-up (x y b (obj layout) &key)
-  (dolist (child (content obj))
-    (on-mouse-up x y b child)))
+;;;; functions ================================================================
 
 (defun calc-layout-area (object)
   ;; Start with existing area
-  (let ((ll (slot-value object 'left))
+  (let ((opts '(:auto :auto-max :auto-min))
+        (ll (slot-value object 'left))
         (lt (slot-value object 'top))
         (lw (slot-value object 'width))
         (lh (slot-value object 'height)))
 
     ;; Calculate our area if needed
-    (if (or (= ll +LAYOUT-LEFT-CALC+)
-            (= lt +LAYOUT-TOP-CALC+)
-            (= lw +LAYOUT-WIDTH-CALC+)
-            (= lh +LAYOUT-HEIGHT-CALC+))
+    (if (or (typep ll 'keyword)
+            (typep lt 'keyword)
+            (typep lw 'keyword)
+            (typep lh 'keyword))
+        
         ;; Locate first parent with area
         (let ((pam (find-parent-area-mixin object)))
           
@@ -84,14 +53,51 @@
                 (decf pah (+ pam-st (padding-bottom pam)))))
 
             ;; Save out area where needed
-            (when (= ll +LAYOUT-LEFT-CALC+)
+            (when (member ll opts)
               (setf (slot-value object 'left) pal))
-            (when (= lt +LAYOUT-TOP-CALC+)
+            (when (member lt opts)
               (setf (slot-value object 'top) pat))
-            (when (= lw +LAYOUT-WIDTH-CALC+)
+            (when (member lw opts)
               (setf (slot-value object 'width) paw))
-            (when (= lh +LAYOUT-HEIGHT-CALC+)
+            (when (member lh opts)
               (setf (slot-value object 'height) pah)))))))
+
+;;;; layout ===================================================================
+
+(defclass layout (container-mixin
+                  parent-mixin
+                  ready-mixin)
+  ((left :initform :auto :initarg nil)
+   (top :initform :auto :initarg nil)
+   (width :initform :auto :initarg nil)
+   (height :initform :auto :initarg nil)))
+
+(defmethod print-object ((o layout) s)
+  (pprint-indent :current 0 s)
+  (pprint-logical-block (s nil)
+    (format s "deflayout ")
+    (print-mixin o s)))
+
+;;; methods ---------------------------------------------------------
+
+(defmethod on-char (key mods (obj layout) &key)
+  (dolist (child (content obj))
+    (on-char key mods child))
+  (my-next-method))
+
+(defmethod on-mouse-down (x y b (obj layout) &key)
+  (dolist (child (content obj))
+    (if (on-mouse-down x y b child)
+        (return-from on-mouse-down t)))
+  nil)
+
+(defmethod on-mouse-move (x y dx dy (obj layout) &key)
+  (dolist (child (content obj))
+    (on-mouse-move x y dx dy child)))
+
+(defmethod on-mouse-up (x y b (obj layout) &key)
+  (dolist (child (content obj))
+    (on-mouse-up x y b child)))
 
 ;;;; column-layout ============================================================
 
@@ -115,7 +121,8 @@
   (calc-layout-area parent)
 
   ;; Start with existing child area
-  (let ((cl (slot-value child 'left))
+  (let ((opts '(:auto :auto-max :auto-min))
+        (cl (slot-value child 'left))
         (ct (slot-value child 'top))
         (cw (slot-value child 'width))
         (ch (slot-value child 'height))
@@ -172,24 +179,23 @@
       ;;       For example, the grid layout will need to do it for both directions.
       
       ;; Update left if desired
-      (when (= cl +LAYOUT-LEFT-CALC+)
+      (when (member cl opts)
         (setf (slot-value child 'left) pl))
 
       ;; Update top if desired
-      (when (= ct +LAYOUT-TOP-CALC+)
+      (when (member ct opts)
         (when (> cp 0)
           (loop :for i :from 0 :to (1- cp) do
             (incf pt (nth i child-hs))))
         (setf (slot-value child 'top) pt))
       
       ;; Update width if desired
-      (when (= cw +LAYOUT-WIDTH-CALC+)
+      (when (member cw opts)
         (setf (slot-value child 'width) pw))
 
       ;; Update height if desired
-      (when (= ch +LAYOUT-HEIGHT-CALC+)
-        (setf (slot-value child 'height) (nth cp child-hs))))
-    )
+      (when (member ch opts)
+        (setf (slot-value child 'height) (nth cp child-hs)))))
   
   (my-next-method))
 
@@ -231,7 +237,8 @@
   (calc-layout-area parent)
 
   ;; Start with existing child area
-  (let ((cl (slot-value child 'left))
+  (let ((opts '(:auto :auto-max :auto-min))
+        (cl (slot-value child 'left))
         (ct (slot-value child 'top))
         (cw (slot-value child 'width))
         (ch (slot-value child 'height))
@@ -244,6 +251,7 @@
         (child-num-v (columns parent))          
         child-hs child-ws)
 
+    ;; TODO: Should this be real?
     (assert (not (eql cp nil)))
     
     ;; Calculate our childrens heights
@@ -261,25 +269,25 @@
            (col (+ (- cp row) (mod cp (rows parent)))))
       
       ;; Update left if desired
-      (when (= cl +LAYOUT-LEFT-CALC+)
+      (when (member cl opts)
         (when (> col 0)
           (loop :for i :from 0 :to (1- col) do
             (incf pl (nth i child-ws))))
         (setf (slot-value child 'left) pl))
 
       ;; Update top if desired
-      (when (= ct +LAYOUT-TOP-CALC+)
+      (when (member ct opts)
         (when (> row 0)
           (loop :for i :from 0 :to (1- row) do
             (incf pt (nth i child-hs))))
         (setf (slot-value child 'top) pt))
       
       ;; Update width if desired
-      (when (= cw +LAYOUT-WIDTH-CALC+)
+      (when (member cw opts)
         (setf (slot-value child 'width) (nth col child-ws)))
 
       ;; Update height if desired
-      (when (= ch +LAYOUT-HEIGHT-CALC+)
+      (when (member ch opts)
         (setf (slot-value child 'height) (nth row child-hs)))))
   
   (my-next-method))

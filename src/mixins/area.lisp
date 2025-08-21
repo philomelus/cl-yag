@@ -1,29 +1,6 @@
 (in-package #:cl-yag)
 
-;;;; area-mixin ===============================================================
-
-(defclass area-mixin ()
-  ((left :initarg :left :initform +LAYOUT-LEFT-CALC+ :type integer :accessor left)
-   (top :initarg :top :initform +LAYOUT-TOP-CALC+ :type integer :accessor top)
-   (width :initarg :width :initform +LAYOUT-HEIGHT-CALC+ :type integer :accessor width)
-   (height :initarg :height :initform +LAYOUT-WIDTH-CALC+ :type integer :accessor height)))
-
-;;; functions -------------------------------------------------------
-
-(defmethod print-mixin ((o area-mixin) s)
-  (pprint-indent :current 0 s)
-  (format s ":left ~d " (left o))
-  (pprint-newline :linear s)
-  (pprint-indent :current 0 s)
-  (format s ":top ~d " (top o))
-  (pprint-newline :linear s)
-  (pprint-indent :current 0 s)
-  (format s ":width ~d " (width o))
-  (pprint-newline :linear s)
-  (pprint-indent :current 0 s)
-  (format s ":height ~d " (height o))
-  (pprint-newline :linear s)
-  (my-next-method))
+;;;; functions ================================================================
 
 (defun find-parent-area-mixin (object)
   (assert (typep object 'parent-mixin))
@@ -41,10 +18,48 @@
 
       ;; Get next parent
       (assert (typep p 'area-mixin))
-      (setf p (parent p))
-      )))
+      (setf p (parent p)))))
+
+;;;; area-mixin ===============================================================
+
+(defvar *AREA-OPTS* '(:auto :auto-max :auto-min))
+
+(defclass area-mixin ()
+  ((left :initarg :left :initform :auto :accessor left)
+   (top :initarg :top :initform :auto :accessor top)
+   (width :initarg :width :initform :auto :accessor width)
+   (height :initarg :height :initform :auto :accessor height)))
+
+(defmethod print-mixin ((o area-mixin) s)
+  (pprint-indent :current 0 s)
+  (format s ":left ~d " (left o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":top ~d " (top o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":width ~d " (width o))
+  (pprint-newline :linear s)
+  (pprint-indent :current 0 s)
+  (format s ":height ~d " (height o))
+  (pprint-newline :linear s)
+  (my-next-method))
 
 ;;; methods ---------------------------------------------------------
+
+(defmethod initialize-object :after ((object area-mixin) &key)
+  (let ((opts '(:auto :auto-max :auto-min)))
+    (with-slots (left top width height) object
+      (macrolet ((validate (field)
+                   `(unless (typep ,field 'number)
+                      (if (typep ,field 'keyword)
+                          (unless (member ,field opts)
+                            (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
+                          (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
+        (validate 'left)
+        (validate 'top)
+        (validate 'width)
+        (validate 'height)))))
 
 (defmethod bottom ((obj area-mixin) &key)
   (+ (top obj) (height obj)))
@@ -52,14 +67,14 @@
 (defmethod height ((obj area-mixin))
   (let ((h (slot-value obj 'height)))
     ;; Calculate if requested
-    (when (= h +LAYOUT-HEIGHT-CALC+)
+    (when (member h *AREA-OPTS*)
       (calc-area obj (parent obj))
       (setf h (slot-value obj 'height)))
     h))
 
 (defmethod left ((obj area-mixin))
   (let ((l (slot-value obj 'left)))
-    (when (= l +LAYOUT-LEFT-CALC+)
+    (when (member l *AREA-OPTS*)
       (calc-area obj (parent obj))
       (setf l (slot-value obj 'left)))
     l))
@@ -89,14 +104,14 @@
 
 (defmethod top ((obj area-mixin))
   (let ((top (slot-value obj 'top)))
-    (when (= top +LAYOUT-TOP-CALC+)
+    (when (member top *AREA-OPTS*)
       (calc-area obj (parent obj))
       (setf top (slot-value obj 'top)))
     top))
 
 (defmethod width ((obj area-mixin))
   (let ((w (slot-value obj 'width)))
-    (when (= w +LAYOUT-WIDTH-CALC+)
+    (when (member w *AREA-OPTS*)
         (calc-area obj (parent obj))
         (setf w (slot-value obj 'width)))
     w))

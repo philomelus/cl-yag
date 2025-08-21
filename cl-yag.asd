@@ -18,7 +18,6 @@
   :components ((:module "src"
                 :components ((:file "packages")
                              
-                             (:file "constants")
                              (:file "macros")
                              (:file "generics")
                              
@@ -49,6 +48,7 @@
                              (:file "mixins/visible")
 
                              (:file "manager")
+                             (:file "fonts")
                              (:file "layout")
 
                              ;; Interactive objects

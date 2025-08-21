@@ -26,19 +26,15 @@
            (setf (text-tests-data-a1 data)
                  (defactive-text :title "First Active Text" :font font
                                  :h-align :center :v-align :middle
-                                 :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                 :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                                 :left :auto :top :auto :width :auto :height :auto))
            (setf (text-tests-data-a2 data)
                  (defactive-text :title "Another Active Text" :font font
                                  :h-align :center :v-align :middle
-                                 :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                 :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+))
+                                 :left :auto :top :auto :width :auto :height :auto))
            (setf (text-tests-data-a3 data)
                  (defactive-text :title "Quit" :font font
                                  :h-align :center :v-align :middle
-                                 :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                 :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+
-                   ))
+                                 :left :auto :top :auto :width :auto :height :auto))
            (setf (text-tests-data-cl data)
                  (defcolumn-layout :content (list (text-tests-data-a1 data)
                                                   (text-tests-data-a2 data)

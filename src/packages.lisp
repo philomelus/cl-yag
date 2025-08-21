@@ -18,12 +18,6 @@
                 #:find-class
                 #:slot-definition-name)
   (:export #:main
-           ;; Constants
-           #:+LAYOUT-HEIGHT-CALC+
-           #:+LAYOUT-LEFT-CALC+
-           #:+LAYOUT-TOP-CALC+
-           #:+LAYOUT-WIDTH-CALC+
-
            ;; GUI classes / Macros
            #:active-text
            #:column-layout

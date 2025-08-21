@@ -507,7 +507,7 @@
                   ;; Make sure all slots get set
                   (dolist (slot (class-slots (find-class 'theme-3d-all)))
                     (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                      (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
+                      (error "Missing theme-3d-all setting: ~a" (slot-definition-name slot))))
                   
                   ,object))
               ,normal ,dark ,light ,very-dark ,very-light, fore-color, back-color)))

@@ -35,7 +35,7 @@
     (assert (not (eql nil (font obj))))
     
     ;; When auto-calculated, start at 0 offset from parent
-    (if (= at +LAYOUT-LEFT-CALC+)
+    (if (member at *AREA-OPTS*)
         (setf at 0))
 
     (case va
@@ -58,7 +58,8 @@
 
 ;;;; text-base ================================================================
 
-(defclass text-base-theme-mixin (color-fore-back-mixin)
+(defclass text-base-theme-mixin (color-fore-back-mixin
+                                 font-mixin)
   ())
 
 (defmethod print-mixin ((object text-base-theme-mixin) stream)
@@ -71,7 +72,6 @@
                      align-mixin
                      area-mixin
                      border-mixin
-                     font-mixin
                      parent-mixin
                      title-mixin)
   ())
