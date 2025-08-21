@@ -3,10 +3,10 @@
 ;;;; padding-mixin ============================================================
 
 (defclass padding-mixin ()
-  ((padding-left :initarg :pad-left :initform 0 :type integer :accessor padding-left)
-   (padding-right :initarg :pad-right :initform 0 :type integer :accessor padding-right)
-   (padding-top :initarg :pad-top :initform 0 :type integer :accessor padding-top)
-   (padding-bottom :initarg :pad-bottom :initform 0 :type integer :accessor padding-bottom)))
+  ((padding-left :initarg :padding-left :initform 0 :type integer :accessor padding-left)
+   (padding-right :initarg :padding-right :initform 0 :type integer :accessor padding-right)
+   (padding-top :initarg :padding-top :initform 0 :type integer :accessor padding-top)
+   (padding-bottom :initarg :padding-bottom :initform 0 :type integer :accessor padding-bottom)))
 
 (defmethod print-mixin ((o padding-mixin) s)
   (pprint-indent :current 0 s)

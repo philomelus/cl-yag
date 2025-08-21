@@ -47,6 +47,8 @@
                              (:file "mixins/title")
                              (:file "mixins/visible")
 
+                             (:file "rect")
+                             
                              (:file "manager")
                              (:file "fonts")
                              (:file "layout")

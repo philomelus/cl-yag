@@ -4,9 +4,43 @@
 
 (defgeneric between (lo hi))
 
-(defgeneric bottom (obj &key &allow-other-keys))
+(defgeneric bottom (object))
 
 (defgeneric calc-area (object parent &key &allow-other-keys))
+
+(defgeneric calc-height (type area object)
+  (:documentation "Calculate height of object.
+
+type = member (:auto :auto-max :auto-min)
+area = (left top width height) within parent
+object = object doing height calculation for"))
+
+(defgeneric calc-left (type area object)
+  (:documentation "Calculate the left position of object.
+
+type = member (:auto :auto-max :auto-min)
+area = (left top width height) within parent
+object = object doing left calculation for
+
+At the point this is called, calculated height and width of object have
+already been calcuated and set to object."))
+
+(defgeneric calc-top (type area object)
+  (:documentation "Calculate the top position of object.
+
+type = member (:auto :auto-max :auto-min)
+area = (left top width height) within parent
+object = object doing top calculation for
+
+At the point this is called, calculated height and width of object have
+already been calcuated and set to object."))
+
+(defgeneric calc-width (type area object)
+  (:documentation "Calculate width of object.
+
+type = member (:auto :auto-max :auto-min)
+area = (left top width height) within parent
+object = object doing width calculation for"))
 
 (defgeneric must-init (test desc))
 
@@ -59,7 +93,7 @@
 
 (defgeneric process-events (queue object &key &allow-other-keys))
 
-(defgeneric right (obj &key &allow-other-keys))
+(defgeneric right (object))
 
 (defgeneric unhandled-event (event object) (:method (e o)))
 

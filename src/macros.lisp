@@ -58,10 +58,10 @@ border and spacing of object."
            (format ,stream "(~a) " (print-color ,field))))
      (pprint-newline :linear ,stream)))
 
-(defmacro pprint-field (field object stream)
+(defmacro pprint-field (field object stream &key (fmt "~a"))
   `(progn
      (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a ~a " (symbol-name ',field) (,field ,object))
+     (format ,stream (concatenate 'string ":~a" ,fmt " ") (symbol-name ',field) (,field ,object))
      (pprint-newline :linear ,stream)))
 
 (defmacro pprint-field-keyword (field object stream)
@@ -95,3 +95,4 @@ border and spacing of object."
            (format ,stream "NIL ")
            (format ,stream "(~a) " ,field)))
      (pprint-newline :linear ,stream)))
+

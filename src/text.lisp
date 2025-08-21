@@ -35,7 +35,7 @@
     (assert (not (eql nil (font obj))))
     
     ;; When auto-calculated, start at 0 offset from parent
-    (if (member at *AREA-OPTS*)
+    (if (member at *AREA-TOP-OPTS*)
         (setf at 0))
 
     (case va
@@ -72,6 +72,7 @@
                      align-mixin
                      area-mixin
                      border-mixin
+                     padding-mixin      ; between title and edge
                      parent-mixin
                      title-mixin)
   ())
@@ -90,7 +91,7 @@
   (my-next-method))
 
 (defmacro deftext (&rest rest &key &allow-other-keys)
-  `(make-instance 'active-text ,@rest))
+  `(make-instance 'text ,@rest))
 
 (defmethod print-object ((o text-base) s)
   (pprint-indent :current 0 s)
@@ -100,8 +101,77 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod calc-height (type area (object text))
+  (let ((rv (fourth area)))
+    (case type
+      ((:auto :auto-max))               ; nothing to do
+    
+      (:auto-min
+       (let ((fh (al:get-font-line-height (font object))))
+         (incf fh (padding-top object))
+         (incf fh (padding-bottom object))
+         (setq rv (min fh (fourth area))))))
+    rv))
+
+(defmethod calc-left (type area (object text))
+  (let (rv)
+   (case type
+     ((:left :auto)
+      (setq rv (first area)))
+    
+     (:center
+      (let ((w (slot-value object 'width)))
+        (incf w (padding-left object))
+        (incf w (padding-right object))
+        (setq rv (+ (first area) (truncate (/ (- (third area) w) 2))))))
+
+     (:right
+      (let ((w (slot-value object 'width)))
+        (incf w (padding-left object))
+        (incf w (padding-right object))
+        (setq rv (+ (first area) (- (third area) w))))))
+    rv))
+
+(defmethod calc-top (type area (object text))
+  (let ((rv (second area)))
+    (case type
+      ((:top :auto))                    ; already done
+
+      (:middle
+       (let ((h (slot-value object 'height)))
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (incf rv (truncate (/ (- (fourth area) h) 2)))))
+
+      (:bottom
+       (let ((h (slot-value object 'height)))
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (incf rv (- (fourth area) h)))))
+    
+    (v:info :layout "calc-top: active-text: calculated top: ~d (~d)" rv (second area))
+    rv))
+
+(defmethod calc-width (type area (object text))
+  (let (rv)
+    (case type
+      ((:auto :auto-max)
+       (setq rv (third area)))
+
+      (:auto-min
+       (let ((tw (al:get-text-width (font object) (title object))))
+         (incf tw (padding-left object))
+         (incf tw (padding-right object))
+         (setq rv (min tw (third area))))))
+    (v:info :layout "calc-width: active-text: calculated width: ~d (~d)" rv (third area))
+    rv))
+
 (defmethod on-paint ((obj text) &key)
-  (al:draw-text (font obj) (color obj) (text-calc-left obj) (text-calc-top obj) 0 (title obj))
+  (let ((fc (fore-color obj)))
+    (when (eql fc nil)
+      (fore-color (find-theme obj)))
+    (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+      (al:draw-text (font obj) fc (text-calc-left obj) (text-calc-top obj) 0 (title obj))))
   (my-next-method))
 
 (defmethod (setf theme) ((theme text-theme-mixin) (object text))
@@ -209,40 +279,40 @@
           (when (eql ic nil)
             (setq ic (interior-color theme)))))
 
-      (let ((left (left obj)))
-      
-        ;; Draw background
-        (assert (not (eql bg nil)))
-        (al:draw-filled-rectangle left (top obj) (right obj) (bottom obj) ic)
+      ;; Draw background
+      (assert (not (eql bg nil)))
+      (al:draw-filled-rectangle (left obj) (top obj) (right obj) (bottom obj) ic)
     
-        ;; Draw border
-        (paint-border obj (find-theme obj))
+      ;; Draw border
+      (paint-border obj (find-theme obj))
     
-        ;; Draw text
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-          (assert (not (eql (if down cd cu) nil)))
-          (al:draw-text (font obj) (if down cd cu)
-                        (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
+      ;; Draw text
+      (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+        (assert (not (eql (if down cd cu) nil)))
+        (al:draw-text (font obj) (if down cd cu)
+                      (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
     
-        ;; Hilight if needed
-        (when in
-          (assert (not (eql ch nil)))
-          (let ((left (+ (left obj) 2))
-                (top (+ (top obj) 2))
-                (right (- (right obj) 1))
-                (bottom (- (bottom obj) 1))
-                (bl (border-left obj))
-                (bt (border-top obj))
-                (br (border-right obj))
-                (bb (border-bottom obj)))
-            (unless (eql bl nil)
-              (incf left (width bl)))
-            (unless (eql bt nil)
-              (incf top (width bt)))
-            (unless (eql br nil)
-              (decf right (width br)))
-            (unless (eql bb nil)
-              (decf bottom (width bb)))
+      ;; Hilight if needed
+      (when in
+        (assert (not (eql ch nil)))
+        (let ((left (+ (left obj) 2))
+              (top (+ (top obj) 2))
+              (right (- (right obj) 1))
+              (bottom (- (bottom obj) 1))
+              (bl (border-left obj))
+              (bt (border-top obj))
+              (br (border-right obj))
+              (bb (border-bottom obj)))
+          (unless (eql bl nil)
+            (incf left (width bl)))
+          (unless (eql bt nil)
+            (incf top (width bt)))
+          (unless (eql br nil)
+            (decf right (width br)))
+          (unless (eql bb nil)
+            (decf bottom (width bb)))
+          
+          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
             (al:draw-rectangle left top right bottom ch 1))))))
   
   (my-next-method))

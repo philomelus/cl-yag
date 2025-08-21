@@ -27,7 +27,7 @@
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
-        (font (default-font))
+        (font (default-font -24))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
@@ -43,19 +43,23 @@
                   
                   (g (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
                               :shortcuts (list '(:5))))
+
+                  (a1 (deftext :title "Title" :font font :h-align :center :v-align :middle))
                   
                   (a2 (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left :auto :top :auto :width :auto :height :auto))
+                                      :left :center :top :middle :width :auto :height :auto-min
+                                      :padding-top 10 :padding-bottom 10))
                   (a3 (defactive-text :title "Blastem" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
-                                      :left :auto :top :auto :width :auto :height :auto))
-                  (a4 (defactive-text :title "Quit" :font font
-                                      :h-align :center :v-align :middle :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left :auto :top :auto :width :auto :height :auto))
+                                      :left :center :top :middle :width :auto-min :height :auto
+                                      :padding-left 0 :padding-right 0))
+                  (a4 (defactive-text :title "Quit" :font font :h-align :center :v-align :middle
+                                      :shortcuts (list '(:q :shift) '(:q :none))
+                                      :left :center :top :middle :width :auto :height :auto))
                   ;; (cl (defcolumn-layout :content (list a2 a3 a4)))
-                  (cl (defcolumn-layout :content (list a2 a3 a4)))
-                  (w (defwindow 200 200 200 300 :content (list cl) ;;:interior-color (al:map-rgb-f 1 1 1)
+                  (cl (defcolumn-layout :content (list a1 a2 a3 a4)))
+                  (w (defwindow 200 200 300 400 :content (list cl) ;;:interior-color (al:map-rgb-f 1 1 1)
                        ))
                   (boss (defmanager :content (list w rt rl rr rb g))))
 
@@ -87,16 +91,20 @@
              ;; (setf (border a3) (defborder-3d :width 6 :theme *theme-3d-yellow*))
 
              ;; (setf *theme-default* (theme-3d-gray))
+             ;; (setf (interior-color w) (al:map-rgb 127 0 0))
+             ;; (setf (hover-color a2) (al:map-rgb 0 255 0))
+             ;; (setf (hover-color a3) (al:map-rgb 0 255 0))
+             ;; (setf (hover-color a4) (al:map-rgb 0 255 0))
              
              (setf (padding w) 10)
              
-             (defmethod on-command ((obj (eql (first (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql a2)) &key)
                (v:info :app "Item 1 clicked"))
 
-             (defmethod on-command ((obj (eql (second (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql a3)) &key)
                (v:info :app "Item 2 clicked"))
 
-             (defmethod on-command ((obj (eql (third (content (first (content w)))))) &key)
+             (defmethod on-command ((obj (eql a4)) &key)
                (v:info :app "Item 3 clicked")
                (setf (process boss) nil))
 

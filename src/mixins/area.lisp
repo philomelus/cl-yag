@@ -22,7 +22,10 @@
 
 ;;;; area-mixin ===============================================================
 
-(defvar *AREA-OPTS* '(:auto :auto-max :auto-min))
+(defvar *AREA-HEIGHT-OPTS* '(:auto :auto-max :auto-min))
+(defvar *AREA-LEFT-OPTS* '(:auto :left :center :right))
+(defvar *AREA-TOP-OPTS* '(:auto :top :middle :bottom))
+(defvar *AREA-WIDTH-OPTS* '(:auto :auto-max :auto-min))
 
 (defclass area-mixin ()
   ((left :initarg :left :initform :auto :accessor left)
@@ -48,34 +51,36 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod initialize-object :after ((object area-mixin) &key)
-  (let ((opts '(:auto :auto-max :auto-min)))
-    (with-slots (left top width height) object
-      (macrolet ((validate (field)
-                   `(unless (typep ,field 'number)
-                      (if (typep ,field 'keyword)
-                          (unless (member ,field opts)
-                            (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
-                          (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
-        (validate 'left)
-        (validate 'top)
-        (validate 'width)
-        (validate 'height)))))
+  (with-slots (left top width height) object
+    (macrolet ((validate (field opts)
+                 `(unless (typep ,field 'number)
+                    (if (typep ,field 'keyword)
+                        (unless (member ,field ,opts)
+                          (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
+                        (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
+      (validate 'height *AREA-HEIGHT-OPTS*)
+      (validate 'left *AREA-LEFT-OPTS*)
+      (validate 'top *AREA-TOP-OPTS*)
+      (validate 'width *AREA-WIDTH-OPTS*))))
 
-(defmethod bottom ((obj area-mixin) &key)
+(defmethod bottom ((obj area-mixin))
   (+ (top obj) (height obj)))
 
 (defmethod height ((obj area-mixin))
-  (let ((h (slot-value obj 'height)))
-    ;; Calculate if requested
-    (when (member h *AREA-OPTS*)
+  (with-slots ((h height)) obj
+    (when (typep h 'keyword)
+      (assert (member h *AREA-HEIGHT-OPTS*))
       (calc-area obj (parent obj))
+      (assert (typep (slot-value obj 'height) 'number))
       (setf h (slot-value obj 'height)))
     h))
 
 (defmethod left ((obj area-mixin))
-  (let ((l (slot-value obj 'left)))
-    (when (member l *AREA-OPTS*)
+  (with-slots ((l left)) obj
+    (when (typep l 'keyword)
+      (assert (member l *AREA-LEFT-OPTS*))
       (calc-area obj (parent obj))
+      (assert (typep (slot-value obj 'left) 'number))
       (setf l (slot-value obj 'left)))
     l))
 
@@ -99,21 +104,27 @@
         (on-mouse-up x y b child)))
   (my-next-method))
 
-(defmethod right ((obj area-mixin) &key)
-  (+ (left obj) (width obj)))
+(defmethod right ((obj area-mixin))
+  (let ((l (left obj))
+        (w (width obj)))
+    (+ l w)))
 
 (defmethod top ((obj area-mixin))
-  (let ((top (slot-value obj 'top)))
-    (when (member top *AREA-OPTS*)
+  (with-slots ((top top)) obj
+    (when (typep top 'keyword)
+      (assert (member top *AREA-TOP-OPTS*))
       (calc-area obj (parent obj))
+      (assert (typep (slot-value obj 'top) 'number))
       (setf top (slot-value obj 'top)))
     top))
 
 (defmethod width ((obj area-mixin))
-  (let ((w (slot-value obj 'width)))
-    (when (member w *AREA-OPTS*)
-        (calc-area obj (parent obj))
-        (setf w (slot-value obj 'width)))
+  (with-slots ((w width)) obj
+    (when (typep w 'keyword)
+      (assert (member w *AREA-WIDTH-OPTS*))
+      (calc-area obj (parent obj))
+      (assert (typep (slot-value obj 'width) 'number))
+      (setf w (slot-value obj 'width)))
     w))
 
 (defmethod within (x y (obj area-mixin) &key)
@@ -121,6 +132,11 @@
         (top (top obj))
         (right (right obj))
         (bottom (bottom obj)))
+    (when (typep obj 'padding-mixin)
+      (decf left (padding-left obj))
+      (incf right (padding-right obj))
+      (decf top (padding-top obj))
+      (incf bottom (padding-bottom obj)))
     (if (and (> x left) (< x right)
              (> y top) (< y bottom))
         t
