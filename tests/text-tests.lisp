@@ -12,13 +12,12 @@
   (cl-yag::must-init (al:init-primitives-addon) "primitives addon")
   (al:set-new-display-option :sample-buffers 1 :suggest)
   (al:set-new-display-option :samples 8 :suggest)
-  (al:set-new-display-flags '(:resizable))
+  ;; (al:set-new-display-flags '(:resizable))
 
   (let ((screen (al:create-display 960 720))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (font (al:create-builtin-font))
-        (buffer (al:create-bitmap 320 240))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
@@ -38,7 +37,7 @@
                  (defactive-text :title "Quit" :font font
                                  :h-align :center :v-align :middle
                                  :left +LAYOUT-LEFT-CALC+ :top +LAYOUT-TOP-CALC+
-                                 ;;:width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+
+                                 :width +LAYOUT-WIDTH-CALC+ :height +LAYOUT-HEIGHT-CALC+
                    ))
            (setf (text-tests-data-cl data)
                  (defcolumn-layout :content (list (text-tests-data-a1 data)
@@ -90,13 +89,11 @@
                 (v:debug :event "event: ~a"
                          (event-type event)))))
            
-           ;;(princ (text-tests-data-m data) *standard-output*)
            (process-events queue (text-tests-data-m data))
            )
       
       (progn
         (cffi:foreign-free event)
-        (al:destroy-bitmap buffer)
         (al:destroy-display screen)
         (al:destroy-timer timer)
         (al:destroy-event-queue queue)
