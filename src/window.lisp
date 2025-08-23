@@ -24,12 +24,12 @@
 (defmacro defwindow (l top w h &rest rest &key &allow-other-keys)
   `(make-instance 'window :left ,l :top ,top :width ,w :height ,h ,@rest))
 
-(defmethod print-object ((o window) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "(defwindow ")
-    (print-mixin o s)
-    (format s ")")))
+;; (defmethod print-object ((o window) s)
+;;   (pprint-indent :current 0 s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "(defwindow ")
+;;     (print-mixin o s)
+;;     (format s ")")))
 
 ;;; methods ---------------------------------------------------------
 

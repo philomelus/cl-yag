@@ -52,16 +52,19 @@
     (princ object)
     s))
 
-(defun print-raw-object (o &optional (name nil))
+(defun print-raw-object (o &key (name nil) (bare nil))
   (with-output-to-string (s)
-    (if (eq nil name)
-        (print-unreadable-object (o s :type (if name nil t) :identity t)
+    (if bare
+        (print-unreadable-object (o s :type nil :identity t)
           (format nil ""))
-        (print-unreadable-object (o s :identity t)
-          (format s "~a" name))
+        (if (eq nil name)
+            (print-unreadable-object (o s :type t :identity t)
+              (format nil ""))
+            (print-unreadable-object (o s :identity t)
+              (format s "~a" name))))))
 
-
-        )))
+(defun print-thread-name ()
+  (format nil "~a" (bt:thread-name (bt:current-thread))))
 
 (declaim (ftype (function (integer integer integer integer integer integer integer integer) boolean) rect-collide))
 (defun rect-collide (left1 top1 right1 bottom1 left2 top2 right2 bottom2)

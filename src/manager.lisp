@@ -10,6 +10,8 @@
 (defmacro defmanager (&rest rest &key &allow-other-keys)
   `(make-instance 'manager ,@rest))
 
+;;; methods ---------------------------------------------------------
+
 (defmethod on-char (key mods (obj manager) &key)
   (v:debug :event "on-char: manager: got ~a ~b" key mods)
   (dolist (child (content obj))
@@ -19,18 +21,18 @@
   (dolist (child (content obj))
     (on-paint child)))
 
-(defmethod print-object ((o manager) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "(defmanager ")
-    (print-mixin o s)
-    (format s ")")))
+;; (defmethod print-object ((o manager) s)
+;;   (pprint-indent :current 0 s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "(defmanager ")
+;;     (print-mixin o s)
+;;     (format s ")")))
 
 (defmethod process-events (queue (object manager) &key &allow-other-keys)
   (defmethod on-mouse-down-accept (o (m (eql object)))
     (v:debug :event "on-mouse-down-accept: ~a" (print-raw-object o))
     (setf (slot-value object 'last-mouse-down) o))
-  
+
   (let ((event (cffi:foreign-alloc '(:union al:event))))
     (unwind-protect
          (setf (process object) t)

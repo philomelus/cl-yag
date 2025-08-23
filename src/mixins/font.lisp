@@ -11,7 +11,7 @@
   (format s ":font ")
   (if (eq nil (font o))
       (format s "nil ")
-      (format s "~a " (print-raw-object (font o) "AL:FONT ")))
+      (format s "~a " (print-raw-object (font o) :name "AL:FONT ")))
   (pprint-newline :linear s)
   (my-next-method))
 

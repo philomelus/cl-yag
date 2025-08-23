@@ -20,15 +20,6 @@
 (defparameter *rb* nil)
 (defparameter *g* nil)
 
-(defun dump-layout (object)
-  (when (not (eql object nil))
-    (format *standard-output* "~a:~%" (print-raw-object object))
-    (with-slots (content) object
-      (dotimes (n (length (content object)))
-        (let ((child (nth n content)))
-          (format *standard-output* "  child ~d area (~d ~d) @ (~d ~d)~%" n
-                  (width child) (height child) (left child) (top child)))))))
-
 (defun main-init ()
   (must-init (al:init) "allegro")
   (must-init (al:install-keyboard) "keyboard")
@@ -72,15 +63,16 @@
            
            (setq *a1* (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left :center :top :middle :width :auto :height :auto-min
-                                      :padding-top 10 :padding-bottom 10))
+                                      :left :center :top :top :width :auto :height :auto-min
+                                      :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
            (setq *a2* (defactive-text :title "Blastem" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
-                                      :left :center :top :middle :width :auto-min :height :auto
-                                      :padding-left 0 :padding-right 0))
+                                      :left :center :top :middle :width :auto :height :auto-min
+                                      :padding-left 10 :padding-right 10 :padding-top 10 :padding-bottom 10))
            (setq *a3* (defactive-text :title "Quit" :font font :h-align :center :v-align :middle
                                       :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left :center :top :middle :width :auto :height :auto))
+                                      :left :center :top :bottom :width :auto :height :auto-min
+                                      :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
            (setq *cl2* (defcolumn-layout :content (list *a1* *a2* *a3*)))
            (setq *cl1* (defcolumn-layout :content (list *t1* *cl2*)))
            (setq *w* (defwindow 200 200 300 400 :content (list *cl1*)))

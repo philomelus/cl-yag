@@ -45,7 +45,7 @@ border and spacing of object."
 (defmacro pprint-color (field object stream)
   `(progn
      (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a (~a) " (symbol-name ',field) (print-color (,field ,object)))
+     (format ,stream ":~a (~a) " (symbol-name ',field) (print-color (slot-value ,object ',field)))
      (pprint-newline :linear ,stream)))
 
 (defmacro pprint-color-nil (field object stream)
@@ -61,13 +61,13 @@ border and spacing of object."
 (defmacro pprint-field (field object stream &key (fmt "~a"))
   `(progn
      (pprint-indent :current 0 ,stream)
-     (format ,stream (concatenate 'string ":~a" ,fmt " ") (symbol-name ',field) (,field ,object))
+     (format ,stream (concatenate 'string ":~a " ,fmt " ") (symbol-name ',field) (slot-value ,object ',field))
      (pprint-newline :linear ,stream)))
 
 (defmacro pprint-field-keyword (field object stream)
   `(progn
      (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a :~a" (symbol-name ',field) (,field ,object))
+     (format ,stream ":~a :~a" (symbol-name ',field) (slot-value ,object ',field))
      (pprint-newline :linear ,stream)))
 
 (defmacro pprint-field-nil (field object stream)
@@ -83,7 +83,7 @@ border and spacing of object."
 (defmacro pprint-object (field object stream)
   `(progn
      (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a (~a) " (symbol-name ',field) (,field ,object))
+     (format ,stream ":~a (~a) " (symbol-name ',field) (slot-value ,object ',field))
      (pprint-newline :linear ,stream)))
 
 (defmacro pprint-object-nil (field object stream)
@@ -95,4 +95,11 @@ border and spacing of object."
            (format ,stream "NIL ")
            (format ,stream "(~a) " ,field)))
      (pprint-newline :linear ,stream)))
+
+;;;; with-* ===================================================================
+
+(defmacro with-area ((left top width height) object &body body)
+  `(with-slots ((,left left) (,top top) (,width width) (,height height))
+       ,object
+     ,@body))
 

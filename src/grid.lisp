@@ -27,13 +27,13 @@
 (defmacro defgrid (&rest rest &key &allow-other-keys)
   `(make-instance 'grid ,@rest))
 
-(defmethod print-object ((o grid) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "defgrid ")
-    (pprint-field-nil major o s)
-    (pprint-field-nil minor o s)
-    (print-mixin o s)))
+;; (defmethod print-object ((o grid) s)
+;;   (pprint-indent :current 0 s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "defgrid ")
+;;     (pprint-field-nil major o s)
+;;     (pprint-field-nil minor o s)
+;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 

@@ -9,7 +9,8 @@
   :source-control (:git "https://github.com/philomelus/cl-yag.git")
 
   ;; Dependencies.
-  :depends-on ("cl-liballegro"
+  :depends-on ("bordeaux-threads"
+               "cl-liballegro"
                ;; "cffi-object"
                "closer-mop"
                "verbose")
@@ -36,6 +37,7 @@
                              (:file "mixins/content")
                              (:file "mixins/enable")
                              (:file "mixins/font")
+                             (:file "mixins/layout")
                              (:file "mixins/location")
                              (:file "mixins/manager")
                              (:file "mixins/padding")
@@ -69,7 +71,7 @@
   
   :around-compile
   (lambda (next)
-    (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 1) (speed 1)))    
+    (proclaim '(optimize (compilation-speed 0) (debug 3) (safety 3) (space 1) (speed 0)))    
     ;;(proclaim '(optimize (debug 3) (safety 3)))    
     (funcall next)))
 

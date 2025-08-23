@@ -2,33 +2,39 @@
 
 ;;;; functions ================================================================
 
-(defun text-calc-left (obj)
-  (let ((al (left obj))
-        (ha (h-align obj)))
+(defun text-calc-height (type area object)
+  (let ((rv (height area)))
+    (case type
+      ((:auto :auto-max))               ; nothing to do
+      
+      (:auto-min
+       (let ((fh (al:get-font-line-height (font object))))
+         (incf fh (padding-top object))
+         (incf fh (padding-bottom object))
+         (setq rv (min fh (height area))))))
+    rv))
 
-    (assert (not (eq nil (font obj))))
-    
-    (let ((tw (al:get-text-width (font obj) (title obj)))
-          (aw (width obj)))
-      (case ha
-        (:left)
-        
-        (:center
-         ;; Does text fit?
-         (if (> (- aw tw) 1)
-             ;; Yes so center it
-             (incf al (truncate (/ (- aw tw) 2)))))
-        
-        (:right
-         (if (> (- aw tw) 0)
-             (incf al (- aw tw))))
+(defun text-calc-left (type area object)
+  (let ((rv (left area)))
+    (case type
+      ((:left :auto))                   ; Nothing to do
+      
+      (:center
+       (let ((w (slot-value object 'width)))
+         (incf w (padding-left object))
+         (incf w (padding-right object))
+         (let ((aw (width area)))
+           (if (> aw w)
+               (incf rv (truncate (/ (- aw w) 2)))))))
 
-        (:none)
-        (otherwise
-         (error "unknown horizontal align option: ~a" ha))))
-    al))
+      (:right
+       (let ((w (slot-value object 'width)))
+         (incf w (padding-left object))
+         (incf w (padding-right object))
+         (setq rv (- (width area) w)))))
+    rv))
 
-(defun text-calc-top (obj)
+(defun text-calc-title-top (obj)
   (let ((at (top obj))
         (va (v-align obj)))
 
@@ -55,6 +61,45 @@
       (otherwise
        (error "text unknown vertical alignment: ~a" va)))
    at))
+
+(defun text-calc-top (type area object)
+  (let ((rv (top area)))
+    (case type
+      ((:top :auto))                    ; already done
+
+      (:middle
+       (v:info :layout "[text-calc-top] {~a} v-align :middle calculating" (print-raw-object object))
+       ;; Calculate our height
+       (let ((h (slot-value object 'height)))
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (let ((ha (height area)))
+           ;; Is there room for us to move?
+           (if (> ha h)
+               ;; Yup, so move to middle
+               (progn
+                 (incf rv (truncate (/ (- ha h) 2)))
+                 (v:info :layout "[text-calc-top] {~a} v-align :middle calculated ~d" (print-raw-object object) rv))))))
+
+      (:bottom
+       (let ((h (slot-value object 'height)))
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (incf rv (- (height area) h)))))
+    rv))
+
+(defun text-calc-width (type area object)
+  (let (rv)
+    (case type
+      ((:auto :auto-max)
+       (setq rv (width area)))
+
+      (:auto-min
+       (let ((tw (al:get-text-width (font object) (title object))))
+         (incf tw (padding-left object))
+         (incf tw (padding-right object))
+         (setq rv (min tw (width area))))))
+    rv))
 
 ;;;; text-base ================================================================
 
@@ -93,85 +138,60 @@
 (defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'text ,@rest))
 
-(defmethod print-object ((o text-base) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "deftext ")
-    (print-mixin o s)))
+;; (defmethod print-object ((o text-base) s)
+;;   (pprint-indent :current 0 s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "deftext ")
+;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod calc-height (type area (object text))
-  (let ((rv (fourth area)))
-    (case type
-      ((:auto :auto-max))               ; nothing to do
-    
-      (:auto-min
-       (let ((fh (al:get-font-line-height (font object))))
-         (incf fh (padding-top object))
-         (incf fh (padding-bottom object))
-         (setq rv (min fh (fourth area))))))
+(defmethod calc-height (type (area %rect) (object text))
+  (v:debug :layout "[calc-height] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-height type area object)))
+    (v:debug :layout "[calc-height] {~a} result: ~d" (print-raw-object object) rv)
     rv))
 
-(defmethod calc-left (type area (object text))
-  (let (rv)
-   (case type
-     ((:left :auto)
-      (setq rv (first area)))
-    
-     (:center
-      (let ((w (slot-value object 'width)))
-        (incf w (padding-left object))
-        (incf w (padding-right object))
-        (setq rv (+ (first area) (truncate (/ (- (third area) w) 2))))))
-
-     (:right
-      (let ((w (slot-value object 'width)))
-        (incf w (padding-left object))
-        (incf w (padding-right object))
-        (setq rv (+ (first area) (- (third area) w))))))
+(defmethod calc-left (type (area %rect) (object text))
+  (v:debug :layout "[calc-left] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-left type area object)))
+    (v:debug :layout "[calc-left] {~a} result: ~d" (print-raw-object object) rv)
     rv))
 
-(defmethod calc-top (type area (object text))
-  (let ((rv (second area)))
-    (case type
-      ((:top :auto))                    ; already done
-
-      (:middle
-       (let ((h (slot-value object 'height)))
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (incf rv (truncate (/ (- (fourth area) h) 2)))))
-
-      (:bottom
-       (let ((h (slot-value object 'height)))
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (incf rv (- (fourth area) h)))))
-    
-    (v:info :layout "calc-top: active-text: calculated top: ~d (~d)" rv (second area))
+(defmethod calc-top (type (area %rect) (object text))
+  (v:debug :layout "[calc-top] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-top type area object)))
+    (v:debug :layout "[calc-top] {~a} result: ~d" (print-raw-object object) rv)
     rv))
 
-(defmethod calc-width (type area (object text))
-  (let (rv)
-    (case type
-      ((:auto :auto-max)
-       (setq rv (third area)))
-
-      (:auto-min
-       (let ((tw (al:get-text-width (font object) (title object))))
-         (incf tw (padding-left object))
-         (incf tw (padding-right object))
-         (setq rv (min tw (third area))))))
-    (v:info :layout "calc-width: active-text: calculated width: ~d (~d)" rv (third area))
+(defmethod calc-width (type (area %rect) (object text))
+  (v:debug :layout "[calc-width] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-width type area object))) 
+    (v:debug :layout "[calc-width] {~a} result: ~d" (print-raw-object object) rv)
     rv))
 
 (defmethod on-paint ((obj text) &key)
   (let ((fc (fore-color obj)))
     (when (eql fc nil)
-      (fore-color (find-theme obj)))
-    (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-      (al:draw-text (font obj) fc (text-calc-left obj) (text-calc-top obj) 0 (title obj))))
+      (setq fc (fore-color (find-theme obj))))
+    (let (x f)
+      (case (h-align obj)
+        (:left
+         (setq x (left obj))
+         (setq f +ALIGN-LEFT+))
+        (:center
+         (setq x (+ (left obj) (/ (width obj) 2)))
+         (setq f +ALIGN-CENTER+))
+        (:right
+         (setq x (right obj))
+         (setq f +ALIGN-RIGHT+)))
+      (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+        (assert (not (eql fc nil)))
+        (al:draw-text (font obj) fc x (text-calc-title-top obj) f (title obj)))))
   (my-next-method))
 
 (defmethod (setf theme) ((theme text-theme-mixin) (object text))
@@ -208,13 +228,41 @@
 (defmacro defactive-text (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
 
-(defmethod print-object ((o active-text) s)
-  (pprint-indent :current 0 s)
-  (pprint-logical-block (s nil)
-    (format s "defactive-text ")
-    (print-mixin o s)))
+;; (defmethod print-object ((o active-text) s)
+;;   (pprint-indent :current 0 s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "defactive-text ")
+;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
+
+(defmethod calc-height (type (area %rect) (object active-text))
+  (v:debug :layout "[calc-height] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-height type area object)))
+    (v:debug :layout "[calc-height] {~a} result: ~d" (print-raw-object object) rv)
+    rv))
+
+(defmethod calc-left (type (area %rect) (object active-text))
+  (v:debug :layout "[calc-left] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-left type area object)))
+    (v:debug :layout "[calc-left] {~a} result: ~d" (print-raw-object object) rv)
+    rv))
+
+(defmethod calc-top (type (area %rect) (object active-text))
+  (v:debug :layout "[calc-top] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-top type area object)))
+    (v:debug :layout "[calc-top] {~a} result: ~d" (print-raw-object object) rv)
+    rv))
+
+(defmethod calc-width (type (area %rect) (object active-text))
+  (v:debug :layout "[calc-width] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
+          (width area) (height area) (left area) (top area))
+  (let ((rv (text-calc-width type area object))) 
+    (v:debug :layout "[calc-width] {~a} result: ~d" (print-raw-object object) rv)
+    rv))
 
 (defmethod on-mouse-down (x y b (obj active-text) &key)
   (if (and (= b +MOUSE-BUTTON-LEFT+)
@@ -287,10 +335,21 @@
       (paint-border obj (find-theme obj))
     
       ;; Draw text
-      (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-        (assert (not (eql (if down cd cu) nil)))
-        (al:draw-text (font obj) (if down cd cu)
-                      (text-calc-left obj) (text-calc-top obj) 0 (title obj)))
+      
+      (let (x f)
+        (case (h-align obj)
+          (:left
+           (setq x (left obj))
+           (setq f +ALIGN-LEFT+))
+          (:center
+           (setq x (+ (left obj) (/ (width obj) 2)))
+           (setq f +ALIGN-CENTER+))
+          (:right
+           (setq x (right obj))
+           (setq f +ALIGN-RIGHT+)))
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+          (assert (not (eql (if down cd cu) nil)))
+          (al:draw-text (font obj) (if down cd cu) x (text-calc-title-top obj) f (title obj))))
     
       ;; Hilight if needed
       (when in

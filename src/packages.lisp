@@ -2,7 +2,8 @@
 (defpackage :cl-yag
   (:use #:cl)
   (:local-nicknames
-   (#:v #:org.shirakumo.verbose))  
+   (#:v #:org.shirakumo.verbose)
+   (#:bt #:bordeaux-threads))
   (:import-from #:cffi
                 #:foreign-alloc
                 #:foreign-enum-value

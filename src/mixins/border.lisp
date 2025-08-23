@@ -5,12 +5,12 @@
 (defclass border-base ()
   ((width :initarg :width :initform 1 :type integer :accessor width)))
 
-(defmethod print-object ((object border-base) s)
-  (pprint-logical-block (s nil)
-    (format s "(defborder-base ")
-    (if (eq object nil)
-        (format s "NIL) ")
-        (format s ":width ~d) " (width object)))))
+;; (defmethod print-object ((object border-base) s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "(defborder-base ")
+;;     (if (eq object nil)
+;;         (format s "NIL) ")
+;;         (format s ":width ~d) " (width object)))))
 
 ;;;; border-flat ==============================================================
 
@@ -30,11 +30,11 @@
 (defmacro defborder-flat (&rest rest &key &allow-other-keys)
   `(make-instance 'border-flat ,@rest))
 
-(defmethod print-object ((object border-flat) s)
-  (pprint-logical-block (s nil)
-    (format s "(defborder-flat ")
-    (pprint-field width object s)
-    (print-mixin object s)))
+;; (defmethod print-object ((object border-flat) s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "(defborder-flat ")
+;;     (pprint-field width object s)
+;;     (print-mixin object s)))
 
 ;;;; border-3d ================================================================
 
@@ -55,12 +55,12 @@
 (defmacro defborder-3d (&rest rest &key &allow-other-keys)
   `(make-instance 'border-3d ,@rest))
 
-(defmethod print-object ((object border-3d) s)
-  (pprint-logical-block (s nil)
-    (format s "(defborder-3d ")
-    (pprint-field width object s)
-    (pprint-field-keyword style object s)
-    (print-mixin object s)))
+;; (defmethod print-object ((object border-3d) s)
+;;   (pprint-logical-block (s nil)
+;;     (format s "(defborder-3d ")
+;;     (pprint-field width object s)
+;;     (pprint-field-keyword style object s)
+;;     (print-mixin object s)))
 
 #+safety
 (defmethod initialize-object :after ((object border-3d) &key)

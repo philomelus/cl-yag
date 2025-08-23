@@ -8,7 +8,7 @@
 
 (defmethod print-mixin ((o content-mixin) s)
   (pprint-indent :current 0 s)
-  (format s ":content (")
+  (format s ":content (list ")
   (if (= (length (content o)) 0)
       (format s " ")
       (let ((children (content o)))
@@ -27,11 +27,7 @@
   (dolist (child (content obj))
     ;; If child has a parent slot
     (when (typep child 'parent-mixin)
-      (setf (parent child) obj))
-
-    ;; If child has content
-    (when (typep child 'content-mixin)
-      (calc-area child obj)))
+      (setf (parent child) obj)))
 
   (my-next-method))
 

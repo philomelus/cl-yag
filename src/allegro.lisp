@@ -24,9 +24,15 @@
 (defconstant +KEY-ESC+ (foreign-enum-value 'al::keycodes  :escape))
 (defconstant +KEY-B+ (foreign-enum-value 'al::keycodes :b))
 
+;; Mouse button numbers
 (defconstant +MOUSE-BUTTON-LEFT+ 1)
 (defconstant +MOUSE-BUTTON-RIGHT+ 2)
 (defconstant +MOUSE-BUTTON-MIDDLE+ 3)
+
+;; Font alignment
+(defconstant +ALIGN-LEFT+ (cffi:foreign-enum-value 'al::align-flags ':left))
+(defconstant +ALIGN-CENTER+ (cffi:foreign-enum-value 'al::align-flags ':center))
+(defconstant +ALIGN-RIGHT+ (cffi:foreign-enum-value 'al::align-flags ':right))
 
 ;; blend operations
 (defconstant +OP-ADD+ (cffi:foreign-enum-value 'al::blend-operations ':add))
@@ -46,7 +52,6 @@
 (defconstant +BLEND-INVERSE-CONS-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-cons-color))
 
 ;; TTF font options
-
 (defconstant +TTF-NO-KERNING+ (cffi:foreign-enum-value 'al::ttf-flags ':no-kerning))
 (defconstant +TTF-MONOCHROME+ (cffi:foreign-enum-value 'al::ttf-flags ':monochrome))
 (defconstant +TTF-NO-AUTOHINT+ (cffi:foreign-enum-value 'al::ttf-flags ':no-autohint))
