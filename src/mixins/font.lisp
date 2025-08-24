@@ -3,8 +3,7 @@
 ;;;; font-mixin ===============================================================
 
 (defclass font-mixin ()
-  ((font :initarg :font :initform (cffi:null-pointer) :type cffi:foreign-pointer
-         :accessor font)))
+  ((font :initarg :font :initform nil :accessor font)))
 
 (defmethod print-mixin ((o font-mixin) s)
   (pprint-indent :current 0 s)
