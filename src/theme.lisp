@@ -1,5 +1,41 @@
 (in-package #:cl-yag)
 
+;;;; macros ===================================================================
+
+(defmacro theme-field (field obj)
+  `(let ((th-ob (,field ,obj)))
+     (when (eql th-ob nil)
+       (setq th-ob (,field (find-theme ,obj))))
+     th-ob))
+
+;; TODO:  When I get better with macros and lisp ... save a LOT of code!
+;;
+;; (defmacro with-theme ((fields) obj &body body)
+;;   )
+;;
+;; (with-theme ((f font) (fc fore-color) (bc back-color)) obj
+;;   (format t "~a" f)
+;;   (format t "~a" fc)
+;;   (format t "~a" bc))
+;;
+;; (let ((f (font obj))
+;;       (fc (font-color obj))
+;;       (bc (back-color obj)))
+;;   (when (not (or f fc bc))
+;;     (let ((theme (find-theme obj)))
+;;       (when (not f)
+;;         (setq f (font theme)))
+;;       (when (not fc)
+;;         (setq fc (fore-color theme)))
+;;       (when (not bc)
+;;         (setq bc (back-color theme)))))
+;;   (format t "~a" f)
+;;   (format t "~a" fc)
+;;   (format t "~a" bc))
+
+(defmacro theme-font (obj)
+  `(theme-field font ,obj))
+
 ;;;; forward declaration =====================================================
 
 (defvar *theme-default*)
@@ -418,6 +454,7 @@
     `(funcall (lambda (f i fc bc)
                 (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc)))
                   ;; active-text
+                  (setf (font ,object) (default-font))
                   (setf (down-color ,object) f)
                   (setf (hover-color ,object) f)
                   (setf (interior-color ,object) i)
@@ -481,6 +518,7 @@
     `(funcall (lambda (n d l vd vl fc bc)
                 (let ((,object (make-instance 'theme-3d-all :normal n :dark d :light l :very-dark vd :very-light vl :fore-color fc :back-color bc)))
                   ;; active-text
+                  (setf (font ,object) (default-font))
                   (setf (down-color ,object) vd)
                   (setf (hover-color ,object) d)
                   (setf (interior-color ,object) n)
