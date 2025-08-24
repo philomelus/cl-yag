@@ -22,6 +22,10 @@
 
 ;;;; area-mixin ===============================================================
 
+;; TODO:
+;; minimize maximize
+;; none (means default or auto or both)
+
 (defvar *AREA-HEIGHT-OPTS* '(:auto :auto-max :auto-min))
 (defvar *AREA-LEFT-OPTS* '(:auto :left :center :right))
 (defvar *AREA-TOP-OPTS* '(:auto :top :middle :bottom))
@@ -47,7 +51,7 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod initialize-object :after ((object area-mixin) &key)
+(defmethod initialize-instance :after ((object area-mixin) &key)
   (with-slots (left top width height) object
     ;; Validate fields are valid
     (macrolet ((validate (field opts)
@@ -56,10 +60,10 @@
                         (unless (member ,field ,opts)
                           (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
                         (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
-      (validate 'height *AREA-HEIGHT-OPTS*)
-      (validate 'left *AREA-LEFT-OPTS*)
-      (validate 'top *AREA-TOP-OPTS*)
-      (validate 'width *AREA-WIDTH-OPTS*))
+      (validate height *AREA-HEIGHT-OPTS*)
+      (validate left *AREA-LEFT-OPTS*)
+      (validate top *AREA-TOP-OPTS*)
+      (validate width *AREA-WIDTH-OPTS*))
 
     ;; Save original state of area
     (flet ((is-keyword (field)
@@ -69,7 +73,8 @@
      (setf (slot-value object 'left-calc) (is-keyword left))
      (setf (slot-value object 'top-calc) (is-keyword top))
      (setf (slot-value object 'width-calc) (is-keyword width))
-     (setf (slot-value object 'height-calc) (is-keyword height)))))
+     (setf (slot-value object 'height-calc) (is-keyword height))))
+  (my-next-method))
 
 (defmethod bottom ((obj area-mixin))
   (+ (top obj) (height obj)))
