@@ -1,28 +1,21 @@
 (in-package #:cl-yag)
 
-;;;; cffi-object ==============================================================
+;;;; local macros =============================================================
 
-;; (cobj:define-cobject-class (:struct al:mouse-state))
-
-;; (cobj:define-cobject-class (:struct al:any-event))
-;; (cobj:define-cobject-class (:struct al:display-event))
-;; (cobj:define-cobject-class (:struct al:keyboard-event))
-;; (cobj:define-cobject-class (:struct al:mouse-event))
-;; (cobj:define-cobject-class (:struct al:timer-event))
-
-;; (cobj:define-cobject-class (:struct al:event-queue))
+(defmacro al-enum-value (type value)
+  `(load-time-value (cffi:foreign-enum-value ,type ,value)))
 
 ;;;; constants/enums ==========================================================
 
-(defconstant +KEY-MAX+ (foreign-enum-value 'al::keycodes :key-max))
+(defconstant +KEY-MAX+ (al-enum-value 'al::keycodes :key-max))
 
-(defconstant +KEY-DOWN+ (foreign-enum-value 'al::keycodes :down))
-(defconstant +KEY-LEFT+ (foreign-enum-value 'al::keycodes :left))
-(defconstant +KEY-RIGHT+ (foreign-enum-value 'al::keycodes :right))
-(defconstant +KEY-UP+ (foreign-enum-value 'al::keycodes  :up))
-(defconstant +KEY-X+ (foreign-enum-value 'al::keycodes :x))
-(defconstant +KEY-ESC+ (foreign-enum-value 'al::keycodes  :escape))
-(defconstant +KEY-B+ (foreign-enum-value 'al::keycodes :b))
+(defconstant +KEY-DOWN+ (al-enum-value 'al::keycodes :down))
+(defconstant +KEY-LEFT+ (al-enum-value 'al::keycodes :left))
+(defconstant +KEY-RIGHT+ (al-enum-value 'al::keycodes :right))
+(defconstant +KEY-UP+ (al-enum-value 'al::keycodes  :up))
+(defconstant +KEY-X+ (al-enum-value 'al::keycodes :x))
+(defconstant +KEY-ESC+ (al-enum-value 'al::keycodes  :escape))
+(defconstant +KEY-B+ (al-enum-value 'al::keycodes :b))
 
 ;; Mouse button numbers
 (defconstant +MOUSE-BUTTON-LEFT+ 1)
@@ -30,42 +23,42 @@
 (defconstant +MOUSE-BUTTON-MIDDLE+ 3)
 
 ;; Font alignment
-(defconstant +ALIGN-LEFT+ (cffi:foreign-enum-value 'al::align-flags ':left))
-(defconstant +ALIGN-CENTER+ (cffi:foreign-enum-value 'al::align-flags ':center))
-(defconstant +ALIGN-RIGHT+ (cffi:foreign-enum-value 'al::align-flags ':right))
+(defconstant +ALIGN-LEFT+ (load-time-value (al-enum-value 'al::align-flags ':left)))
+(defconstant +ALIGN-CENTER+ (load-time-value (al-enum-value 'al::align-flags ':center)))
+(defconstant +ALIGN-RIGHT+ (load-time-value (al-enum-value 'al::align-flags ':right)))
 
 ;; blend operations
-(defconstant +OP-ADD+ (cffi:foreign-enum-value 'al::blend-operations ':add))
-(defconstant +OP-SRC-MINUS-DEST+ (cffi:foreign-enum-value 'al::blend-operations ':src-minus-dest))
-(defconstant +OP-DEST-MINUS-SRC+ (cffi:foreign-enum-value 'al::blend-operations ':dest-minus-src))
+(defconstant +OP-ADD+ (al-enum-value 'al::blend-operations ':add))
+(defconstant +OP-SRC-MINUS-DEST+ (al-enum-value 'al::blend-operations ':src-minus-dest))
+(defconstant +OP-DEST-MINUS-SRC+ (al-enum-value 'al::blend-operations ':dest-minus-src))
 
 ;; blend modes
-(defconstant +BLEND-ZERO+ (cffi:foreign-enum-value 'al::blend-mode ':zero))
-(defconstant +BLEND-ONE+ (cffi:foreign-enum-value 'al::blend-mode ':one))
-(defconstant +BLEND-ALPHA+ (cffi:foreign-enum-value 'al::blend-mode ':alpha))
-(defconstant +BLEND-INVERSE-ALPHA+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-alpha))
-(defconstant +BLEND-SRC-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':src-color))
-(defconstant +BLEND-DEST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':dest-color))
-(defconstant +BLEND-INVERSE-SRC-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-src-color))
-(defconstant +BLEND-INVERSE-DEST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-dest-color))
-(defconstant +BLEND-CONST-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':const-color))
-(defconstant +BLEND-INVERSE-CONS-COLOR+ (cffi:foreign-enum-value 'al::blend-mode ':inverse-cons-color))
+(defconstant +BLEND-ZERO+ (al-enum-value 'al::blend-mode ':zero))
+(defconstant +BLEND-ONE+ (al-enum-value 'al::blend-mode ':one))
+(defconstant +BLEND-ALPHA+ (al-enum-value 'al::blend-mode ':alpha))
+(defconstant +BLEND-INVERSE-ALPHA+ (al-enum-value 'al::blend-mode ':inverse-alpha))
+(defconstant +BLEND-SRC-COLOR+ (al-enum-value 'al::blend-mode ':src-color))
+(defconstant +BLEND-DEST-COLOR+ (al-enum-value 'al::blend-mode ':dest-color))
+(defconstant +BLEND-INVERSE-SRC-COLOR+ (al-enum-value 'al::blend-mode ':inverse-src-color))
+(defconstant +BLEND-INVERSE-DEST-COLOR+ (al-enum-value 'al::blend-mode ':inverse-dest-color))
+(defconstant +BLEND-CONST-COLOR+ (al-enum-value 'al::blend-mode ':const-color))
+(defconstant +BLEND-INVERSE-CONS-COLOR+ (al-enum-value 'al::blend-mode ':inverse-cons-color))
 
 ;; TTF font options
-(defconstant +TTF-NO-KERNING+ (cffi:foreign-enum-value 'al::ttf-flags ':no-kerning))
-(defconstant +TTF-MONOCHROME+ (cffi:foreign-enum-value 'al::ttf-flags ':monochrome))
-(defconstant +TTF-NO-AUTOHINT+ (cffi:foreign-enum-value 'al::ttf-flags ':no-autohint))
+(defconstant +TTF-NO-KERNING+ (al-enum-value 'al::ttf-flags ':no-kerning))
+(defconstant +TTF-MONOCHROME+ (al-enum-value 'al::ttf-flags ':monochrome))
+(defconstant +TTF-NO-AUTOHINT+ (al-enum-value 'al::ttf-flags ':no-autohint))
 
 ;; Pixel formats
-(defconstant +P-F-RGB-888+ (cffi:foreign-enum-value 'al::pixel-format ':rgb-888))
-(defconstant +P-F-BGR-888+ (cffi:foreign-enum-value 'al::pixel-format ':bgr-888))
-(defconstant +P-F-ABGR-8888+ (cffi:foreign-enum-value 'al::pixel-format ':abgr-8888))
-(defconstant +P-F-ARGB-8888+ (cffi:foreign-enum-value 'al::pixel-format ':argb-8888))
+(defconstant +P-F-RGB-888+ (al-enum-value 'al::pixel-format ':rgb-888))
+(defconstant +P-F-BGR-888+ (al-enum-value 'al::pixel-format ':bgr-888))
+(defconstant +P-F-ABGR-8888+ (al-enum-value 'al::pixel-format ':abgr-8888))
+(defconstant +P-F-ARGB-8888+ (al-enum-value 'al::pixel-format ':argb-8888))
 
 ;; locking-flags
-(defconstant +LOCK_READWRITE+ (cffi:foreign-enum-value 'al::locking-flags ':readwrite))
-(defconstant +LOCK_READONLY+ (cffi:foreign-enum-value 'al::locking-flags ':readonly))
-(defconstant +LOCK_WRITEONLY+ (cffi:foreign-enum-value 'al::locking-flags ':writeonly))
+(defconstant +LOCK_READWRITE+ (al-enum-value 'al::locking-flags ':readwrite))
+(defconstant +LOCK_READONLY+ (al-enum-value 'al::locking-flags ':readonly))
+(defconstant +LOCK_WRITEONLY+ (al-enum-value 'al::locking-flags ':writeonly))
 
 ;;;; allegro struct wrappers ==================================================
 
