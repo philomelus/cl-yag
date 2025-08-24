@@ -2,13 +2,14 @@
 
 ;;;; functions ================================================================
 
+(declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-height))
 (defun text-calc-height (type area object)
   (let ((rv (height area)))
     (case type
       ((:auto :auto-max))               ; nothing to do
       
       (:auto-min
-       (let ((fh (al:get-font-line-height (font object))))
+       (let ((fh (al:get-font-line-height (theme-font object))))
          (incf fh (padding-top object))
          (incf fh (padding-bottom object))
          (setq rv (min fh (height area))))))
@@ -36,9 +37,13 @@
 
 (defun text-calc-title-top (obj)
   (let ((at (top obj))
-        (va (v-align obj)))
+        (va (v-align obj))
+        (fnt (font obj)))
 
-    (assert (not (eql nil (font obj))))
+    ;; Make sure we have a font
+    (when (eql fnt nil)
+      (setq fnt (font (find-theme obj))))
+    (assert (not (eql fnt nil)))
     
     ;; When auto-calculated, start at 0 offset from parent
     (if (member at *AREA-TOP-OPTS*)
@@ -49,12 +54,12 @@
       
       (:middle
        (let ((h (height obj))
-             (fh (al:get-font-line-height (font obj))))
+             (fh (al:get-font-line-height fnt)))
          (incf at (truncate (/ (- h fh) 2)))))
       
       (:bottom
        (let ((h (height obj))
-             (fh (al:get-font-line-height (font obj))))
+             (fh (al:get-font-line-height fnt)))
          (incf at (- h fh))))
       
       (:none)
@@ -68,7 +73,6 @@
       ((:top :auto))                    ; already done
 
       (:middle
-       (v:info :layout "[text-calc-top] {~a} v-align :middle calculating" (print-raw-object object))
        ;; Calculate our height
        (let ((h (slot-value object 'height)))
          (incf h (padding-top object))
@@ -77,9 +81,7 @@
            ;; Is there room for us to move?
            (if (> ha h)
                ;; Yup, so move to middle
-               (progn
-                 (incf rv (truncate (/ (- ha h) 2)))
-                 (v:info :layout "[text-calc-top] {~a} v-align :middle calculated ~d" (print-raw-object object) rv))))))
+               (incf rv (truncate (/ (- ha h) 2)))))))
 
       (:bottom
        (let ((h (slot-value object 'height)))
@@ -95,7 +97,7 @@
        (setq rv (width area)))
 
       (:auto-min
-       (let ((tw (al:get-text-width (font object) (title object))))
+       (let ((tw (al:get-text-width (theme-font object) (title object))))
          (incf tw (padding-left object))
          (incf tw (padding-right object))
          (setq rv (min tw (width area))))))
@@ -175,9 +177,16 @@
     rv))
 
 (defmethod on-paint ((obj text) &key)
-  (let ((fc (fore-color obj)))
-    (when (eql fc nil)
-      (setq fc (fore-color (find-theme obj))))
+  (let ((fc (fore-color obj))
+        (fnt (font obj)))
+    (when (or (eql fc nil)
+              (eql fnt nil))
+      
+      (let ((theme (find-theme obj)))
+        (when (eql fc nil)
+          (setq fc (fore-color theme)))
+        (when (eql fnt nil)
+          (setq fnt (font theme)))))
     (let (x f)
       (case (h-align obj)
         (:left
@@ -191,7 +200,7 @@
          (setq f +ALIGN-RIGHT+)))
       (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
         (assert (not (eql fc nil)))
-        (al:draw-text (font obj) fc x (text-calc-title-top obj) f (title obj)))))
+        (al:draw-text fnt fc x (text-calc-title-top obj) f (title obj)))))
   (my-next-method))
 
 (defmethod (setf theme) ((theme text-theme-mixin) (object text))
@@ -305,14 +314,16 @@
           (cu (up-color obj))
           (fg (fore-color obj))
           (bg (back-color obj))
-          (ic (interior-color obj)))
+          (ic (interior-color obj))
+          (fnt (font obj)))
 
       (when (or (eql cd nil)
                 (eql cu nil)
                 (eql cu nil)
                 (eql fg nil)
                 (eql bg nil)
-                (eql ic nil))
+                (eql ic nil)
+                (eql fnt nil))
         (let ((theme (find-theme obj)))
           (when (eql cd nil)
             (setq cd (down-color theme)))
@@ -325,7 +336,9 @@
           (when (eql bg nil)
             (setq bg (back-color theme)))
           (when (eql ic nil)
-            (setq ic (interior-color theme)))))
+            (setq ic (interior-color theme)))
+          (when (eql fnt nil)
+            (setq fnt (font theme)))))
 
       ;; Draw background
       (assert (not (eql bg nil)))
@@ -335,7 +348,6 @@
       (paint-border obj (find-theme obj))
     
       ;; Draw text
-      
       (let (x f)
         (case (h-align obj)
           (:left
@@ -349,7 +361,7 @@
            (setq f +ALIGN-RIGHT+)))
         (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
           (assert (not (eql (if down cd cu) nil)))
-          (al:draw-text (font obj) (if down cd cu) x (text-calc-title-top obj) f (title obj))))
+          (al:draw-text fnt (if down cd cu) x (text-calc-title-top obj) f (title obj))))
     
       ;; Hilight if needed
       (when in
