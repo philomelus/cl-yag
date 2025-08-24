@@ -123,22 +123,6 @@ area allocated to them, whether they choose to use it or not."
           (incf (height (aref child-area back)))
           (decf num-to-adjust 2)))
 
-      ;; Update internal areas for children with actual area values
-      (with-slots (content) object
-        (loop :for i :from 0 :to (1- num-children) :do
-          (with-slots ((rl left) (rt top) (rw width) (rh height))
-              (aref child-area i)
-            (with-slots ((cl left) (ct top) (cw width) (ch height))
-                (nth i content)
-              (unless (typep cl 'keyword)
-                (setf rl cl))
-              (unless (typep ct 'keyword)
-                (setf rh ct))
-              (unless (typep cw 'keyword)
-                (setf rw cw))
-              (unless (typep ch 'keyword)
-                (setf rh ch))))))
-      
       (dotimes (n num-children)
         (v:debug :layout "[calc-column-layout-child-areas] child ~d internal area (~d ~d) @ (~d ~d)" n
                 (width (elt child-area n))
@@ -180,136 +164,154 @@ area allocated to them, whether they choose to use it or not."
       (setf p (parent p)))))
 
 (defun update-column-layout-child-areas (index object)
-  "When the size of a child object has been changed, this recalculates the sizes
-of the children that are affected by it.  For column-layout, thats all children
-with indexes greater than the changed index."
+  "When a child has options changing the area used within the layout, this
+recalculates the sizes of the children that are affected by it."
 
-  ;; TODO: Only when safety 3 #+safety
-  (progn
-    (when (> index 0)
-      (loop :for i :from 0 :to (1- index) :do
-        (with-area (rl rt rw rh) (aref (slot-value object 'child-area) i)
-          (with-area (ol ot ow oh) (nth i (content object))
-            (if (not (typep ol 'keyword))
-                (assert (= rl ol)))
-            (if (not (typep ot 'keyword))
-                (assert (= rt ot)))
-            (if (not (typep ow 'keyword))
-                (assert (= rw ow)))
-            (if (not (typep oh 'keyword))
-                (assert (= rh oh)))))))
+  (v:debug :layout "[update-column-layout-child-area] {~a} updating child ~d"
+           (print-raw-object (nth index (content object))) index)
+
+  ;; Figure out what fields to take from object
+  (let ((upd-ch-l-p nil) (upd-ch-t-p nil) (upd-ch-w-p nil) (upd-ch-h-p nil))
     
-    (when (< index (length (content object)))
-      (loop :for i :from (1+ index) :to (1- (length (content object))) :do
-        (with-area (ol ot ow oh) (nth i (content object))
-          (with-area (rl rt rw rh) (aref (slot-value object 'child-area) i)
-            (if (not (typep ol 'keyword))
-                (assert (= rl ol)))
-            (if (not (typep ot 'keyword))
-                (assert (= rt ot)))
-            (if (not (typep ow 'keyword))
-                (assert (= rw ow)))
-            (if (not (typep oh 'keyword))
-                (assert (= rh oh))))))))
-  
-  (let* ((num-children (length (content object)))
-         (affected (- num-children index 1)))
+    ;; Update internal area if field wasn't calculated
+    (macrolet ((update-p (field field-calc)
+                 `(if (not (slot-value (nth index (content object)) ',field-calc))
+                      (progn
+                        (v:info :layout "[update-column-layout-child-areas] child ~d internal ~a needs update"
+                                index (symbol-name ',field))
+                        t)
+                      nil)))
+      (setq upd-ch-l-p (update-p left left-calc))
+      (setq upd-ch-t-p (update-p top top-calc))
+      (setq upd-ch-w-p (update-p width width-calc))
+      (setq upd-ch-h-p (update-p height height-calc)))
+    
+    ;; Update internal area from control based on options
+    (dolist (opt (aref (slot-value object 'child-options) index))
+      (case opt
+        (:min-height
+         (setq upd-ch-h-p t)
+         (v:info :layout "[update-column-layout-child-areas] child ~d has option :min-height"index))
+        (:min-width
+         (setq upd-ch-w-p t)
+         (v:info :layout "[update-column-layout-child-areas] child ~d has option :min-width"index ))
+        (:max-height)
+        (:max-width)))
 
-    ;; Nothing to do if it was the only or last child
-    (unless (> affected 0)
-      (return-from update-column-layout-child-areas))
+    
+    (let* ((num-children (length (content object)))
+           (affected (- num-children index 1)))
 
-    ;; Update affected children
-    (with-slots (child-area) object
+      ;; Nothing to do if it was the only or last child
+      (unless (> affected 0)
+        (return-from update-column-layout-child-areas))
 
-      (v:debug :layout "[update-column-layout-child-areas] updating ~d internal from (~d ~d) @ (~d ~d)" index
-              (width (aref child-area index))
-              (height (aref child-area index))
-              (left (aref child-area index))
-              (top (aref child-area index)))
-      (v:debug :layout "[update-column-layout-child-areas]                       to (~d ~d) @ (~d ~d) {~a}"
-              (slot-value (nth index (content object)) 'width)
-              (slot-value (nth index (content object)) 'height)
-              (slot-value (nth index (content object)) 'left)
-              (slot-value (nth index (content object)) 'top)
-              (print-raw-object (nth index (content object))))
+      ;; Update affected children
+      (with-slots (child-area) object
 
-      ;; Calculate newly available height
-      (let ((new-height (- (height (aref child-area index))
-                           (height (nth index (content object))))))
-        ;; Add height of all prior siblings
-        (loop :for i :from (1+ index) :to (1- num-children) :do
-          (incf new-height (height (aref child-area i))))
+        (v:debug :layout "[update-column-layout-child-areas] child ~d updating internal:" index)
+        (v:debug :layout "[update-column-layout-child-areas]         {~a}" (print-raw-object (nth index (content object))))
+        (v:debug :layout "[update-column-layout-child-areas]         from (~d ~d) @ (~d ~d)"
+                 (width (aref child-area index))
+                 (height (aref child-area index))
+                 (left (aref child-area index))
+                 (top (aref child-area index)))
+        (v:debug :layout "[update-column-layout-child-areas]         to (~d ~d) @ (~d ~d)"
+                 (slot-value (nth index (content object)) 'width)
+                 (slot-value (nth index (content object)) 'height)
+                 (slot-value (nth index (content object)) 'left)
+                 (slot-value (nth index (content object)) 'top))
 
-        (v:debug :layout "[update-column-layout-child-areas] siblings available new height ~d" new-height)
-        
-        ;; Recalculate rest of the children
-        (let ((new-child-height (truncate (/ new-height affected)))
-              (height-to-spread (mod new-height affected)))
-
-          ;; Update child area to objects actual area
-          (with-slots (content) object
-            (setf (height (aref child-area index)) (slot-value (nth index content) 'height))
-            (setf (width (aref child-area index)) (slot-value (nth index content) 'width))
-            (setf (left (aref child-area index)) (slot-value (nth index content) 'left))
-            (setf (top (aref child-area index)) (slot-value (nth index content) 'top)))
-          
-          ;; Update child areas
+        ;; Calculate newly available height
+        (let ((new-height (- (height (aref child-area index))
+                             (height (nth index (content object))))))
+          ;; Add height of all prior siblings
           (loop :for i :from (1+ index) :to (1- num-children) :do
-            (let ((new-top (+ (bottom (aref child-area (1- i))) 1))
-                  (new-height new-child-height))
+            (incf new-height (height (aref child-area i))))
 
-              (let ((child (nth i (content object)))
-                    (child-a (aref child-area i)))
-
-                ;; Save new internal height
-                (setf (height child-a) new-height)
-                
-                ;; Force recalc of child height if originally calculated
-                (when (slot-value child 'height-calc)
-                  (setf (slot-value child 'height) (slot-value child 'height-calc)))
-
-                ;; Save new internal top
-                (setf (top child-a) new-top)
-
-                ;; Force recalc of child top if originally calculated
-                (when (slot-value child 'top-calc)
-                  (setf (slot-value child 'top) (slot-value child 'top-calc)))
-
-                ;; For layouts that changed, force full recalculation of area
-                (when (typep child 'layout-base)
-                  (v:debug :layout "[update-column-layout-child-areas] {~a} child ~d layout forced recalc"
-                          (print-raw-object child) i)
-                  (setf (slot-value (nth i (content object)) 'child-area) nil)
-                  (dolist (gc (content child))
-                    (when (typep gc 'area-mixin)
-                      (when (slot-value gc 'height-calc)
-                        (setf (slot-value gc 'height) (slot-value gc 'height-calc)))
-                      (when (slot-value gc 'top-calc)
-                        (setf (slot-value gc 'top) (slot-value gc 'top-calc))))))
-                )))
-
+          (v:debug :layout "[update-column-layout-child-areas] siblings available new height ~d" new-height)
           
-          ;; Allocate left over space
-          (when (> height-to-spread 0)
-            (do ((next (1+ index) (+ next 1)))
-                ((= height-to-spread 0))
-              (incf (height (aref child-area next)))
-              (decf height-to-spread)))
+          ;; Recalculate rest of the children
+          (let ((new-child-height (truncate (/ new-height affected)))
+                (height-to-spread (mod new-height affected)))
 
-          ;; Dump updates
-          (dotimes (n affected)
-            (let* ((i (+ index n 1))
-                   (r (aref child-area i))
-                   (cna (nth i (content object))))
-              (v:debug :layout "[update-column-layout-child-areas] child ~d new internal area (~d ~d) @ (~d ~d)" i (width r) (height r) (left r) (top r))
-              (v:debug :layout "[update-column-layout-child-areas] child ~d       actual area (~d ~d) @ (~d ~d) {~a}" i
-                      (slot-value cna 'width) (slot-value cna 'height) (slot-value cna 'left) (slot-value cna 'top)
-                      (print-raw-object cna))
-              )))))
-    ))
+            ;; Update child area to objects actual area
+            (with-slots (content) object
+              (when upd-ch-h-p
+                (setf (height (aref child-area index)) (slot-value (nth index content) 'height))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d internal height updated (~d)"
+                         index (height (aref child-area index))))
+              (when upd-ch-w-p
+                (setf (width (aref child-area index)) (slot-value (nth index content) 'width))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d internal width updated (~d)"
+                         index (height (aref child-area index))))
+              (when upd-ch-l-p
+                (setf (left (aref child-area index)) (slot-value (nth index content) 'left))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d internal left updated (~d)"
+                         index (height (aref child-area index))))
+              (when upd-ch-t-p
+                (setf (top (aref child-area index)) (slot-value (nth index content) 'top))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d internal top updated (~d)"
+                         index (height (aref child-area index)))))
+            
+            ;; Update child areas
+            (loop :for i :from (1+ index) :to (1- num-children) :do
+              (let ((new-top (+ (bottom (aref child-area (1- i))) 1))
+                    (new-height new-child-height))
+
+                (let ((child (nth i (content object)))
+                      (child-a (aref child-area i)))
+
+                  ;; Save new internal height
+                  (setf (height child-a) new-height)
+                  
+                  ;; Force recalc of child height if originally calculated
+                  (when (slot-value child 'height-calc)
+                    (setf (slot-value child 'height) (slot-value child 'height-calc)))
+
+                  ;; Save new internal top
+                  (setf (top child-a) new-top)
+
+                  ;; Force recalc of child top if originally calculated
+                  (when (slot-value child 'top-calc)
+                    (setf (slot-value child 'top) (slot-value child 'top-calc)))
+
+                  ;; For layouts that changed, force full recalculation of area
+                  (when (typep child 'layout-base)
+                    (v:debug :layout "[update-column-layout-child-areas] {~a} child ~d layout forced recalc"
+                             (print-raw-object child) i)
+                    (setf (slot-value (nth i (content object)) 'child-area) nil)
+                    (dolist (gc (content child))
+                      (when (typep gc 'area-mixin)
+                        (when (slot-value gc 'height-calc)
+                          (setf (slot-value gc 'height) (slot-value gc 'height-calc)))
+                        (when (slot-value gc 'top-calc)
+                          (setf (slot-value gc 'top) (slot-value gc 'top-calc))))))
+                  )))
+
+            
+            ;; Allocate left over space
+            (when (> height-to-spread 0)
+              (do ((next (1+ index) (+ next 1)))
+                  ((= height-to-spread 0))
+                (incf (height (aref child-area next)))
+                (decf height-to-spread)))
+
+            ;; Dump updates
+            (dotimes (n affected)
+              (let* ((i (+ index n 1))
+                     (r (aref child-area i))
+                     (cna (nth i (content object))))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d new internal area (~d ~d) @ (~d ~d)" i (width r) (height r) (left r) (top r))
+                (v:debug :layout "[update-column-layout-child-areas] child ~d       actual area (~d ~d) @ (~d ~d) {~a}" i
+                         (slot-value cna 'width) (slot-value cna 'height) (slot-value cna 'left) (slot-value cna 'top)
+                         (print-raw-object cna))
+                )))))
+      )))
 
 ;;;; layout-base ==============================================================
+
+(defparameter +LAYOUT-CHILD-OPTIONS+ '(:min-height :min-width :max-height :max-width))
 
 (defclass layout-base (container-mixin
                        parent-mixin
@@ -320,7 +322,8 @@ with indexes greater than the changed index."
    (height :initform :auto :initarg nil)
 
    ;; Internal
-   (child-area :initform nil)))
+   (child-area :initform nil)
+   (child-options :initform nil)))
 
 ;; (defmethod print-object ((o layout-base) s)
 ;;   (pprint-indent :current 0 s)
@@ -351,6 +354,7 @@ with indexes greater than the changed index."
 
 ;;;; column-layout ============================================================
 
+
 (defclass column-layout (layout-base
                          padding-mixin)
   ())
@@ -363,6 +367,24 @@ with indexes greater than the changed index."
 ;;   (pprint-logical-block (s nil)
 ;;     (format s "defcolumn-layout ")
 ;;     (print-mixin o s)))
+
+;; Separate children into objects and options
+(defmethod initialize-instance :after ((object column-layout) &key)
+  ;; Allocate options storage
+  (setf (slot-value object 'child-options) (make-array (length (content object)) :initial-element nil))
+
+  ;; Separate the children and their options
+  (dotimes (i (length (content object)))
+    (let ((child (nth i (content object))))
+      (when (consp child)
+        
+        (let ((child-object (symbol-value (first child)))
+              (options (rest child)))
+          (dolist (option options)
+            (unless (member option +LAYOUT-CHILD-OPTIONS+)
+              (error "unknown child option: ~a" option)))
+          (setf (nth i (content object)) child-object)
+          (setf (aref (slot-value object 'child-options) i) options))))))
 
 ;;; methods ---------------------------------------------------------
 
@@ -382,39 +404,54 @@ with indexes greater than the changed index."
 
       (with-slots ((cl left) (ct top) (cw width) (ch height)) child
 
-        (v:debug :layout "[calc-area] {~a} child ~d calculating (~a ~a ~a ~a)"
-                (print-raw-object child) cp cl ct cw ch)
+        (v:debug :layout "[calc-area] {~a} child ~d calculating (~a ~a) @ (~a ~a)"
+                 (print-raw-object child) cp cw ch cl ct)
         
-        (let ((ocl cl) (oct ct) (ocw cw) (och ch))
+        (let ((clp nil) (ctp nil) (cwp nil) (chp nil))
 
-          (when (member ch *AREA-HEIGHT-OPTS*)
-            (setf ch (calc-height ch oa child)))
+          ;; Calculate height if desired
+          (when (typep ch 'keyword)
+            (setf ch (calc-height ch oa child)
+                  chp t))
 
-          ;; Update width if desired
-          (when (member cw *AREA-WIDTH-OPTS*)
-            (setf cw (calc-width cw oa child)))
+          ;; Calculate width if desired
+          (when (typep cw 'keyword)
+            (setf cw (calc-width cw oa child)
+                  cwp t))
 
-          ;; Update left if desired
-          (when (member cl *AREA-LEFT-OPTS*)
-            (setf cl (calc-left cl oa child)))
+          ;; Calculate left if desired
+          (when (typep cl 'keyword)
+            (setf cl (calc-left cl oa child)
+                  clp t))
 
-          ;; Update top if desired
-          (when (member ct *AREA-TOP-OPTS*)
-            (let ((ctt ct)
-                  (ctn))
-              (setf ctn (calc-top ctt oa child))
-              (v:debug :layout "[calc-area] {~a} calc-top returned ~d" (print-raw-object child) ctn)
-              (setf ct ctn)))
+          ;; Calculate top if desired
+          (when (typep ct 'keyword)
+            (setf ct (calc-top ct oa child)
+                  ctp t))
 
-          (when (or (not (eql och ch))
-                    (not (eql ocw cw))
-                    (not (eql oct ct))
-                    (not (eql ocl cl)))
-            (v:debug :layout "[calc-area] {~a} child ~d changed to (~d ~d) @ (~d ~d)"
-                    (print-raw-object child) cp cw ch cl ct)
-            (update-column-layout-child-areas cp parent)
-            )
-          ))))
+          ;; Call update when there are child options or any area field wasn't
+          ;; calculated
+          ;; NOTE: Could also tell if they are orignal from area-mixin's *-calc
+          ;;       fields, but they require more runtime to access
+          (let ((options (aref (slot-value parent 'child-options) cp)))
+            (when (or (not (or clp ctp cwp chp))
+                      options)
+              (when (not clp)
+                (v:info :layout "[calc-area] {~a} left was NOT CALCULATED" (print-raw-object child)))
+              (when (not ctp)
+                (v:info :layout "[calc-area] {~a} top was NOT CALCULATED" (print-raw-object child)))
+              (when (not cwp)
+                (v:info :layout "[calc-area] {~a} width was NOT CALCULATED" (print-raw-object child)))
+              (when (not chp)
+                (v:info :layout "[calc-area] {~a} height was NOT CALCULATED" (print-raw-object child)))
+              (with-area (lcl lct lcw lch) (aref child-area cp)
+                (v:debug :layout "[calc-area] {~a} child ~d internal area (~d ~d) @ (~d ~d)"
+                         (print-raw-object child) cp lcw lch lcl lct))
+              (update-column-layout-child-areas cp parent)))
+
+          ;; Log updated/changed area
+          (v:debug :layout "[calc-area] {~a} child ~d area (~d ~d) @ (~d ~d)"
+                   (print-raw-object child) cp cw ch cl ct)))))
   (my-next-method))
 
 (defmethod on-paint ((obj column-layout) &key)
@@ -444,61 +481,3 @@ with indexes greater than the changed index."
 
 ;;; methods ---------------------------------------------------------
 
-;; (defmethod calc-area (child (parent grid-layout) &key)
-;;   ;; Calculate our area if needed
-;;   (calc-layout-area parent)
-
-;;   ;; Start with existing child area
-;;   (let ((cl (slot-value child 'left))
-;;         (ct (slot-value child 'top))
-;;         (cw (slot-value child 'width))
-;;         (ch (slot-value child 'height))
-;;         (pl (slot-value parent 'left))
-;;         (pt (slot-value parent 'top))
-;;         (pw (slot-value parent 'width))
-;;         (ph (slot-value parent 'height))
-;;         (cp (position child (content parent)))
-;;         (child-num-h (rows parent))
-;;         (child-num-v (columns parent))          
-;;         child-hs child-ws)
-
-;;     ;; TODO: Should this be real?
-;;     (assert (not (eql cp nil)))
-    
-;;     ;; Calculate our childrens heights
-;;     (loop :for i :from 0 :to (rows parent) do
-;;       (push (+ (truncate (/ ph child-num-v)) (if (> (mod ph child-num-v) 0) 1 0)) child-hs))
-
-;;     ;; Calculate our childrens widths
-;;     (loop :for i :from 0 :to (columns parent) do
-;;       (push (+ (truncate (/ pw child-num-h) (if (> (mod pw child-num-h) 0) 1 0))) child-ws))
-
-;;     ;; TODO: Spacing not taken into consideration yet
-    
-;;     ;; Determine row and column of child
-;;     (let* ((row (truncate (/ cp (rows parent))))
-;;            (col (+ (- cp row) (mod cp (rows parent)))))
-      
-;;       ;; Update left if desired
-;;       (when (member cl *AREA-OPTS*)
-;;         (when (> col 0)
-;;           (loop :for i :from 0 :to (1- col) do
-;;             (incf pl (nth i child-ws))))
-;;         (setf (slot-value child 'left) pl))
-
-;;       ;; Update top if desired
-;;       (when (member ct *AREA-OPTS*)
-;;         (when (> row 0)
-;;           (loop :for i :from 0 :to (1- row) do
-;;             (incf pt (nth i child-hs))))
-;;         (setf (slot-value child 'top) pt))
-      
-;;       ;; Update width if desired
-;;       (when (member cw *AREA-OPTS*)
-;;         (setf (slot-value child 'width) (nth col child-ws)))
-
-;;       ;; Update height if desired
-;;       (when (member ch *AREA-OPTS*)
-;;         (setf (slot-value child 'height) (nth row child-hs)))))
-  
-;;   (my-next-method))

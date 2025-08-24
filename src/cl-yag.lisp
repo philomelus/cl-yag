@@ -41,7 +41,6 @@
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
-        (font (default-font -24))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
@@ -58,23 +57,26 @@
            (setq *g* (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
                               :shortcuts (list '(:5))))
 
-           (setq *t1* (deftext :title "Title" :font font :h-align :center :v-align :middle
+           (setq *t1* (deftext :title "Title" :font nil :h-align :center :v-align :middle
                                :height :auto-min))
            
-           (setq *a1* (defactive-text :title "Asteroids" :font font :h-align :center :v-align :middle
+           (setq *a1* (defactive-text :title "Asteroids" :font nil :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
-                                      :left :center :top :top :width :auto :height :auto-min
+                                      :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
-           (setq *a2* (defactive-text :title "Blastem" :font font :h-align :center :v-align :middle
+           (setq *a2* (defactive-text :title "Blastem" :font nil :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
                                       :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 10 :padding-right 10 :padding-top 10 :padding-bottom 10))
-           (setq *a3* (defactive-text :title "Quit" :font font :h-align :center :v-align :middle
+           (setq *a3* (defactive-text :title "Quit" :font nil :h-align :center :v-align :middle
                                       :shortcuts (list '(:q :shift) '(:q :none))
-                                      :left :center :top :bottom :width :auto :height :auto-min
+                                      :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
+
+           (setf (font *theme-default*) (default-font -24))
+           
            (setq *cl2* (defcolumn-layout :content (list *a1* *a2* *a3*)))
-           (setq *cl1* (defcolumn-layout :content (list *t1* *cl2*)))
+           (setq *cl1* (defcolumn-layout :content (list '(*t1* :min-height) *cl2*)))
            (setq *w* (defwindow 200 200 300 400 :content (list *cl1*)))
            (setf *boss* (defmanager :content (list *w* *rl* *rt* *rr* *rb* *g*)))
            
@@ -95,8 +97,7 @@
            (setf (major-color *g*) (al:map-rgb-f 0 0.35 0))
            (setf (minor-color *g*) (al:map-rgb-f 0 0.25 0))
 
-           (setf (interior-color *w*) (al:map-rgb 191 63 63))
-           
+           ;; (setf (interior-color *w*) (al:map-rgb 191 63 63))
            
            (setf (padding *w*) 10)
            
@@ -153,6 +154,5 @@
         (cffi:foreign-free event)
         (al:destroy-display screen)
         (al:destroy-timer timer)
-        (al:destroy-event-queue queue)
-        (al:destroy-font font)))))
+        (al:destroy-event-queue queue)))))
 
