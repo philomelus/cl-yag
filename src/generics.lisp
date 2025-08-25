@@ -15,6 +15,9 @@ type = member (:auto :auto-max :auto-min)
 area = (left top width height) within parent
 object = object doing height calculation for"))
 
+(defgeneric calc-layout-child-areas (object)
+  (:documentation "Called when layout first needs to know area of its children."))
+
 (defgeneric calc-left (type area object)
   (:documentation "Calculate the left position of object.
 
@@ -100,7 +103,12 @@ object = object doing width calculation for"))
 
 (defgeneric unhandled-event (event object) (:method (e o)))
 
-(defgeneric update-global-theme (theme) (:method (o)))
+(defgeneric update-layout-child-areas (index object)
+  (:documentation "After a child's area has been modified, call this to update the internal child
+areas as well as redistribute newly available area to siblings.
+
+index  = Index of modified child
+object = Object containing modified child"))
 
 (defgeneric within (x y obj &key &allow-other-keys))
 
