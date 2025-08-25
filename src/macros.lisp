@@ -96,6 +96,22 @@ border and spacing of object."
            (format ,stream "(~a) " ,field)))
      (pprint-newline :linear ,stream)))
 
+(defmacro pprint-raw (field object stream)
+  `(progn
+     (pprint-index :current 0 ,stream)
+     (format ,stream ":~a ~a" (symbol-name ',field) (print-raw-object (slot-value ,object ',field)))
+     (pprint-newline :linear ,stream)))
+
+(defmacro pprint-raw-nil (field object stream)
+  `(progn
+     (pprint-indent :current 0 ,stream)
+     (format ,stream ":~a " (symbol-name ',field))
+     (with-slots (,field) ,object
+       (if (eql ,field nil)
+           (format ,stream "NIL ")
+           (format ,stream "~a " (print-raw-object ,field))))
+     (pprint-newline :linear ,stream)))
+
 ;;;; with-* ===================================================================
 
 (defmacro with-area ((left top width height) object &body body)
