@@ -32,6 +32,7 @@
                              (:file "mixins/align")
                              (:file "mixins/area")
                              (:file "mixins/border")
+                             (:file "mixins/child")
                              (:file "mixins/color")
                              (:file "mixins/container")
                              (:file "mixins/content")
@@ -45,10 +46,12 @@
                              (:file "mixins/ready")
                              (:file "mixins/shortcuts")
                              (:file "mixins/spacing")
+                             (:file "mixins/style")
                              (:file "mixins/theme")
                              (:file "mixins/title")
                              (:file "mixins/visible")
 
+                             (:file "primitives")
                              (:file "rect")
                              
                              (:file "manager")
