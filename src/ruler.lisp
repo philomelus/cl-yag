@@ -122,3 +122,25 @@
     (setf (major-color object) mj)
     (setf (minor-color object) mn)))
 
+;;;; map-theme ================================================================
+
+(defmethod map-theme (field (theme ruler-theme-mixin))
+  (case field
+    (major-color
+     (typecase theme
+       (theme-3d
+        (very-light-color theme))
+       (theme-flat
+        (interior-color theme))
+       (t
+        (error "don't know how to get major-color from ~a" (type-of theme)))))
+    (minor-color
+     (typecase theme
+       (theme-3d
+        (light-color theme))
+       (theme-flat
+        (interior-color theme))
+       (t
+        (error "don't know how to get minor-color from ~a" (type-of theme)))))
+    (otherwise
+     (error "don't know how to get ~a from ~a" field (type-of theme)))))

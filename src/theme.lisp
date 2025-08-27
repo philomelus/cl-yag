@@ -112,66 +112,6 @@
 
 ;;; methods ---------------------------------------------------------
 
-(macrolet ((paint-border-side-flat (&body body)
-             `(with-accessors ((color color) (b-width width)) border
-                (assert (> b-width 0))
-                (with-accessors ((left left) (top top) (o-width width) (height height)) object
-                  (let ((c color)
-                        (w b-width)
-                        (w2 (truncate (/ b-width 2))))
-                    (if (eql c nil)
-                        (setq c (frame-color theme)))
-                    ,@body)))))
-  
-  (defmethod paint-border-left ((border border-flat) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat
-      (let ((xx (+ left w2)))
-        (assert (not (eql c nil)))
-        (al:draw-line xx top xx (+ top height) c w))))
-  
-  (defmethod paint-border-top ((border border-flat) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat
-      (let ((yy (+ top w2)))
-        (al:draw-line left yy (+ left o-width) yy c w)))))
-
-(macrolet ((paint-border-side-flat (other-border &body body)
-             `(with-accessors ((color color) (b-width width)) border
-                (assert (> b-width 0))
-                (with-accessors ((left left) (top top) (o-width width) (height height) (bo ,other-border)) object
-                  (let ((c color)
-                        (w b-width)
-                        (w2 (truncate (/ b-width 2)))
-                        (bow 0))
-                    (if (eql c nil)
-                        (setq c (frame-color theme)))
-                    (unless (eql bo nil)
-                      (setq bow (width bo)))
-                    ,@body)))))
-  
-  (defmethod paint-border-bottom ((border border-flat) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat border-bottom
-      (let ((yy (+ (+ top (- height bow)) w2)))
-        (al:draw-line left yy (+ left o-width) yy c w))))
-
-  (defmethod paint-border-right ((border border-flat) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat border-left
-      (let ((xx (+ (+ left (- o-width bow)) w2)))
-        (al:draw-line xx top xx (+ top height) c w)))))
-
-;;;; theme-flat-all ===========================================================
-
-(defclass theme-flat-all (theme-flat
-                          active-text-theme-mixin
-                          border-flat-theme-mixin
-                          grid-theme-mixin
-                          ruler-theme-mixin
-                          text-theme-mixin
-                          window-theme-mixin)
-  ())
-
-;; (defmethod print-object ((object theme-flat-all) stream)
-;;   )
-
 ;;;; theme-3d =================================================================
 
 (defclass theme-3d (theme-base
@@ -206,6 +146,76 @@
   (theme-read-field theme-3d-vl 'very-light))
 
 ;;;; common methods ===========================================================
+
+(macrolet ((paint-border-side-flat (&body body)
+             `(with-accessors ((color color) (b-width width)) border
+                (assert (> b-width 0))
+                (with-accessors ((left left) (top top) (o-width width) (height height)) object
+                  (let ((c color)
+                        (w b-width)
+                        (w2 (truncate (/ b-width 2))))
+                    (if (eql c nil)
+                        (setq c (frame-color theme)))
+                    ,@body)))))
+  
+  (defun paint-border-left-flat (border object theme)
+    (paint-border-side-flat
+      (let ((xx (+ left w2)))
+        (assert (not (eql c nil)))
+        (al:draw-line xx top xx (+ top height) c w))))
+  
+  (defun paint-border-top-flat (border object theme)
+    (paint-border-side-flat
+      (let ((yy (+ top w2)))
+        (al:draw-line left yy (+ left o-width) yy c w))))
+
+  (defmethod paint-border-left ((border border-flat) (object area-mixin) (theme theme-3d))
+    (paint-border-left-flat border object theme))
+  
+  (defmethod paint-border-left ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-left-flat border object theme))
+
+  (defmethod paint-border-top ((border border-flat) (object area-mixin) (theme theme-3d))
+    (paint-border-top-flat border object theme))
+
+  (defmethod paint-border-top ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-top-flat border object theme)))
+
+(macrolet ((paint-border-side-flat (other-border &body body)
+             `(with-accessors ((color color) (b-width width)) border
+                (assert (> b-width 0))
+                (with-accessors ((left left) (top top) (o-width width) (height height) (bo ,other-border)) object
+                  (let ((c color)
+                        (w b-width)
+                        (w2 (truncate (/ b-width 2)))
+                        (bow 0))
+                    (if (eql c nil)
+                        (setq c (frame-color theme)))
+                    (unless (eql bo nil)
+                      (setq bow (width bo)))
+                    ,@body)))))
+  
+  (defmethod paint-border-bottom-flat (border object theme)
+    (paint-border-side-flat border-bottom
+      (let ((yy (+ (+ top (- height bow)) w2)))
+        (al:draw-line left yy (+ left o-width) yy c w))))
+
+  (defmethod paint-border-right-flat (border object theme)
+    (paint-border-side-flat border-left
+      (let ((xx (+ (+ left (- o-width bow)) w2)))
+        (al:draw-line xx top xx (+ top height) c w))))
+
+  (defmethod paint-border-bottom ((border border-flat) (object area-mixin) (theme theme-3d))
+    (paint-border-bottom-flat border object theme))
+  
+  (defmethod paint-border-bottom ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-bottom-flat border object theme))
+
+  (defmethod paint-border-right ((border border-flat) (object area-mixin) (theme theme-3d))
+    (paint-border-bottom-flat border object theme))
+  
+  (defmethod paint-border-right ((border border-flat) (object area-mixin) (theme theme-flat))
+    (paint-border-bottom-flat border object theme)))
 
 (macrolet ((with-theme-3d-colors
                ((n d l vd vl) border theme &body body)
@@ -299,22 +309,4 @@
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line r1 top r1 (- b hw) c1 hw)
                   (al:draw-line r2 (+ top hw) r2 (- b hw) c2 hw))))))))))
-
-;;;; theme-3d-all =============================================================
-
-(defclass theme-3d-all (theme-3d
-                        active-text-theme-mixin
-                        border-3d-theme-mixin
-                        border-flat-theme-mixin
-                        grid-theme-mixin
-                        ruler-theme-mixin
-                        text-theme-mixin
-                        window-theme-mixin)
-  ())
-
-;; (defmethod print-object ((object theme-3d-all) stream)
-;;   (pprint-indent :current 0 stream)
-;;   (pprint-logical-block (stream nil)
-;;     (format stream "deftheme-3d-all ")
-;;     (print-mixin object stream)))
 

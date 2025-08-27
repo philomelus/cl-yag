@@ -81,3 +81,10 @@
     (setf (interior-color object) i)
     (setf (back-color object) bc)
     (setf (fore-color object) fc)))
+
+;;;; map-theme ================================================================
+
+(defmethod map-theme (field (theme window-theme-mixin))
+  (unless (member theme '(theme-3d theme-flat))
+    (error "don't know how to get ~a from ~a" field (type-of theme)))
+  (interior-color theme))

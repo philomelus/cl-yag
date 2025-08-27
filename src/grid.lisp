@@ -134,3 +134,17 @@
     (setf (minor-color-h object) mnh)
     (setf (minor-color-v object) mnv)))
  
+;;;; map-theme ================================================================
+
+(defmethod map-theme (field (theme grid-theme-mixin))
+  (typecase theme
+    (theme-flat
+     (interior-color theme))
+    (theme-3d
+     (case field
+       ((major-color-h major-color-v) (dark-color theme))
+       ((minor-color-h minor-color-v) (very-dark-color theme))
+       (t
+        (error "don't know how to get ~a from ~a" field (type-of theme)))))
+    (t
+     (error "don't know how to get ~a from ~a" field (type-of theme)))))

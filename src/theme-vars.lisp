@@ -9,12 +9,36 @@
 ;; TODO: Find a way to express the connections from themes to objects in
 ;;       a way to allow it to be specified once.
 
-;; (defmethod map-theme (field (theme text-base-theme-mixin))
-;;   (typcase theme
-;;            (active-text-theme-mixin
-;;             )
-;;            (active-text-theme-3d-mixin
-;;             )))
+;;;; theme-flat-all ===========================================================
+
+(defclass theme-flat-all (theme-flat
+                          ;; Order matters ... follow same way they are initialized
+                          active-text-theme-mixin
+                          
+                          border-flat-theme-mixin
+                          
+                          grid-theme-mixin
+                          
+                          ruler-theme-mixin
+                          
+                          window-theme-mixin)
+  ())
+
+;;;; theme-3d-all =============================================================
+
+(defclass theme-3d-all (theme-3d
+                        ;; Order matters ... follow same way they are initialized
+                        active-text-theme-mixin
+                        
+                        border-flat-theme-mixin
+                        border-3d-theme-mixin
+                        
+                        grid-theme-mixin
+                        
+                        ruler-theme-mixin
+                        
+                        window-theme-mixin)
+  ())
 
 ;;; active-text -----------------------------------------------------
 
@@ -43,10 +67,10 @@
 
 ;;; box -------------------------------------------------------------
 
-(defmethod (setf theme) ((theme theme-flat) (object box))
+(defmethod (setf theme) ((theme theme-flat) (object box-base))
   (error "not implemented"))
 
-(defmethod (setf theme) ((theme theme-3d) (object box))
+(defmethod (setf theme) ((theme theme-3d) (object box-base))
   (error "not implemented"))
 
 ;;; grid ------------------------------------------------------------
@@ -124,27 +148,36 @@
                                  &body body)
   (let ((object (gensym)))
     `(funcall (lambda (f i fc bc)
-                (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc)))
-                  ;; active-text
+                (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc :frame-color f :interior-color i)))
+                  
+                  ;; Common
                   (setf (font ,object) (default-font))
-                  (setf (down-color ,object) f)
-                  (setf (hover-color ,object) f)
-                  (setf (interior-color ,object) i)
-                  (setf (up-color ,object) i)
-                  ;; border-3d is not valid from a flat theme
-                  ;; border-flat
-                  (setf (color ,object) f)
+                  
+                  ;; text-base / text / active-text
+                  (let ((text-theme (coerce ,object 'text-base-theme-mixin)))
+                    (setf (down-color ,object) (map-theme 'down-color text-theme))
+                    (setf (hover-color ,object) (map-theme 'hover-color text-theme))
+                    (setf (interior-color ,object) (map-theme 'interior-color text-theme))
+                    (setf (up-color ,object) (map-theme 'up-color text-theme)))
+                  
+                  ;; border-flat / border-3d
+                  (setf (color ,object) (map-theme 'color (coerce ,object 'border-theme-mixin)))
+                  
                   ;; grid
-                  (setf (major-color-h ,object) f)
-                  (setf (major-color-v ,object) f)
-                  (setf (minor-color-h ,object) f)
-                  (setf (minor-color-v ,object) f)
+                  (let ((grid-theme (coerce ,object 'grid-theme-mixin)))
+                    (setf (major-color-h ,object) (map-theme 'major-color-h grid-theme))
+                    (setf (major-color-v ,object) (map-theme 'major-color-v grid-theme))
+                    (setf (minor-color-h ,object) (map-theme 'minor-color-h grid-theme))
+                    (setf (minor-color-v ,object) (map-theme 'minor-color-h grid-theme)))
+                  
                   ;; ruler
-                  (setf (major-color ,object) f)
-                  (setf (minor-color ,object) f)
-                  ;; text
+                  (let ((ruler-theme (coerce ,object 'ruler-theme-mixin)))
+                    (setf (major-color ,object) (map-theme 'major-color ruler-theme))
+                    (setf (minor-color ,object) (map-theme 'minor-color ruler-theme)))
+                  
                   ;; window
-                  (setf (frame-color ,object) f)
+                  (when (eql (interior-color ,object) nil)
+                    (setf (interior-color ,object) (map-theme 'interior-color (coerce ,object 'window-theme-mixin))))
 
                   ;; Custom initialization code
                   (let ((object ,object))
@@ -152,9 +185,9 @@
                     (setf ,object object))
                   
                   ;; Make sure all slots get set
-                  (dolist (slot (class-slots (find-class 'theme-flat-all)))
-                    (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                      (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
+                  ;; (dolist (slot (class-slots (find-class 'theme-flat-all)))
+                  ;;   (when (eql (slot-value ,object (slot-definition-name slot)) nil)
+                  ;;     (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
                   ,object))
               ,frame ,interior ,fore ,back)))
 
@@ -167,7 +200,8 @@
 (defun theme-flat-gray ()
   (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)
     ;; Override the up color
-    (setf (up-color object) (fore-color object))))
+    (setf (up-color object) (map-theme 'up-color (coerce object 'text-base-theme-mixin)))
+    ))
 
 (defun theme-flat-green ()
   (deftheme-flat-all-obj (al:map-rgb 0 191 0) (al:map-rgb 0 255 0)))
@@ -189,25 +223,40 @@
   (let ((object (gensym)))
     `(funcall (lambda (n d l vd vl fc bc)
                 (let ((,object (make-instance 'theme-3d-all :normal n :dark d :light l :very-dark vd :very-light vl :fore-color fc :back-color bc)))
-                  ;; active-text
+                  
+                  ;; Common
                   (setf (font ,object) (default-font))
-                  (setf (down-color ,object) vd)
-                  (setf (hover-color ,object) d)
-                  (setf (interior-color ,object) n)
-                  (setf (up-color ,object) vl)
-                  ;; border-3d
-                  ;; border-flat
+
+                  ;; text-base / text / active-text
+                  (let ((text-theme (coerce ,object 'text-base-theme-mixin)))
+                    (setf (down-color ,object) (map-theme 'down-color text-theme))
+                    (setf (hover-color ,object) (map-theme 'hover-color text-theme))
+                    (setf (interior-color ,object) (map-theme 'interior-color text-theme))
+                    (setf (up-color ,object) (map-theme 'up-color text-theme)))
+                  
+                  ;; border-flat / border-3d
                   (setf (color ,object) d)
+                  ;; border-3d dark-color
+                  ;; border-3d light-color
+                  ;; border-3d normal-color
+                  ;; border-3d very-dark-color
+                  ;; border-3d very-light-color
+                  
                   ;; grid
-                  (setf (major-color-h ,object) d)
-                  (setf (major-color-v ,object) d)
-                  (setf (minor-color-h ,object) vd)
-                  (setf (minor-color-v ,object) vd)
+                  (let ((grid-theme (coerce ,object 'grid-theme-mixin)))
+                    (setf (major-color-h ,object) (map-theme 'major-color-h grid-theme))
+                    (setf (major-color-v ,object) (map-theme 'major-color-v grid-theme))
+                    (setf (minor-color-h ,object) (map-theme 'minor-color-h grid-theme))
+                    (setf (minor-color-v ,object) (map-theme 'minor-color-v grid-theme)))
+                  
                   ;; ruler
-                  (setf (major-color ,object) vl)
-                  (setf (minor-color ,object) l)
-                  ;; text taken care of above
+                  (let ((ruler-theme (coerce ,object 'ruler-theme-mixin)))
+                    (setf (major-color ,object) (map-theme 'major-color ruler-theme))
+                    (setf (minor-color ,object) (map-theme 'minor-color ruler-theme)))
+                  
                   ;; window
+                  (when (eql (interior-color ,object) nil)
+                    (setf (interior-color ,object) (map-theme 'interior-color (coerce ,object 'window-theme-mixin))))
 
                   ;; Custom initialization code
                   (let ((object ,object))
@@ -215,9 +264,9 @@
                     (setf ,object object))
 
                   ;; Make sure all slots get set
-                  (dolist (slot (class-slots (find-class 'theme-3d-all)))
-                    (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                      (error "Missing theme-3d-all setting: ~a" (slot-definition-name slot))))
+                  ;; (dolist (slot (class-slots (find-class 'theme-3d-all)))
+                  ;;   (when (eql (slot-value ,object (slot-definition-name slot)) nil)
+                  ;;     (error "Missing theme-3d-all setting: ~a" (slot-definition-name slot))))
                   
                   ,object))
               ,normal ,dark ,light ,very-dark ,very-light, fore-color, back-color)))
@@ -232,8 +281,9 @@
   (deftheme-3d-obj
       (al:map-rgb 212 208 200) (al:map-rgb 128 128 128) (al:map-rgb 223 223 223) (al:map-rgb 95 95 95) (al:map-rgb 245 245 245) (al:map-rgb 0 0 0) (al:map-rgb 255 255 255)
     ;; Override the active-text up/down for this one
-    (setf (up-color object) (fore-color object))
-    (setf (down-color object) (dark-color object))))
+    (setf (up-color object) (map-theme 'up-color (coerce object 'text-base-theme-mixin)))
+    (setf (down-color object) (map-theme 'down-color (coerce object 'text-base-theme-mixin)))
+    ))
 
 (defun theme-3d-green ()
   (deftheme-3d-obj (al:map-rgb 0 255 0) (al:map-rgb 0 191 0) (al:map-rgb 127 255 127) (al:map-rgb 0 159 0) (al:map-rgb 191 255 191)))
