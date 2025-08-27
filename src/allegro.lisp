@@ -190,3 +190,21 @@
          ,@body
          (al:set-blender ,sop ,ssrc ,sdst)))))
 
+(defmacro with-clipping ((&optional (left nil leftp) (top nil topp) (width nil widthp) (height nil heightp)) &body body)
+  "Save current clipping, set clipping to specified values, then restore clippinig."
+  (let ((cl (gensym)) (ct (gensym)) (cw (gensym)) (ch (gensym))
+        (al (gensym)) (at (gensym)) (aw (gensym)) (ah (gensym)))
+    `(let (,@(if leftp `((,al ,left)))
+           ,@(if topp `((,at ,top)))
+           ,@(if widthp `((,aw ,width)))
+           ,@(if heightp `((,ah ,height))))
+       (cffi::with-foreign-objects ((,cl :int) (,ct :int) (,cw :int) (,ch :int))
+         (al:get-clipping-rectangle ,cl ,ct ,cw ,ch)
+         (al:set-clipping-rectangle ,(if leftp `,al `(cffi:mem-ref ,cl :int))
+                                    ,(if topp `,at `(cffi:mem-ref ,ct :int))
+                                    ,(if widthp `,aw `(cffi:mem-ref ,cw :int))
+                                    ,(if heightp `,ah `(cffi:mem-ref ,ch :int)))
+         ,@body
+         (al:set-clipping-rectangle (cffi:mem-ref ,cl :int) (cffi:mem-ref ,ct :int)
+                                    (cffi:mem-ref ,cw :int) (cffi:mem-ref ,ch :int))))))
+

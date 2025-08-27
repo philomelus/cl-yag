@@ -1,46 +1,10 @@
 (in-package #:cl-yag)
 
-;;;; macros ===================================================================
-
-(defmacro theme-field (field obj)
-  `(let ((th-ob (,field ,obj)))
-     (when (eql th-ob nil)
-       (setq th-ob (,field (find-theme ,obj))))
-     th-ob))
-
-;; TODO:  When I get better with macros and lisp ... save a LOT of code!
-;;
-;; (defmacro with-theme ((fields) obj &body body)
-;;   )
-;;
-;; (with-theme ((f font) (fc fore-color) (bc back-color)) obj
-;;   (format t "~a" f)
-;;   (format t "~a" fc)
-;;   (format t "~a" bc))
-;;
-;; (let ((f (font obj))
-;;       (fc (font-color obj))
-;;       (bc (back-color obj)))
-;;   (when (not (or f fc bc))
-;;     (let ((theme (find-theme obj)))
-;;       (when (not f)
-;;         (setq f (font theme)))
-;;       (when (not fc)
-;;         (setq fc (fore-color theme)))
-;;       (when (not bc)
-;;         (setq bc (back-color theme)))))
-;;   (format t "~a" f)
-;;   (format t "~a" fc)
-;;   (format t "~a" bc))
-
-(defmacro theme-font (obj)
-  `(theme-field font ,obj))
-
 ;;;; forward declaration =====================================================
 
 (defvar *theme-default*)
 
-;;;; macros ===================================================================
+;;;; functions ================================================================
 
 (defun find-theme (o)
   ;; Does object have theme?
@@ -245,61 +209,65 @@
 
 (macrolet ((with-theme-3d-colors
                ((n d l vd vl) border theme &body body)
-               `(let ((,n (normal-color ,border))
-                      (,d (dark-color ,border))
-                      (,l (light-color ,border))
-                      (,vd (very-dark-color ,border))
-                      (,vl (very-light-color ,border)))
-                  (when (eql ,n nil)
-                    (setf ,n (normal-color ,theme)))
-                  (when (eql ,d nil)
-                    (setf ,d (dark-color ,theme)))
-                  (when (eql ,l nil)
-                    (setf ,l (light-color ,theme)))
-                  (when (eql ,vd nil)
-                    (setf ,vd (very-dark-color ,theme)))
-                  (when (eql ,vl nil)
-                    (setf ,vl (very-light-color ,theme)))
-                  ,@body)))
+               (let ((border-var (gensym))
+                     (theme-var (gensym)))
+                 `(let ((,border-var ,border)
+                        (,theme-var ,theme))
+                    (let ((,n (normal-color ,border-var))
+                          (,d (dark-color ,border-var))
+                          (,l (light-color ,border-var))
+                          (,vd (very-dark-color ,border-var))
+                          (,vl (very-light-color ,border-var)))
+                      (when (eql ,n nil)
+                        (setf ,n (normal-color ,theme-var)))
+                      (when (eql ,d nil)
+                        (setf ,d (dark-color ,theme-var)))
+                      (when (eql ,l nil)
+                        (setf ,l (light-color ,theme-var)))
+                      (when (eql ,vd nil)
+                        (setf ,vd (very-dark-color ,theme-var)))
+                      (when (eql ,vl nil)
+                        (setf ,vl (very-light-color ,theme-var)))
+                      ,@body)))))
   
-(defmethod paint-border-left ((border border-3d) (object area-mixin) (theme theme-3d))
-  (with-theme-3d-colors (n d l vd vl) border theme
-    (with-accessors ((left left) (top top)) object
-      (with-slots (width) border
-        (let (c1 c2)
-          (case (style border)
-            (:inset (setf c1 vd c2 d))
-            ((:outset :default) (setf c1 n c2 vl))
-            (:flat (setf c1 vd c2 d)))
-          (let ((b (+ top (height object)))
-                (hw (/ width 2)))
-            (let ((l1 (+ left (/ width 4)))
-                  (l2 (+ left (* width 0.75))))
-              (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-                (al:draw-line l1 (+ top hw) l1 (- b hw) c1 hw)
-                (al:draw-line l2 (+ top width) l2 (- b width) c2 hw)))))))))
+  (defmethod paint-border-left ((border border-3d) (object area-mixin) (theme theme-3d))
+    (with-theme-3d-colors (n d l vd vl) border theme
+      (with-accessors ((left left) (top top)) object
+        (with-local-slots ((bw width)) border
+          (let (c1 c2)
+            (case (style border)
+              (:inset (setf c1 vd c2 d))
+              ((:outset :default) (setf c1 n c2 vl))
+              (:flat (setf c1 vd c2 d)))
+            (let ((b (+ top (height object)))
+                  (hw (/ bw 2)))
+              (let ((l1 (+ left (/ bw 4)))
+                    (l2 (+ left (* bw 0.75))))
+                (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
+                  (al:draw-line l1 (+ top hw) l1 (- b hw) c1 hw)
+                  (al:draw-line l2 (+ top bw) l2 (- b bw) c2 hw)))))))))
   
-(defmethod paint-border-top ((border border-3d) (object area-mixin) (theme theme-3d))
-  (with-theme-3d-colors (n d l vd vl) border theme
-    (with-accessors ((left left) (top top)) object
-      (with-slots (width) border
-        (let (c1 c2)
-          (case (style border)
-            (:inset (setf c1 vd c2 d))
-            ((:outset :default) (setf c1 n c2 vl))
-            (:flat (setf c1 vd c2 d)))
-          (let ((r (+ left (width object)))
-                (hw (/ width 2)))
-            (let ((t1 (+ top (/ width 4)))
-                  (t2 (+ top (* width 0.75))))
-              (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-                (al:draw-line left t1 (- r hw) t1 c1 hw)
-                (al:draw-line (+ left hw) t2 (- r width) t2 c2 hw)))))))))
+  (defmethod paint-border-top ((border border-3d) (object area-mixin) (theme theme-3d))
+    (with-theme-3d-colors (n d l vd vl) border theme
+      (with-accessors ((left left) (top top)) object
+        (with-local-slots ((bw width)) border
+          (let (c1 c2)
+            (case (style border)
+              (:inset (setf c1 vd c2 d))
+              ((:outset :default) (setf c1 n c2 vl))
+              (:flat (setf c1 vd c2 d)))
+            (let ((r (+ left (width object)))
+                  (hw (/ bw 2)))
+              (let ((t1 (+ top (/ bw 4)))
+                    (t2 (+ top (* bw 0.75))))
+                (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
+                  (al:draw-line left t1 (- r hw) t1 c1 hw)
+                  (al:draw-line (+ left hw) t2 (- r bw) t2 c2 hw)))))))))
   
   (defmethod paint-border-bottom ((border border-3d) (object area-mixin) (theme theme-3d))
     (with-theme-3d-colors (n d l vd vl) border theme
       (with-accessors ((left left) (top top)) object
-        (with-slots (width) border
+        (with-local-slots ((bw width)) border
           (let (c1 c2)
             (case (style border)
               (:inset (setf c1 vl c2 n))
@@ -307,9 +275,9 @@
               (:flat (setf c1 vd c2 d)))
             (let ((b (+ top (height object)))
                   (r (+ left (width object)))
-                  (hw (/ width 2)))
-              (let ((b1 (- b (/ width 4)))
-                    (b2 (- b (* width 0.75))))
+                  (hw (/ bw 2)))
+              (let ((b1 (- b (/ bw 4)))
+                    (b2 (- b (* bw 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line left b1 r b1 c1 hw)
                   (al:draw-line (+ left hw) b2 (- r hw) b2 c2 hw)))))))))
@@ -317,7 +285,7 @@
   (defmethod paint-border-right ((border border-3d) (object area-mixin) (theme theme-3d))
     (with-theme-3d-colors (n d l vd vl) border theme
       (with-accessors ((left left) (top top)) object
-        (with-slots (width) border
+        (with-slots ((bw width)) border
           (let (c1 c2)
             (case (style border)
               (:inset (setf c1 vl c2 n))
@@ -325,9 +293,9 @@
               (:flat (setf c1 vd c2 d)))
             (let ((r (+ left (width object)))
                   (b (+ top (height object)))
-                  (hw (/ width 2)))
-              (let ((r1 (- r (/ width 4)))
-                    (r2 (- r (* width 0.75))))
+                  (hw (/ bw 2)))
+              (let ((r1 (- r (/ bw 4)))
+                    (r2 (- r (* bw 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line r1 top r1 (- b hw) c1 hw)
                   (al:draw-line r2 (+ top hw) r2 (- b hw) c2 hw))))))))))
@@ -349,233 +317,4 @@
 ;;   (pprint-logical-block (stream nil)
 ;;     (format stream "deftheme-3d-all ")
 ;;     (print-mixin object stream)))
-
-;;;; global object theme handlers =============================================
-
-;;; active-text -----------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object active-text))
-  (with-slots ((f frame-color) (i interior-color)
-               (fc fore-color) (bc back-color))
-      theme
-    (setf (down-color object) f)
-    (setf (hover-color object) f)
-    (setf (interior-color object) i)
-    (setf (up-color object) i)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object active-text))
-  (with-slots ((d dark-color) (n normal-color)
-               (vd very-dark-color) (vl very-light-color)
-               (fc fore-color) (bc back-color))
-      theme
-    (setf (down-color object) vd)
-    (setf (hover-color object) d)
-    (setf (interior-color object) n)
-    (setf (up-color object) vl)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-;;; grid ------------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object grid))
-  (when (typep theme 'ruler-theme-mixin))
-  (with-slots ((fc frame-color)) theme
-    (setf (major-color-h object) fc)
-    (setf (major-color-v object) fc)
-    (setf (minor-color-h object) fc)
-    (setf (minor-color-v object) fc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object grid))
-  (with-slots ((d dark) (vd very-dark)) theme
-    (setf (major-color-h object) d)
-    (setf (major-color-v object) d)
-    (setf (minor-color-h object) vd)
-    (setf (minor-color-v object) vd)))
-
-;;; ruler -----------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object ruler))
-  (with-slots ((f frame-color)) theme
-    (setf (color object) f)
-    (setf (major-color object) f)
-    (setf (minor-color object) f)))
-
-(defmethod (setf theme) ((theme theme-3d) (object ruler))
-  (with-slots ((l light) (vd very-dark) (vl very-light)) theme
-    (setf (color object) vd)
-    (setf (major-color object) vl)
-    (setf (minor-color object) l)))
-
-;;; text ------------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object text))
-  (with-slots ((i interior-color) (fc fore-color) (bc back-color))
-      theme
-    (setf (interior-color object) i)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object text))
-  (with-slots ((n normal-color) (fc fore-color) (bc back-color))
-      theme
-    (setf (interior-color object) n)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-;;; window ----------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object window))
-  (with-slots ((bc back-color) (fc fore-color) (i interior-color))
-      theme
-    (setf (interior-color object) i)
-    (setf (back-color object) bc)
-    (setf (fore-color object) fc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object window))
-  (with-slots ((d dark-color) (n normal-color)) theme
-    (setf (frame-color object) d)
-    (setf (interior-color object) n)))
-
-;;;; global themes ============================================================
-
-;; These should initialize their fields the same way the above (setf theme)
-;; functions do.  TODO: Make it so the code exists once!
-
-;;; flat ------------------------------------------------------------
-
-;; Adjustments for global themes
-
-(defmacro deftheme-flat-all-obj (frame interior
-                                 &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0))
-                                 &body body)
-  (let ((object (gensym)))
-    `(funcall (lambda (f i fc bc)
-                (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc)))
-                  ;; active-text
-                  (setf (font ,object) (default-font))
-                  (setf (down-color ,object) f)
-                  (setf (hover-color ,object) f)
-                  (setf (interior-color ,object) i)
-                  (setf (up-color ,object) i)
-                  ;; border-3d is not valid from a flat theme
-                  ;; border-flat
-                  (setf (color ,object) f)
-                  ;; grid
-                  (setf (major-color-h ,object) f)
-                  (setf (major-color-v ,object) f)
-                  (setf (minor-color-h ,object) f)
-                  (setf (minor-color-v ,object) f)
-                  ;; ruler
-                  (setf (major-color ,object) f)
-                  (setf (minor-color ,object) f)
-                  ;; text
-                  ;; window
-                  (setf (frame-color ,object) f)
-
-                  ;; Custom initialization code
-                  (let ((object ,object))
-                    ,@body
-                    (setf ,object object))
-                  
-                  ;; Make sure all slots get set
-                  (dolist (slot (class-slots (find-class 'theme-flat-all)))
-                    (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                      (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
-                  ,object))
-              ,frame ,interior ,fore ,back)))
-
-(defun theme-flat-aqua ()
-  (deftheme-flat-all-obj (al:map-rgb 0 191 191) (al:map-rgb 0 255 255)))
-
-(defun theme-flat-blue ()
-  (deftheme-flat-all-obj (al:map-rgb 0 0 191) (al:map-rgb 0 0 255)))
-
-(defun theme-flat-gray ()
-  (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)
-    ;; Override the up color
-    (setf (up-color object) (fore-color object))))
-
-(defun theme-flat-green ()
-  (deftheme-flat-all-obj (al:map-rgb 0 191 0) (al:map-rgb 0 255 0)))
-
-(defun theme-flat-purple ()
-  (deftheme-flat-all-obj (al:map-rgb 191 0 191) (al:map-rgb 255 0 255)))
-
-(defun theme-flat-red ()
-  (deftheme-flat-all-obj (al:map-rgb 191 0 0) (al:map-rgb 255 0 0)))
-
-(defun theme-flat-yellow ()
-  (deftheme-flat-all-obj (al:map-rgb 191 191 0) (al:map-rgb 255 255 0)))
-
-;;; 3d --------------------------------------------------------------
-
-(defmacro deftheme-3d-obj (normal dark light very-dark very-light
-                           &optional (fore-color '(al:map-rgb-f 1.0 1.0 1.0)) (back-color '(al:map-rgb 0 0 0))
-                           &body body)
-  (let ((object (gensym)))
-    `(funcall (lambda (n d l vd vl fc bc)
-                (let ((,object (make-instance 'theme-3d-all :normal n :dark d :light l :very-dark vd :very-light vl :fore-color fc :back-color bc)))
-                  ;; active-text
-                  (setf (font ,object) (default-font))
-                  (setf (down-color ,object) vd)
-                  (setf (hover-color ,object) d)
-                  (setf (interior-color ,object) n)
-                  (setf (up-color ,object) vl)
-                  ;; border-3d
-                  ;; border-flat
-                  (setf (color ,object) d)
-                  ;; grid
-                  (setf (major-color-h ,object) d)
-                  (setf (major-color-v ,object) d)
-                  (setf (minor-color-h ,object) vd)
-                  (setf (minor-color-v ,object) vd)
-                  ;; ruler
-                  (setf (major-color ,object) vl)
-                  (setf (minor-color ,object) l)
-                  ;; text taken care of above
-                  ;; window
-
-                  ;; Custom initialization code
-                  (let ((object ,object))
-                    ,@body
-                    (setf ,object object))
-
-                  ;; Make sure all slots get set
-                  (dolist (slot (class-slots (find-class 'theme-3d-all)))
-                    (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                      (error "Missing theme-3d-all setting: ~a" (slot-definition-name slot))))
-                  
-                  ,object))
-              ,normal ,dark ,light ,very-dark ,very-light, fore-color, back-color)))
-
-(defun theme-3d-aqua ()
-  (deftheme-3d-obj (al:map-rgb 0 255 255) (al:map-rgb 0 191 191) (al:map-rgb 127 255 255) (al:map-rgb 0 127 127) (al:map-rgb 191 255 255)))
-
-(defun theme-3d-blue ()
-  (deftheme-3d-obj (al:map-rgb 0 0 255) (al:map-rgb 0 0 191) (al:map-rgb 159 159 255) (al:map-rgb 0 0 159) (al:map-rgb 191 191 255)))
-
-(defun theme-3d-gray ()
-  (deftheme-3d-obj
-      (al:map-rgb 212 208 200) (al:map-rgb 128 128 128) (al:map-rgb 223 223 223) (al:map-rgb 95 95 95) (al:map-rgb 245 245 245) (al:map-rgb 0 0 0) (al:map-rgb 255 255 255)
-    ;; Override the active-text up/down for this one
-    (setf (up-color object) (fore-color object))
-    (setf (down-color object) (dark-color object))))
-
-(defun theme-3d-green ()
-  (deftheme-3d-obj (al:map-rgb 0 255 0) (al:map-rgb 0 191 0) (al:map-rgb 127 255 127) (al:map-rgb 0 159 0) (al:map-rgb 191 255 191)))
-
-(defun theme-3d-purple ()
-  (deftheme-3d-obj (al:map-rgb 255 0 255) (al:map-rgb 191 0 191) (al:map-rgb 255 159 255) (al:map-rgb 159 0 159) (al:map-rgb 255 191 255)))
-
-(defun theme-3d-red ()
-  (deftheme-3d-obj (al:map-rgb 255 0 0) (al:map-rgb 191 0 0) (al:map-rgb 255 127 127) (al:map-rgb 159 0 0) (al:map-rgb 255 191 191)))
-
-(defun theme-3d-yellow ()
-  (deftheme-3d-obj (al:map-rgb 255 255 0) (al:map-rgb 191 191 0) (al:map-rgb 255 255 127) (al:map-rgb 127 127 0) (al:map-rgb 255 255 191)))
-
-;;;------------------------------------------------------------------
-
-(defparameter *theme-default* (theme-flat-gray))
 

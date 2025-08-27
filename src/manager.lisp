@@ -15,7 +15,8 @@
 (defmethod on-char (key mods (obj manager) &key)
   (v:debug :event "on-char: manager: got ~a ~b" key mods)
   (dolist (child (content obj))
-    (on-char key mods child)))
+    (when (on-char key mods child)
+      (return-from on-char t))))
 
 (defmethod paint ((obj manager) &key)
   (dolist (child (content obj))

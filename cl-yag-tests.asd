@@ -9,6 +9,7 @@
   :source-control (:git "https://github.com/philomelus/cl-yag.git")
   
   :depends-on ("cl-yag"
+               "closer-mop"
                ;;:fiveam
                "verbose")
 

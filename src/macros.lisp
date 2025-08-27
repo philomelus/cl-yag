@@ -2,40 +2,6 @@
 
 ;;;; macros ===================================================================
 
-(defmacro with-border-area ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, adjusting for border."
-  (let ((bl (gensym))
-        (bt (gensym))
-        (br (gensym))
-        (bb (gensym)))
-    `(let ((,left (left ,object))
-           (,top (top ,object))
-           (,right (right ,object))
-           (,bottom (bottom ,object))
-           (,bl (border-left ,object))
-           (,bt (border-top ,object))
-           (,br (border-right ,object))
-           (,bb (border-bottom ,object)))
-       (unless (eql ,bl nil)
-         (incf ,left (width ,bl)))
-       (unless (eql ,bt nil)
-         (incf ,top (width ,bt)))
-       (unless (eql ,br nil)
-         (decf ,right (width ,br)))
-       (unless (eql ,bb nil)
-         (decf ,bottom (width ,bb)))
-       ,@body)))
-
-(defmacro with-border-and-padding-area ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, adjusting for
-border and spacing of object."
-  `(with-border-area (,left ,top ,right ,bottom) object
-     (incf ,left (padding-left ,object))
-     (incf ,top (padding-top ,object))
-     (decf ,right (padding-right ,object))
-     (decf ,bottom (padding-bottom ,object))
-     ,@body))
-
 (defmacro my-next-method ()
   `(if (next-method-p) (call-next-method)))
 
@@ -112,10 +78,102 @@ border and spacing of object."
            (format ,stream "~a " (print-raw-object ,field))))
      (pprint-newline :linear ,stream)))
 
+;;;; various ==================================================================
+
+(defmacro theme-field (field obj)
+  `(let ((th-ob (,field ,obj)))
+     (when (eql th-ob nil)
+       (setq th-ob (,field (find-theme ,obj))))
+     th-ob))
+
 ;;;; with-* ===================================================================
 
 (defmacro with-area ((left top width height) object &body body)
+  "Creates local bingings of let, top, width, and height slots of an area-mixin
+slots."
+  
   `(with-slots ((,left left) (,top top) (,width width) (,height height))
        ,object
      ,@body))
+
+(defmacro with-border-area ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordinates of object, adjusting for border."
+  (let ((bl (gensym))
+        (bt (gensym))
+        (br (gensym))
+        (bb (gensym)))
+    `(let ((,left (left ,object))
+           (,top (top ,object))
+           (,right (right ,object))
+           (,bottom (bottom ,object))
+           (,bl (border-left ,object))
+           (,bt (border-top ,object))
+           (,br (border-right ,object))
+           (,bb (border-bottom ,object)))
+       (unless (eql ,bl nil)
+         (incf ,left (width ,bl)))
+       (unless (eql ,bt nil)
+         (incf ,top (width ,bt)))
+       (unless (eql ,br nil)
+         (decf ,right (width ,br)))
+       (unless (eql ,bb nil)
+         (decf ,bottom (width ,bb)))
+       ,@body)))
+
+(defmacro with-border-and-padding-area ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordinates of object, adjusting for
+border and spacing of object."
+  `(with-border-area (,left ,top ,right ,bottom) object
+     (incf ,left (padding-left ,object))
+     (incf ,top (padding-top ,object))
+     (decf ,right (padding-right ,object))
+     (decf ,bottom (padding-bottom ,object))
+     ,@body))
+
+(defmacro with-local-accessors ((&rest slots) instance &body body)
+  "Like with-slots, but slots are cached in local variables and changes are not
+updated on setq/setf."
+  
+  (let ((in (gensym)))
+    `(let ((,in ,instance))
+       (let (,@(mapcar #'(lambda (obj)
+                           (if (consp obj)
+                               `(,(first obj) (,(second obj) ,in))
+                               (error "malformed slots")))
+                       slots))
+         ,@body))))
+
+(defmacro with-local-slots ((&rest slots) instance &body body)
+  "Like with-slots, but slots are cached in local variables and changes are not
+updated on setq/setf."
+  
+  (let ((in (gensym)))
+    `(let ((,in ,instance))
+       (let (,@(mapcar #'(lambda (obj)
+                           (if (consp obj)
+                               `(,(first obj) (slot-value ,in ',(second obj)))
+                               (error "malformed slots")))
+                       slots))
+         ,@body))))
+
+;; BUGBUG: TODO:  Args evaluated more than one time
+(defmacro with-theme ((&rest fields) object &body body)
+  (let ((instance (gensym))
+        (theme (gensym)))
+    `(let ((,instance ,object))
+       (let (,@(mapcar #'(lambda (f)
+                           `(,(first f) (,(second f) ,instance)))
+                       fields))
+         (when (or ,@(mapcar #'(lambda (f)
+                                 `(eql ,(first f) nil))
+                             fields))
+           (let ((,theme (find-theme obj)))
+             ,@(mapcar #'(lambda (f)
+                           `(when (not ,(first f))
+                              (setq ,(first f) (,(second f) ,theme))))
+                       fields)))
+         ,@(mapcar #'(lambda (f)
+                       `(assert (not (eql ,(first f) nil))))
+                   fields)
+         ,@body))))
 

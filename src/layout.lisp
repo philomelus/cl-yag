@@ -28,7 +28,8 @@
 
 (defmethod on-char (key mods (obj layout-base) &key)
   (dolist (child (content obj))
-    (on-char key mods child))
+    (when (on-char key mods child)
+      (return-from on-char t)))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj layout-base) &key)
@@ -71,8 +72,15 @@
     (let ((child (nth i (content object))))
       (when (consp child)
         
-        (let ((child-object (symbol-value (first child)))
+        (let ((child-object)
               (options (rest child)))
+          (typecase (first child)
+            (symbol
+             (setq child-object (symbol-value (first child))))
+            (t
+             (setq child-object (first child))))
+          ;; Make sure options area valid
+          ;; #+safety
           (dolist (option options)
             (unless (member option +LAYOUT-CHILD-OPTIONS+)
               (error "unknown child option: ~a" option)))
@@ -100,51 +108,30 @@
         (v:debug :layout "[calc-area] {~a} child ~d calculating (~a ~a) @ (~a ~a)"
                  (print-raw-object child) cp cw ch cl ct)
         
-        (let ((clp nil) (ctp nil) (cwp nil) (chp nil))
+        (macrolet ((do-calc (var func)
+                     `(if (typep ,var 'keyword)
+                          (progn
+                            (setf ,var (,func ,var oa child))
+                            t)
+                          nil)))
+          (let ((clp (do-calc ch calc-height))
+                (ctp (do-calc cw calc-width))
+                (cwp (do-calc cl calc-left))
+                (chp (do-calc ct calc-top)))
 
-          ;; Calculate height if desired
-          (when (typep ch 'keyword)
-            (setf ch (calc-height ch oa child)
-                  chp t))
+            ;; Call update when there are child options or any area field wasn't
+            ;; calculated
+            (let ((options (aref (slot-value parent 'child-options) cp)))
+              (when (or (not (or clp ctp cwp chp))
+                        options)
+                (with-area (lcl lct lcw lch) (aref child-area cp)
+                  (v:debug :layout "[calc-area] {~a} child ~d internal area (~d ~d) @ (~d ~d)"
+                           (print-raw-object child) cp lcw lch lcl lct))
+                (update-layout-child-areas cp parent)))
 
-          ;; Calculate width if desired
-          (when (typep cw 'keyword)
-            (setf cw (calc-width cw oa child)
-                  cwp t))
-
-          ;; Calculate left if desired
-          (when (typep cl 'keyword)
-            (setf cl (calc-left cl oa child)
-                  clp t))
-
-          ;; Calculate top if desired
-          (when (typep ct 'keyword)
-            (setf ct (calc-top ct oa child)
-                  ctp t))
-
-          ;; Call update when there are child options or any area field wasn't
-          ;; calculated
-          ;; NOTE: Could also tell if they are orignal from area-mixin's *-calc
-          ;;       fields, but they require more runtime to access
-          (let ((options (aref (slot-value parent 'child-options) cp)))
-            (when (or (not (or clp ctp cwp chp))
-                      options)
-              (when (not clp)
-                (v:debug :layout "[calc-area] {~a} left was NOT CALCULATED" (print-raw-object child)))
-              (when (not ctp)
-                (v:debug :layout "[calc-area] {~a} top was NOT CALCULATED" (print-raw-object child)))
-              (when (not cwp)
-                (v:debug :layout "[calc-area] {~a} width was NOT CALCULATED" (print-raw-object child)))
-              (when (not chp)
-                (v:debug :layout "[calc-area] {~a} height was NOT CALCULATED" (print-raw-object child)))
-              (with-area (lcl lct lcw lch) (aref child-area cp)
-                (v:debug :layout "[calc-area] {~a} child ~d internal area (~d ~d) @ (~d ~d)"
-                         (print-raw-object child) cp lcw lch lcl lct))
-              (update-layout-child-areas cp parent)))
-
-          ;; Log updated/changed area
-          (v:debug :layout "[calc-area] {~a} child ~d area (~d ~d) @ (~d ~d)"
-                   (print-raw-object child) cp cw ch cl ct)))))
+            ;; Log updated/changed area
+            (v:debug :layout "[calc-area] {~a} child ~d area (~d ~d) @ (~d ~d)"
+                     (print-raw-object child) cp cw ch cl ct))))))
   (my-next-method))
 
 (defmethod on-paint ((obj column-layout) &key)
@@ -174,14 +161,14 @@
           (if (typep pam 'layout-base)
               ;; Yeah, so get our area from its child-area
               (let ((pamo (position object (content pam))))
-                (assert (>= pamo 0))
+                (assert (not (eql pamo nil)))
                 (with-area (pl pt pw ph)
                            (aref (slot-value pam 'child-area) pamo)
                   (setf pal pl pat pt paw pw pah ph)
-                  (assert (>= pal 0))
-                  (assert (>= pat 0))
-                  (assert (>= paw 0))
-                  (assert (>= pah 0))))
+                  (assert (typep pal 'number))
+                  (assert (typep pat 'number))
+                  (assert (typep paw 'number))
+                  (assert (typep pah 'number))))
               ;; Nope, so get the actual area
               (setf pal (slot-value pam 'left)
                     pat (slot-value pam 'top)

@@ -2,8 +2,9 @@
 (defpackage :cl-yag-tests
   (:use #:cl #:cl-yag)
   (:local-nicknames
-   (#:v #:org.shirakumo.verbose))  
-
+   (#:v #:org.shirakumo.verbose)
+   (#:mop #:closer-mop))
+  
   ;; (:import-from #:cl-yag
   ;;               ;; GUI classes / Macros
   ;;               #:defactive-text

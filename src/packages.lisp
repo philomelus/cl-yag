@@ -19,11 +19,31 @@
                 #:find-class
                 #:slot-definition-name)
   (:export #:main
+
+           ;; Global init/load/etc.
+           #:default-font
+           #:default-mono-font
+           #:theme-flat-aqua
+           #:theme-flat-blue
+           #:theme-flat-gray
+           #:theme-flat-green
+           #:theme-flat-purple
+           #:theme-flat-red
+           #:theme-flat-yellow
+           #:theme-3d-aqua
+           #:theme-3d-blue
+           #:theme-3d-gray
+           #:theme-3d-green
+           #:theme-3d-purple
+           #:theme-3d-red
+           #:theme-3d-yellow
+           
            ;; GUI classes / Macros
            #:active-text
            #:column-layout
            #:defactive-text
-           #:defborder
+           #:defborder-3d
+           #:defborder-flat
            #:defcolumn-layout
            #:defgrid
            #:defmanager
@@ -87,6 +107,7 @@
            #:fore-color
            #:h-align
            #:height
+           #:interior-color
            #:left
            #:light
            #:location
@@ -153,6 +174,7 @@
            #:within
            
            ;; Misc
+           #:area-br
            #:print-raw-object
            
            ;; Allegro specific
@@ -203,6 +225,7 @@
 
            ;; Globals
            #:*theme-default*
+           
            ))
 
 (in-package #:cl-yag)

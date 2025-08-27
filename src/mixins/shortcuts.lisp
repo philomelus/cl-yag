@@ -12,6 +12,7 @@
         (incf mods-val 2))
     (if (member :alt mods)
         (incf mods-val 4))
+    (v:debug :shortcuts "[mod2val] mods: ~a = ~d" mods mods-val)
     mods-val))
 
 (defun val2mod (val)
@@ -19,19 +20,19 @@
   (let ((mods ())
         (v val))
     (when (= v 0)
-      (push :none mods)
-      (return-from val2mod mods))
+      (push :none mods))
     (when (logbitp 2 val)
       (push :alt mods))
     (when (logbitp 1 val)
       (push :control mods))
     (when (logbitp 0 val)
       (push :shift mods))
+    (v:debug :shortcuts "[val2mod] val: ~d = ~a" val mods)
     mods))
 
 (defun validate-shortcuts (object)
   "Validate shortcuts appear to be valid.
-Keys aren't checked because if international support.
+Keys aren't checked because of international support.
 Modifiers are checked."
   (dolist (sc (shortcuts object))
     (let ((mods (second sc)))
@@ -58,26 +59,30 @@ allow multiple keys even though they are only allowed once each."
       (let ((keys (first sc))
             (mods (second sc)))
 
+        (v:debug :shortcuts "[convert-shortcuts] keys: ~a :mods ~a" keys mods)
+        
         ;; Make sure they are in known format
-        (unless (eql nil keys)
-          (unless (typep keys 'cons)
+        (unless (eql keys nil)
+          (unless (consp keys)
             (setf keys (list keys))))
-        (unless (eql nil mods)
-          (unless (typep mods 'cons)
+        (unless (eql mods nil)
+          (unless (consp mods)
             (setf mods (list mods))))
 
         ;; Create bitfield for modifiers
         (let ((mods-val (mod2val mods)))
 
           ;; Add valid accelerators to list
-          (if (eql nil keys)
+          (if (eql keys nil)
               ;; No key, are there mods?
-              (if (> mods-val 0)
+              (when (/= mods-val 0)
                   ;; Yes, so its valid
-                  (push (list nil mods-val) accels))
+                  (push (list nil mods-val) accels)
+                  (v:debug :shortcuts "[convert-shortcuts] added ~a" (list nil mods-val)))
               ;; Add all keys and mods as accels
               (dolist (k keys)
-                (push (list k mods-val) accels))))))
+                (push (list k mods-val) accels)
+                (v:debug :shortcuts "[convert-shortcuts] added ~a" (list k mods-val)))))))
 
     ;; Save in object
     (setf (slot-value object 'accels) accels)))
@@ -129,7 +134,12 @@ allow multiple keys even though they are only allowed once each."
           (if (and (eql key (first accel))
                    (= (second accel) mods))
               (progn
-                (v:debug :events "on-char: shortcuts-mixin: accepted ~a" accel)
+                (v:debug :shortcuts "[on-char] accepted accel:~a key:~a mod:~a ~a ~a" accel key mod
+                         (eql key (first accel)) (= (second accel) mods))
                 (on-command object)
-                (return-from on-char)))))))
+                (return-from on-char t))
+              (v:debug :shortcuts "[on-char] not accepted accel:~a key:~a mod:~a ~a ~a" accel key mod
+                       (eql key (first accel)) (= (second accel) mods))
+              ))))
+    nil)
   (my-next-method))

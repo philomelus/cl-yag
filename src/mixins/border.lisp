@@ -1,5 +1,15 @@
 (in-package #:cl-yag)
 
+;;;; macros ===================================================================
+
+(defmacro with-borders ((&rest vars) object &body body)
+  (assert (= (length vars) 4))
+  `(let ((,(first vars) (border-left ,object))
+         (,(second vars) (border-right ,object))
+         (,(third vars) (border-top ,object))
+         (,(fourth vars) (border-bottom ,object)))
+     ,@body))
+
 ;;;; border-base ==============================================================
 
 (defclass border-base ()

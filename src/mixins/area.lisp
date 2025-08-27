@@ -2,6 +2,14 @@
 
 ;;;; functions ================================================================
 
+(defun area (object)
+  (assert (typep object 'area-mixin))
+  (values (left object) (top object) (width object) (height object)))
+
+(defun area-rb (object)
+  (assert (typep object 'area-mixin))
+  (values (left object) (top object) (right object) (bottom object)))
+
 (defun find-parent-area-mixin (object)
   (assert (typep object 'parent-mixin))
   (let ((p (parent object)))

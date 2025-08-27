@@ -35,7 +35,8 @@
 
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
-    (on-char key mods child))
+    (when (on-char key mods child)
+      (return-from on-char t)))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj window) &key)
@@ -60,9 +61,7 @@
   (with-slots (content left top) obj
     
     ;; Fill interior if desired
-    (let ((ic (interior-color obj)))
-      (when (eql ic nil)
-        (setq ic (interior-color (find-theme obj))))
+    (with-theme ((ic interior-color)) obj
       (with-border-area (l t_ r b) obj
         (al:draw-filled-rectangle l t_ r b ic)))
     

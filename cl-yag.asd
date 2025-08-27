@@ -61,12 +61,13 @@
                              ;; Interactive objects
                              (:file "grid")
                              (:file "ruler")
-                             (:file "text")
+                             (:file "text" :depends-on ("theme"))
                              (:file "window")
 
                              ;; theme needs to be last as it relies on all the
                              ;; other objects -theme-mixins
-                             (:file "theme" :depends-on ("grid" "ruler" "text" "window"))
+                             (:file "theme")
+                             (:file "theme-vars" :depends-on ("grid" "ruler" "text" "theme" "window"))
 
                              ;; Used during development, and relies on ALL
                              ;; other files
