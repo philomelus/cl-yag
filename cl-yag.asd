@@ -59,6 +59,7 @@
                              (:file "layout")
 
                              ;; Interactive objects
+                             (:file "box")
                              (:file "grid")
                              (:file "ruler")
                              (:file "text" :depends-on ("theme"))
@@ -67,7 +68,7 @@
                              ;; theme needs to be last as it relies on all the
                              ;; other objects -theme-mixins
                              (:file "theme")
-                             (:file "theme-vars" :depends-on ("grid" "ruler" "text" "theme" "window"))
+                             (:file "theme-vars" :depends-on ("box" "grid" "ruler" "text" "theme" "window"))
 
                              ;; Used during development, and relies on ALL
                              ;; other files
