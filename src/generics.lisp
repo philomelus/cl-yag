@@ -48,19 +48,6 @@ object = object doing width calculation for"))
 (defgeneric layout (object)
   (:documentation "Force object and all children to calculate their layout."))
 
-(defgeneric map-theme (field theme)
-  (:documentation "Given a theme field name and a theme, return the appropriate theme value for
-the combination.
-
-field - Field of theme to retreive
-theme - Theme to get field from.  Note that this can be any possible theme
-        for an object.  For example, for a window object, it could be
-        either a window-flat or a window-3d.  All fields should be
-        be supported for either type, so that when a combination is used
-        (for example a parent window uses a 3d theme, but the current
-        contained object needs a flat theme), the appropriate value can be
-        located."))
-
 (defgeneric must-init (test desc))
 
 (defgeneric on-char (key mods object &key &allow-other-keys)

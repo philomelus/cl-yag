@@ -366,30 +366,3 @@
     (setf (fore-color object) fc)
     (setf (back-color object) bc)))
 
-;;;; map-theme ================================================================
-
-(defmethod map-theme (field (theme text-base-theme-mixin))
-  (case field
-    (back-color (back-color theme))
-    (down-color
-     (typecase theme
-       (theme-3d (very-dark-color theme))
-       (theme-flat (frame-color theme))
-       (error "don't know to get down-color from ~a" (type-of theme))))
-    (font (font theme))
-    (fore-color (fore-color theme))
-    (hover-color
-     (typecase theme
-       (theme-3d (dark-color theme))
-       (theme-flat (frame-color theme))
-       (error "don't know to get hover-color from ~a" (type-of theme))))
-    (interior-color
-     (typecase theme
-       (theme-3d (normal-color theme))
-       (theme-flat (interior-color theme))
-       (error "don't know to get interior-color from ~a" (type-of theme))))
-    (up-color
-     (typecase theme
-       (theme-3d (very-light-color theme))
-       (theme-flat (interior-color theme))
-       (error "don't know to get up-color from ~a" (type-of theme))))))
