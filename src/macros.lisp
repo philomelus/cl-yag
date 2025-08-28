@@ -86,6 +86,12 @@
        (setq th-ob (,field (find-theme ,obj))))
      th-ob))
 
+(defmacro theme-field-object (field obj theme-obj)
+  `(let ((th-ob (,field ,obj)))
+     (when (eql th-ob nil)
+       (setq th-ob (,field ,theme-obj)))
+     th-ob))
+
 ;;;; with-* ===================================================================
 
 (defmacro with-area ((left top width height) object &body body)
@@ -157,7 +163,7 @@ updated on setq/setf."
          ,@body))))
 
 ;; BUGBUG: TODO:  Args evaluated more than one time
-(defmacro with-theme ((&rest fields) object &body body)
+(defmacro with-theme-object ((&rest fields) object &body body)
   (let ((instance (gensym))
         (theme (gensym)))
     `(let ((,instance ,object))
@@ -167,7 +173,27 @@ updated on setq/setf."
          (when (or ,@(mapcar #'(lambda (f)
                                  `(eql ,(first f) nil))
                              fields))
-           (let ((,theme (find-theme obj)))
+           (let ((,theme (find-theme ,instance)))
+             ,@(mapcar #'(lambda (f)
+                           `(when (not ,(first f))
+                              (setq ,(first f) (,(second f) ,theme))))
+                       fields)))
+         ,@(mapcar #'(lambda (f)
+                       `(assert (not (eql ,(first f) nil))))
+                   fields)
+         ,@body))))
+
+(defmacro with-theme ((&rest fields) object theme-object &body body)
+  (let ((instance (gensym))
+        (theme (gensym)))
+    `(let ((,instance ,object))
+       (let (,@(mapcar #'(lambda (f)
+                           `(,(first f) (,(second f) ,instance)))
+                       fields))
+         (when (or ,@(mapcar #'(lambda (f)
+                                 `(eql ,(first f) nil))
+                             fields))
+           (let ((,theme ,theme-object))
              ,@(mapcar #'(lambda (f)
                            `(when (not ,(first f))
                               (setq ,(first f) (,(second f) ,theme))))

@@ -7,6 +7,15 @@ When creating a new graphical/interactive object, these are the things you don't
   
 - Update the theme-flat-all and theme-3d-all code, or add :after methods to update them
 
+- Objects should NOT be named for flat/3d.  They should only use a theme to determine when to paint as flat or 3d.
+  This means that there should almost always be 3 theme mixins:
+  
+  (defclass my-object-theme-mixin () ())
+  (defclass my-object-3d-theme-mixin (my-object-theme-mixin) ())
+  (defclass my-object-flat-theme-mixn (my-object-theme-mixin) ())
+
+  So that the main object can use the base theme as a base, then in method on-paint determine HOW/WHAT to paint based on derived theme.
+  
 - Crate the following methods, to make it easy for end users to use themes:
   (defmethod (setf theme) ((theme theme-flat) (object -your-object-)))
   (defmethod (setf theme) ((theme theme-3d) (object -your-object-)))

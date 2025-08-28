@@ -42,8 +42,7 @@
            #:active-text
            #:column-layout
            #:defactive-text
-           #:defborder-3d
-           #:defborder-flat
+           #:defborder
            #:defcolumn-layout
            #:defgrid
            #:defmanager

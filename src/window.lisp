@@ -61,7 +61,7 @@
   (with-slots (content left top) obj
     
     ;; Fill interior if desired
-    (with-theme ((ic interior-color)) obj
+    (with-theme-object ((ic interior-color)) obj
       (with-border-area (l t_ r b) obj
         (al:draw-filled-rectangle l t_ r b ic)))
     

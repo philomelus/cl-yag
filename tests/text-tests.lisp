@@ -56,7 +56,8 @@
              (setf w2 (defwindow 250 25 200 300 :content (list cl2) :interior-color (al:map-rgb-f 1 0 0)))
 
              ;; Test 3
-             (setf b1 (defborder-flat :width 2 :color (al:map-rgb-f 0.5 0.5 0.5)))
+             (setf b1 (defborder :thickness 2))
+             ;; TODO: (setf (color b1) (al:map-rgb-f 0.5 0.5 0.5))
              (setf t2 (deftext :title "center/auto-min a really long title to see what happens" :h-align :center :height :auto-min
                                :padding-bottom 5
                                :interior-color (al:map-rgb-f 1 0 0)
@@ -78,13 +79,15 @@
              (setf w3 (defwindow 475 25 200 300 :content (list cl4) :interior-color (al:map-rgb-f 1 0 0)))
 
              ;; Test 4
-             (setf b2 (defborder-flat :width 2 :color (al:map-rgb-f 0.5 0.5 0.5)))
+             (setf b2 (defborder :thickness 2))
+             ;; TODO: (setf (color b2) (al:map-rgb-f 0.5 0.5 0.5))
              (setf t3 (deftext :title "center/auto-min" :h-align :center :height :auto-min
                                :padding-bottom 5
                                :interior-color (al:map-rgb-f 1 0 0)
                                :border-bottom b2
                                :font (cl-yag:default-mono-font -20)))
-             (setf b3 (defborder-flat :width 2 :color (al:map-rgb-f 0.25 1 0.25)))
+             (setf b3 (defborder :thickness 2))
+             ;; TODO: (setf (color b3) (al:map-rgb-f 0.25 1 0.25))
              (setf a10 (defactive-text :title "c/b/auto-min/m" :h-align :center :v-align :middle :height :auto-min
                                        :width 176
                                        :left :center :top :bottom

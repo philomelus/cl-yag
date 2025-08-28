@@ -67,10 +67,10 @@
 
 ;;; box -------------------------------------------------------------
 
-(defmethod (setf theme) ((theme theme-flat) (object box-base))
+(defmethod (setf theme) ((theme theme-flat) (object box))
   (error "not implemented"))
 
-(defmethod (setf theme) ((theme theme-3d) (object box-base))
+(defmethod (setf theme) ((theme theme-3d) (object box))
   (error "not implemented"))
 
 ;;; grid ------------------------------------------------------------
@@ -150,25 +150,25 @@
     `(funcall (lambda (f i fc bc)
                 (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc :frame-color f :interior-color i)))
 
-                  ;; active-text
+                  ;; active-text-theme-mixin
                   (setf (font ,object) (default-font))
                   (setf (down-color ,object) f)
                   (setf (hover-color ,object) f)
                   (setf (interior-color ,object) i)
                   (setf (up-color ,object) i)
-                  ;; border-3d is not valid from a flat theme
-                  ;; border-flat
+                  ;; border-3d-theme-mixin is not valid from a flat theme
+                  ;; border-flat-theme-mixin
                   (setf (color ,object) f)
-                  ;; grid
+                  ;; grid-theme-mixin
                   (setf (major-color-h ,object) f)
                   (setf (major-color-v ,object) f)
                   (setf (minor-color-h ,object) f)
                   (setf (minor-color-v ,object) f)
-                  ;; ruler
+                  ;; ruler-theme-mixin
                   (setf (major-color ,object) f)
                   (setf (minor-color ,object) f)
-                  ;; text
-                  ;; window
+                  ;; text-theme-mixin
+                  ;; window-theme-mixin
                   (setf (frame-color ,object) f)
 
                   ;; Custom initialization code
@@ -216,25 +216,25 @@
     `(funcall (lambda (n d l vd vl fc bc)
                 (let ((,object (make-instance 'theme-3d-all :normal n :dark d :light l :very-dark vd :very-light vl :fore-color fc :back-color bc)))
                   
-                  ;; active-text
+                  ;; active-text-theme-mixin
                   (setf (font ,object) (default-font))
                   (setf (down-color ,object) vd)
                   (setf (hover-color ,object) d)
                   (setf (interior-color ,object) n)
                   (setf (up-color ,object) vl)
-                  ;; border-3d
-                  ;; border-flat
+                  ;; border-3d-theme-mixin
+                  ;; border-flat-theme-mixin
                   (setf (color ,object) d)
-                  ;; grid
+                  ;; grid-theme-mixn
                   (setf (major-color-h ,object) d)
                   (setf (major-color-v ,object) d)
                   (setf (minor-color-h ,object) vd)
                   (setf (minor-color-v ,object) vd)
-                  ;; ruler
+                  ;; ruler-theme-mixin
                   (setf (major-color ,object) vl)
                   (setf (minor-color ,object) l)
-                  ;; text taken care of above
-                  ;; window
+                  ;; text-theme-mixin
+                  ;; window-theme-mixin
 
                   ;; Custom initialization code
                   (let ((object ,object))

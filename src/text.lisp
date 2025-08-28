@@ -38,7 +38,7 @@
 
 (defun text-calc-title-top (obj)
   (with-local-accessors ((at top) (va v-align)) obj
-    (with-theme ((fnt font)) obj
+    (with-theme-object ((fnt font)) obj
 
       ;; When auto-calculated, start at 0 offset from parent
       (if (member at *AREA-TOP-OPTS*)
@@ -174,7 +174,7 @@
     rv))
 
 (defmethod on-paint ((obj text) &key)
-  (with-theme ((fc fore-color) (fnt font) (ic interior-color)) obj
+  (with-theme-object ((fc fore-color) (fnt font) (ic interior-color)) obj
 
     ;; Draw background
     (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
@@ -305,10 +305,10 @@
 
 (defmethod on-paint ((obj active-text) &key)
   (with-local-slots ((in inside) (down was-down)) obj
-    (with-theme ((cd down-color) (ch hover-color) (cu up-color)
-                 (fg fore-color) (bg back-color) (ic interior-color)
-                 (fnt font))
-                obj
+    (with-theme-object ((cd down-color) (ch hover-color) (cu up-color)
+                        (fg fore-color) (bg back-color) (ic interior-color)
+                        (fnt font))
+                       obj
       ;; Draw background
       (assert (not (eql bg nil)))
       (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
@@ -342,16 +342,15 @@
               (bottom (- (bottom obj) 1.5)))
           (with-borders (bl bt br bb) obj
             (unless (eql bl nil)
-              (incf left (width bl)))
+              (incf left (thickness bl)))
             (unless (eql bt nil)
-              (incf top (width bt)))
+              (incf top (thickness bt)))
             (unless (eql br nil)
-              (decf right (width br)))
+              (decf right (thickness br)))
             (unless (eql bb nil)
-              (decf bottom (width bb))))
+              (decf bottom (thickness bb))))
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
             (al:draw-rectangle left top right bottom ch 1))))))
-  
   (my-next-method))
 
 (defmethod (setf theme) ((theme active-text-theme-mixin) (object active-text))
