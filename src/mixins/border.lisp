@@ -12,9 +12,6 @@
 
 ;;;; border-base ==============================================================
 
-(defclass border-theme-mixin ()
-  ())
-
 (defclass border-base ()
   ((width :initarg :width :initform 1 :type integer :accessor width)))
 
@@ -29,8 +26,7 @@
 
 ;;; theme-mixin -----------------------------------------------------
 
-(defclass border-flat-theme-mixin (border-theme-mixin
-                                   color-mixin)
+(defclass border-flat-theme-mixin (color-mixin)
   ())
 
 ;; print-mixin not needed because there are no non-base slots
@@ -54,8 +50,7 @@
 
 ;;; theme-mixin -----------------------------------------------------
 
-(defclass border-3d-theme-mixin (border-theme-mixin
-                                 color-3d-mixin)
+(defclass border-3d-theme-mixin (color-3d-mixin)
   ())
 
 ;; print-mixin not needed because there are no non-base slots
