@@ -43,6 +43,7 @@
            #:column-layout
            #:defactive-text
            #:defborder
+           #:defbox
            #:defcolumn-layout
            #:defgrid
            #:defmanager

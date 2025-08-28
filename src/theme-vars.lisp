@@ -12,31 +12,24 @@
 ;;;; theme-flat-all ===========================================================
 
 (defclass theme-flat-all (theme-flat
-                          ;; Order matters ... follow same way they are initialized
                           active-text-theme-mixin
-                          
                           border-flat-theme-mixin
-                          
+                          box-flat-theme-mixin
                           grid-theme-mixin
-                          
                           ruler-theme-mixin
-                          
                           window-theme-mixin)
   ())
 
 ;;;; theme-3d-all =============================================================
 
 (defclass theme-3d-all (theme-3d
-                        ;; Order matters ... follow same way they are initialized
                         active-text-theme-mixin
-                        
-                        border-flat-theme-mixin
                         border-3d-theme-mixin
-                        
+                        border-flat-theme-mixin
+                        box-3d-theme-mixin
+                        box-flat-theme-mixn
                         grid-theme-mixin
-                        
                         ruler-theme-mixin
-                        
                         window-theme-mixin)
   ())
 
@@ -159,6 +152,7 @@
                   ;; border-3d-theme-mixin is not valid from a flat theme
                   ;; border-flat-theme-mixin
                   (setf (color ,object) f)
+                  ;; box-flat-theme-mixin
                   ;; grid-theme-mixin
                   (setf (major-color-h ,object) f)
                   (setf (major-color-v ,object) f)
@@ -167,9 +161,8 @@
                   ;; ruler-theme-mixin
                   (setf (major-color ,object) f)
                   (setf (minor-color ,object) f)
-                  ;; text-theme-mixin
-                  ;; window-theme-mixin
-                  (setf (frame-color ,object) f)
+                  ;; text-theme-mixin covered by active-text-theme-mixin
+                  ;; window-theme-mixin covered by theme-flat
 
                   ;; Custom initialization code
                   (let ((object ,object))
@@ -222,9 +215,11 @@
                   (setf (hover-color ,object) d)
                   (setf (interior-color ,object) n)
                   (setf (up-color ,object) vl)
-                  ;; border-3d-theme-mixin
+                  ;; border-3d-theme-mixin covered by theme-3d
                   ;; border-flat-theme-mixin
                   (setf (color ,object) d)
+                  ;; box-3d-theme-mixin
+                  ;; box-flat-theme-mixin
                   ;; grid-theme-mixn
                   (setf (major-color-h ,object) d)
                   (setf (major-color-v ,object) d)
@@ -233,8 +228,8 @@
                   ;; ruler-theme-mixin
                   (setf (major-color ,object) vl)
                   (setf (minor-color ,object) l)
-                  ;; text-theme-mixin
-                  ;; window-theme-mixin
+                  ;; text-theme-mixin covered by active-text-theme-mixin
+                  ;; window-theme-mixin converted by active-text-theme-mixin
 
                   ;; Custom initialization code
                   (let ((object ,object))

@@ -37,3 +37,20 @@
   (pprint-color-nil back-color o s)
   (my-next-method))
 
+;;;; frame-color-mixin ========================================================
+
+(defclass frame-color-mixin ()
+  ((frame-color :initarg :frame-color :initform nil :accessor frame-color)))
+
+(defmethod print-mixin ((o frame-color-mixin) s)
+  (pprint-color-nil frame-color o s)
+  (my-next-method))
+
+;;;; interior-color-mixin =====================================================
+
+(defclass interior-color-mixin ()
+  ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
+
+(defmethod print-mixin ((o interior-color-mixin) s)
+  (pprint-color-nil interior-color o s)
+  (my-next-method))
