@@ -9,17 +9,21 @@
       ((:auto :auto-max))               ; nothing to do
       
       (:auto-min
-       (let ((fh (al:get-font-line-height (theme-field font object))))
-         (incf fh (padding-top object))
-         (incf fh (padding-bottom object))
-         (setq rv (min fh (height area))))))
+       (let ((fnt (theme-field font object)))
+         (assert (and (not (eql fnt nil))
+                      (not (cffi:null-pointer-p fnt))))
+         (let ((fh (al:get-font-line-height fnt)))
+           (incf fh (padding-top object))
+           (incf fh (padding-bottom object))
+           (setq rv (min fh (height area)))))))
     rv))
 
 (declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-left))
 (defun text-calc-left (type area object)
   (with-local-accessors ((rv left)) area
     (case type
-      ((:left :auto))                   ; Nothing to do
+      ((:left :auto)
+       (incf rv (padding-left object)))
       
       (:center
        (with-local-slots ((w width)) object
@@ -39,7 +43,9 @@
 (defun text-calc-title-top (obj)
   (with-local-accessors ((at top) (va v-align)) obj
     (with-theme-object ((fnt font)) obj
-
+      (assert (and (not (eql fnt nil))
+                   (not (cffi:null-pointer-p fnt))))
+      
       ;; When auto-calculated, start at 0 offset from parent
       (if (member at *AREA-TOP-OPTS*)
           (setf at 0))
@@ -102,11 +108,12 @@
 
 ;;;; text-base ================================================================
 
-(defclass text-base-theme-mixin (color-fore-back-mixin
+(defclass text-base-theme-mixin (back-fore-color-mixin
                                  font-mixin)
   ())
 
-(defmethod print-mixin ((object text-base-theme-mixin) stream)
+(defmethod print-mixin ((object text-base-theme-mixin) &optional stream)
+  (declare (ignore stream))
   ;; Nothing to do, as base mixin will print fields
   (my-next-method))
 
@@ -130,18 +137,13 @@
                 text-theme-mixin)
   ())
 
-(defmethod print-mixin ((object text-theme-mixin) stream)
-  (pprint-color-nil interior-color object stream)
+(defmethod print-mixin ((object text-theme-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil interior-color object stream)
   (my-next-method))
 
 (defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'text ,@rest))
-
-;; (defmethod print-object ((o text-base) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "deftext ")
-;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 
@@ -215,10 +217,11 @@
    (hover-color :initarg :hover-color :initform (al:map-rgb-f 0.5 0.5 0.5) :accessor hover-color)
    (up-color :initarg :up-color :initform nil :accessor up-color)))
 
-(defmethod print-mixin ((object active-text-theme-mixin) stream)
-  (pprint-color-nil down-color object stream)
-  (pprint-color-nil hover-color object stream)
-  (pprint-color-nil up-color object stream)
+(defmethod print-mixin ((object active-text-theme-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil down-color object stream)
+  ;; (pprint-color-nil hover-color object stream)
+  ;; (pprint-color-nil up-color object stream)
   (my-next-method))
 
 ;;; active-text -----------------------------------------------------
@@ -232,12 +235,6 @@
 
 (defmacro defactive-text (&rest rest &key &allow-other-keys)
   `(make-instance 'active-text ,@rest))
-
-;; (defmethod print-object ((o active-text) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "defactive-text ")
-;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 

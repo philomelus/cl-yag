@@ -8,11 +8,12 @@
    (minor-color-h :initarg :minor-color-h :initform nil :accessor minor-color-h)
    (minor-color-v :initarg :minor-color-v :initform nil :accessor minor-color-v)))
 
-(defmethod print-mixin ((object grid-theme-mixin) stream)
-  (pprint-color-nil major-color-h object stream)
-  (pprint-color-nil major-color-v object stream)
-  (pprint-color-nil minor-color-h object stream)
-  (pprint-color-nil minor-color-v object stream)  
+(defmethod print-mixin ((object grid-theme-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil major-color-h object stream)
+  ;; (pprint-color-nil major-color-v object stream)
+  ;; (pprint-color-nil minor-color-h object stream)
+  ;; (pprint-color-nil minor-color-v object stream)  
   (my-next-method))
 
 ;;;; grid =====================================================================
@@ -26,14 +27,6 @@
 
 (defmacro defgrid (&rest rest &key &allow-other-keys)
   `(make-instance 'grid ,@rest))
-
-;; (defmethod print-object ((o grid) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "defgrid ")
-;;     (pprint-field-nil major o s)
-;;     (pprint-field-nil minor o s)
-;;     (print-mixin o s)))
 
 ;;; methods ---------------------------------------------------------
 

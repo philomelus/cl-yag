@@ -3,28 +3,17 @@
 ;;;; spacing-mixin ============================================================
 
 (defclass spacing-mixin ()
-  ((spacing-left :initarg :spacing-left :initform 0 :type integer :accessor spacing-left)
-   (spacing-right :initarg :spacing-right :initform 0 :type integer :accessor spacing-right)
-   (spacing-top :initarg :spacing-top :initform 0 :type integer :accessor spacing-top)
-   (spacing-bottom :initarg :spacing-bottom :initform 0 :type integer :accessor spacing-bottom)))
+  ((spacing-left :initarg :spacing-left :initform 0 :accessor spacing-left)
+   (spacing-top :initarg :spacing-top :initform 0 :accessor spacing-top)
+   (spacing-right :initarg :spacing-right :initform 0 :accessor spacing-right)
+   (spacing-bottom :initarg :spacing-bottom :initform 0 :accessor spacing-bottom)))
 
-(defmethod print-mixin ((o spacing-mixin) s)
-  (pprint-indent :current 0 s)
-  (format s ":spacing-left ~d " (spacing-left o))
-  (pprint-newline :linear s)
-
-  (pprint-indent :current 0 s)
-  (format s ":spacing-right ~d " (spacing-right o))
-  (pprint-newline :linear s)
-
-  (pprint-indent :current 0 s)
-  (format s ":spacing-top ~d " (spacing-top o))
-  (pprint-newline :linear s)
-
-  (pprint-indent :current 0 s)
-  (format s ":spacing-bottom ~d " (spacing-bottom o))
-  (pprint-newline :linear s)
-
+(defmethod print-mixin ((o spacing-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-field spacing-left o s :fmt "~a")
+  ;; (pprint-field spacing-top o s :fmt "~a")
+  ;; (pprint-field spacing-right o s :fmt "~a")
+  ;; (pprint-field spacing-bottom o s :fmt "~a")
   (my-next-method))
 
 (defmethod (setf spacing) (value (object spacing-mixin))

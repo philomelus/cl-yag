@@ -18,12 +18,6 @@
    (child-area :initform nil)
    (child-options :initform nil)))
 
-;; (defmethod print-object ((o layout-base) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "deflayout-base ")
-;;     (print-mixin o s)))
-
 ;;; methods ---------------------------------------------------------
 
 (defmethod on-char (key mods (obj layout-base) &key)
@@ -55,12 +49,6 @@
 
 (defmacro defcolumn-layout (&rest rest &key &allow-other-keys)
   `(make-instance 'column-layout ,@rest))
-
-;; (defmethod print-object ((o column-layout) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "defcolumn-layout ")
-;;     (print-mixin o s)))
 
 ;; Separate children into objects and options
 (defmethod initialize-instance :after ((object column-layout) &key)
@@ -136,8 +124,11 @@
 
 (defmethod on-paint ((obj column-layout) &key)
   (dolist (c (content obj))
-    (on-paint c))
-  ;; (on-paint (first (content obj)))
+    (if (atom c)
+        (on-paint c)
+        (progn
+          (if (consp c)
+              (on-paint (first c))))))
   (my-next-method))
 
 ;;;; functions ================================================================
@@ -233,7 +224,7 @@ area allocated to them, whether they choose to use it or not."
     (setf child-area (make-array (length (content object)) :adjustable nil))
     
     (let* ((num-children (length (content object)))
-           (num-to-adjust (mod (height object) num-children))
+           (num-to-adjust (truncate (mod (height object) num-children)))
            (base-height (truncate (/ (height object) num-children))))
       (assert (< num-to-adjust num-children))
       
@@ -454,3 +445,31 @@ recalculates the sizes of the children that are affected by it."
                 )))))
       )))
 
+;;;; functions ================================================================
+
+;; Separate children into objects and options
+(defun parse-children (object)
+  
+  ;; Allocate options storage
+  (setf (slot-value object 'child-options) (make-array (length (content object)) :initial-element nil))
+
+  ;; Separate the children and their options
+  (dotimes (i (length (content object)))
+    (let ((child (nth i (content object))))
+      (when (consp child)
+        
+        (let ((child-object)
+              (options (rest child)))
+          (typecase (first child)
+            (symbol
+             (setq child-object (symbol-value (first child))))
+            (t
+             (setq child-object (first child))))
+          ;; Make sure options area valid
+          ;; #+safety
+          (dolist (option options)
+            (unless (member option +LAYOUT-CHILD-OPTIONS+)
+              (error "unknown child option: ~a" option)))
+          (setf (nth i (content object)) child-object)
+          (setf (aref (slot-value object 'child-options) i) options)))))
+  )

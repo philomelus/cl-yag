@@ -2,8 +2,6 @@
 
 ;;;; generics =================================================================
 
-(defgeneric between (lo hi))
-
 (defgeneric bottom (object))
 
 (defgeneric calc-area (object parent &key &allow-other-keys))
@@ -77,9 +75,13 @@ object = object doing width calculation for"))
 
 (defgeneric on-paint (obj &key &allow-other-keys))
 
-(defgeneric on-resize (obj x y w h &key &allow-other-keys))
+(defgeneric on-resize (obj x y w h &key &allow-other-keys)
+  (:method (obj x y w h &key)
+    (my-next-method)))
 
-(defgeneric on-timer (timer count object))
+(defgeneric on-timer (timer count object &key &allow-other-keys)
+  (:method (timer count object &key)
+    (my-next-method)))
 
 (defgeneric owner (obj))
 
@@ -95,7 +97,7 @@ object = object doing width calculation for"))
 (defgeneric paint-border-right (border object theme))
 (defgeneric paint-border-top (border object theme))
 
-(defgeneric print-mixin (object stream))
+(defgeneric print-mixin (object &optional stream))
 
 (defgeneric process-events (queue object &key &allow-other-keys))
 

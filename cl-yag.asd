@@ -11,7 +11,7 @@
   ;; Dependencies.
   :depends-on ("bordeaux-threads"
                "cl-liballegro"
-               ;; "cffi-object"
+               "cffi-object"
                "closer-mop"
                "verbose")
 

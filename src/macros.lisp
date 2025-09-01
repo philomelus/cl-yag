@@ -12,7 +12,7 @@
   `(progn
      (pprint-indent :current 0 ,stream)
      (format ,stream ":~a (~a) " (symbol-name ',field) (print-color (slot-value ,object ',field)))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-color-nil (field object stream)
   `(progn
@@ -22,19 +22,19 @@
        (if (eql ,field nil)
            (format ,stream "NIL ")
            (format ,stream "(~a) " (print-color ,field))))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-field (field object stream &key (fmt "~a"))
   `(progn
      (pprint-indent :current 0 ,stream)
      (format ,stream (concatenate 'string ":~a " ,fmt " ") (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-field-keyword (field object stream)
   `(progn
      (pprint-indent :current 0 ,stream)
      (format ,stream ":~a :~a" (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-field-nil (field object stream)
   `(progn
@@ -44,13 +44,13 @@
        (if (eql ,field nil)
            (format ,stream "NIL ")
            (format ,stream "~a " ,field)))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-object (field object stream)
   `(progn
      (pprint-indent :current 0 ,stream)
      (format ,stream ":~a (~a) " (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-object-nil (field object stream)
   `(progn
@@ -60,13 +60,13 @@
        (if (eql ,field nil)
            (format ,stream "NIL ")
            (format ,stream "(~a) " ,field)))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-raw (field object stream)
   `(progn
      (pprint-index :current 0 ,stream)
      (format ,stream ":~a ~a" (symbol-name ',field) (print-raw-object (slot-value ,object ',field)))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 (defmacro pprint-raw-nil (field object stream)
   `(progn
@@ -76,7 +76,7 @@
        (if (eql ,field nil)
            (format ,stream "NIL ")
            (format ,stream "~a " (print-raw-object ,field))))
-     (pprint-newline :linear ,stream)))
+     (pprint-newline :mandatory ,stream)))
 
 ;;;; various ==================================================================
 
@@ -95,12 +95,28 @@
 ;;;; with-* ===================================================================
 
 (defmacro with-area ((left top width height) object &body body)
-  "Creates local bingings of let, top, width, and height slots of an area-mixin
-slots."
+  "Creates local bingings of let, top, width, and height of an area-mixin"
   
-  `(with-slots ((,left left) (,top top) (,width width) (,height height))
-       ,object
-     ,@body))
+  ;; `(with-slots ((,left left) (,top top) (,width width) (,height height))
+  ;;      ,object
+  ;;    ,@body)
+
+  (let ((instance (gensym)))
+    `(let ((,instance ,object))
+       (with-local-slots ((,left left) (,top top) (,width width) (,height height))
+                         ,instance
+         ,@body))))
+
+(defmacro with-area-rb ((left top right bottom) object &body body)
+  "Creates local bindings of left, top, and local bindings of result of right, and
+bottom for an area-mixin."
+  
+  (let ((instance (gensym)))
+    `(let ((,instance ,object))
+       (with-local-slots ((,left left) (,top top)) ,instance
+         (let ((,right (right ,instance))
+               (,bottom (bottom ,instance)))
+           ,@body)))))
 
 (defmacro with-border-area ((left top right bottom) object &body body)
   "Provide left, top, right, and bottom coordinates of object, adjusting for border."
@@ -183,21 +199,12 @@ updated on setq/setf."
                    fields)
          ,@body))))
 
-(defmacro with-theme ((&rest fields) object theme-object &body body)
-  (let ((instance (gensym))
-        (theme (gensym)))
-    `(let ((,instance ,object))
+(defmacro with-theme ((&rest fields) theme-object &body body)
+  (let ((instance (gensym)))
+    `(let ((,instance ,theme-object))
        (let (,@(mapcar #'(lambda (f)
                            `(,(first f) (,(second f) ,instance)))
                        fields))
-         (when (or ,@(mapcar #'(lambda (f)
-                                 `(eql ,(first f) nil))
-                             fields))
-           (let ((,theme ,theme-object))
-             ,@(mapcar #'(lambda (f)
-                           `(when (not ,(first f))
-                              (setq ,(first f) (,(second f) ,theme))))
-                       fields)))
          ,@(mapcar #'(lambda (f)
                        `(assert (not (eql ,(first f) nil))))
                    fields)

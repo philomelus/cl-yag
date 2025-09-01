@@ -29,14 +29,6 @@
          (yag-path (asdf:system-relative-pathname "cl-yag" real-path)))
     (namestring yag-path)))
 
-(defmethod between ((lo integer) (hi integer))
-  (let* ((r (+ lo (* (random 1.0) (- hi lo))))
-		 (result (truncate r)))
-	result))
-
-(defmethod between ((lo float) (hi float))
-  (+ lo (* (random 1.0) (- hi lo))))
-
 (defmethod must-init ((test sb-sys::system-area-pointer) desc)
   (when (null-pointer-p test)
     (if (>  (al:get-errno) 0)
@@ -67,12 +59,4 @@
 
 (defun print-thread-name ()
   (format nil "~a" (bt:thread-name (bt:current-thread))))
-
-(declaim (ftype (function (integer integer integer integer integer integer integer integer) boolean) rect-collide))
-(defun rect-collide (left1 top1 right1 bottom1 left2 top2 right2 bottom2)
-  (cond ((> left1 right2) (return-from rect-collide nil))
-		((< right1 left2) (return-from rect-collide nil))
-		((> top1 bottom2) (return-from rect-collide nil))
-		((< bottom1 top2) (return-from rect-collide nil)))
-  t)
 

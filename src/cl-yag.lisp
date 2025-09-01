@@ -57,18 +57,18 @@
            (setq *g* (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
                               :shortcuts (list '(:5))))
 
-           (setq *t1* (deftext :title "Title" :font nil :h-align :center :v-align :middle
+           (setq *t1* (deftext :title "Title" :h-align :center :v-align :middle
                                :height :auto-min))
            
-           (setq *a1* (defactive-text :title "Asteroids" :font nil :h-align :center :v-align :middle
+           (setq *a1* (defactive-text :title "Asteroids" :h-align :center :v-align :middle
                                       :shortcuts (list '(:a :shift) '(:a :none))
                                       :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
-           (setq *a2* (defactive-text :title "Blastem" :font nil :h-align :center :v-align :middle
+           (setq *a2* (defactive-text :title "Blastem" :h-align :center :v-align :middle
                                       :shortcuts (list '(:b :shift) '(:b :none))
                                       :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 10 :padding-right 10 :padding-top 10 :padding-bottom 10))
-           (setq *a3* (defactive-text :title "Quit" :font nil :h-align :center :v-align :middle
+           (setq *a3* (defactive-text :title "Quit" :h-align :center :v-align :middle
                                       :shortcuts (list '(:q :shift) '(:q :none))
                                       :left :center :top :middle :width :auto :height :auto-min
                                       :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
@@ -117,23 +117,11 @@
                  (setf (process *boss*) nil)
                  ;; Pass on or else non-specific object's won't get told
                  (my-next-method)))
-           
-           (defmethod unhandled-event (event (object (eql *boss*)))
-             (declare (ignore object))
-             (case (event-type event)
-               (:timer
-                (al:clear-to-color (al:map-rgb-f 0 0 0))
-                (paint *boss*)
-                (al:flip-display))
-               
-               (:display-close (setf (process *boss*) nil))
-               
-               (:display-resize
-                (on-resize *w* (display-event-x event) (display-event-y event)
-                           (display-event-width event) (display-event-height event)))
 
-               (otherwise
-                (v:debug :event "event: ~a" (event-type event)))))
+           (defmethod on-timer (source count (object (eql *boss*)) &key)
+             (al:clear-to-color (al:map-rgb-f 0 0 0))
+             (paint *boss*)
+             (al:flip-display))
 
            (al:start-timer timer)
            (al:clear-keyboard-state screen)

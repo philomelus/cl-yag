@@ -3,18 +3,13 @@
 ;;;; location-mixin ===========================================================
 
 (defclass location-mixin ()
-  ((x :initarg :x :initform 0 :type integer :accessor location-x)
-   (y :initarg :y :initform 0 :type integer :accessor location-y)))
+  ((x :initarg :x :initform 0 :accessor location-x)
+   (y :initarg :y :initform 0 :accessor location-y)))
 
-(defmethod print-mixin ((o location-mixin) s)
-  (pprint-indent :current 0 s)
-  (format s ":x ~d " (location-x o))
-  (pprint-newline :linear s)
-  
-  (pprint-indent :current 0 s)
-  (format s ":y ~d " (location-y o))
-  (pprint-newline :linear s)
-  
+(defmethod print-mixin ((o location-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-field x o s :fmt "~d")
+  ;; (pprint-field y o s :fmt "~d")
   (my-next-method))
 
 (defmethod (setf location) (x y (object location-mixin))

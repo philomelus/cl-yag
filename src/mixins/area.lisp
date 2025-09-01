@@ -50,11 +50,12 @@
    (width-calc :initform nil)
    (height-calc :initform nil)))
 
-(defmethod print-mixin ((o area-mixin) s)
-  (pprint-field left o s :fmt "~d")
-  (pprint-field top o s :fmt "~d")
-  (pprint-field width o s :fmt "~d")
-  (pprint-field height o s :fmt "~d")
+(defmethod print-mixin ((o area-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-field left o s :fmt "~d")
+  ;; (pprint-field top o s :fmt "~d")
+  ;; (pprint-field width o s :fmt "~d")
+  ;; (pprint-field height o s :fmt "~d")
   (my-next-method))
 
 ;;; methods ---------------------------------------------------------

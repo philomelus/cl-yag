@@ -69,7 +69,7 @@
            #:area-mixin
            #:border-mixin
            #:color-mixin
-           #:color-fore-back-mixin
+           #:back-fore-color-mixin
            #:container-mixin
            #:content-mixin
            #:enable-mixin
@@ -132,6 +132,7 @@
            #:spacing-top
            #:spacing-v
            #:style
+           #:title-position
            #:theme
            #:theme-3d-d
            #:theme-3d-l

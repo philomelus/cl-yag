@@ -27,7 +27,7 @@
                         border-3d-theme-mixin
                         border-flat-theme-mixin
                         box-3d-theme-mixin
-                        box-flat-theme-mixn
+                        box-flat-theme-mixin
                         grid-theme-mixin
                         ruler-theme-mixin
                         window-theme-mixin)
@@ -152,7 +152,7 @@
                   ;; border-3d-theme-mixin is not valid from a flat theme
                   ;; border-flat-theme-mixin
                   (setf (color ,object) f)
-                  ;; box-flat-theme-mixin
+                  ;; box-flat-theme-mixin covered by theme-flat
                   ;; grid-theme-mixin
                   (setf (major-color-h ,object) f)
                   (setf (major-color-v ,object) f)
@@ -218,8 +218,8 @@
                   ;; border-3d-theme-mixin covered by theme-3d
                   ;; border-flat-theme-mixin
                   (setf (color ,object) d)
-                  ;; box-3d-theme-mixin
-                  ;; box-flat-theme-mixin
+                  ;; box-3d-theme-mixin covered by theme-3d
+                  ;; box-flat-theme-mixin covered by active-text-theme-mixin and border-flat-theme-mixin
                   ;; grid-theme-mixn
                   (setf (major-color-h ,object) d)
                   (setf (major-color-v ,object) d)

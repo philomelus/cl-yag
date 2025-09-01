@@ -65,14 +65,8 @@
 
 ;;;; theme-base ===============================================================
 
-(defclass theme-base (color-fore-back-mixin)
+(defclass theme-base (back-fore-color-mixin)
   ())
-
-;; (defmethod print-object ((o theme-base) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "deftheme-base")
-;;     (print-mixin o s)))
 
 (defmethod paint-border ((object area-mixin) (theme theme-base))
   ;; Left side
@@ -104,12 +98,6 @@
 (defmacro deftheme-flat (&rest rest &key &allow-other-keys)
   `(make-instance 'theme-flat ,@rest))
 
-;; (defmethod print-object ((o theme-flat) s)
-;; (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "deftheme-flat ")
-;;     (print-mixin o s)))
-
 ;;; methods ---------------------------------------------------------
 
 ;;;; theme-3d =================================================================
@@ -120,12 +108,6 @@
 
 (defmacro deftheme-3d (&rest rest &key &allow-other-keys)
   `(make-instance 'theme-3d ,@rest))
-
-;; (defmethod print-object ((o theme-3d) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "deftheme-3d ")
-;;     (print-mixin o s)))
 
 ;;;; methods ==================================================================
 

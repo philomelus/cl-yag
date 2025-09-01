@@ -3,34 +3,12 @@
 ;;;; %point2 ==================================================================
 
 (defclass %point2 ()
-  ((h) (v)))
-
-(defclass %point2-i (%point2)
-  ((h :initarg :h :initarg :left :initarg :right :initarg :x
-      :type integer :initform 0
-      :accessor h :accessor left :accessor right :accessor x)
-   (v :initarg :v :initarg :top :initarg :bottom :initarg :y
-      :type integer :initform 0
-      :accessor v :accessor top :accessor bottom :accessor y)))
-
-(defclass %point2-f (%point2)
   ((h :initarg :h :initarg :left :initarg :right :initarg :x
       :type float :initform 0.0
       :accessor h :accessor left :accessor right :accessor x)
    (v :initarg :v :initarg :top :initarg :bottom :initarg :y
       :type float :initform 0.0
       :accessor h :accessor top :accessor bottom :accessor y)))
-
-(defmacro point2 (horizontal vertical)
-  (typecase horizontal
-    (integer
-     (assert (typep vertical 'integer))
-     `(make-instance '%point2-i :h ,horizontal :v ,vertical))
-    (float
-     (assert (typep vertical 'float))
-     `(make-instance '%point2-f :h ,horizontal :v ,vertical))
-    (t
-     (error "must be integer or float, got: ~a" (type-of horizontal)))))
 
 ;;;; arc ======================================================================
 

@@ -1,5 +1,8 @@
 (in-package #:cl-yag)
 
+(cffi-object::define-cobject-class (:struct al:color))
+(cffi-object::define-cobject-class (:struct al::vertex))
+
 ;;;; local macros =============================================================
 
 (defmacro al-enum-value (type value)
@@ -155,6 +158,54 @@
 
 ;;;; function wrappers ========================================================
 
+;; vertexes are (list x y color) for now
+(defun draw-prim (vertexes type &key (start 0 startp) (end nil endp))
+  (let ((num-vertexes (length vertexes))
+        start-arg end-arg type-arg)
+    
+    ;; Translate type
+    (case type
+      (:line-list (setq type-arg 0))
+      (:line-strip (setq type-arg 1))
+      (:line-loop (setq type-arg 2))
+      (:triangle-list (setq type-arg 3))
+      (:triangle-strip (setq type-arg 4))
+      (:triangle-fan (setq type-arg 5))
+      (:point-list (setq type-arg 6))
+      (otherwise
+       (error "unknown draw-prim type: ~a" type)))
+
+    ;; Determine start
+    (if startp
+        (setq start-arg (if (typep start 'integer)
+                            start
+                            (round start)))
+        (setq start-arg 0))
+
+    ;; Determine end
+    (if endp
+        (setq end-arg (if (eql end nil)
+                          num-vertexes
+                          (if (typep end 'integer)
+                              end
+                              (round end))))
+        (setq end-arg num-vertexes))
+
+    (let (va)
+      (setq va (cffi-object::make-carray num-vertexes :element-type 'al::vertex))
+      (dotimes (index num-vertexes)
+        (let* ((data (nth index vertexes))
+               (c (third data)))
+          (setf (cffi-object::caref va index) (al::make-vertex :x (coerce (first (nth index vertexes)) 'float)
+                                                               :y (coerce (second (nth index vertexes)) 'float)
+                                                               :z 0.0
+                                                               :color (al::make-color
+                                                                       :r (color-r c)
+                                                                       :g (color-g c)
+                                                                       :b (color-b c)
+                                                                       :a (color-a c))))))
+      (al:draw-prim (cffi-object::cobject-pointer va) (cffi:null-pointer) (cffi:null-pointer) start-arg end-arg type-arg))))
+
 (defun get-blender ()
   (cffi:with-foreign-objects ((op :int) (src :int) (dst :int))
     (al:get-blender op src dst)
@@ -198,6 +249,18 @@
            ,@(if topp `((,at ,top)))
            ,@(if widthp `((,aw ,width)))
            ,@(if heightp `((,ah ,height))))
+       ,(if leftp
+            (unless (typep `,al 'integer)
+              `(setq ,al (round ,al))))
+       ,(if topp
+            (unless (typep `,at 'integer)
+              `(setq ,at (round ,at))))
+       ,(if widthp
+            (unless (typep `,aw 'integer)
+              `(setq ,aw (round ,aw))))
+       ,(if heightp
+            (unless (typep `,ah 'integer)
+              `(setq ,ah (round ,ah))))
        (cffi::with-foreign-objects ((,cl :int) (,ct :int) (,cw :int) (,ch :int))
          (al:get-clipping-rectangle ,cl ,ct ,cw ,ch)
          (al:set-clipping-rectangle ,(if leftp `,al `(cffi:mem-ref ,cl :int))
@@ -207,4 +270,3 @@
          ,@body
          (al:set-clipping-rectangle (cffi:mem-ref ,cl :int) (cffi:mem-ref ,ct :int)
                                     (cffi:mem-ref ,cw :int) (cffi:mem-ref ,ch :int))))))
-

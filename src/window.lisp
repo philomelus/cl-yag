@@ -4,11 +4,12 @@
 
 ;;; theme-mixin -----------------------------------------------------
 
-(defclass window-theme-mixin (color-fore-back-mixin)
+(defclass window-theme-mixin (back-fore-color-mixin)
   ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
 
-(defmethod print-mixin ((object window-theme-mixin) stream)
-  (pprint-color-nil interior-color object stream)
+(defmethod print-mixin ((object window-theme-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil interior-color object stream)
   (my-next-method))
 
 ;;; window ----------------------------------------------------------
@@ -23,13 +24,6 @@
 
 (defmacro defwindow (l top w h &rest rest &key &allow-other-keys)
   `(make-instance 'window :left ,l :top ,top :width ,w :height ,h ,@rest))
-
-;; (defmethod print-object ((o window) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "(defwindow ")
-;;     (print-mixin o s)
-;;     (format s ")")))
 
 ;;; methods ---------------------------------------------------------
 

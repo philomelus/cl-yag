@@ -6,9 +6,10 @@
   ((major-color :initarg :major-color :initform nil :accessor major-color)
    (minor-color :initarg :minor-color :initform nil :accessor minor-color)))
 
-(defmethod print-mixin ((object ruler-theme-mixin) stream)
-  (pprint-color-nil major-color object stream)
-  (pprint-color-nil major-color object stream)
+(defmethod print-mixin ((object ruler-theme-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil major-color object stream)
+  ;; (pprint-color-nil major-color object stream)
   (my-next-method))
 
 ;;;; ruler ====================================================================
@@ -25,15 +26,7 @@
 (defmacro defruler (&rest rest &key &allow-other-keys)
   `(make-instance 'ruler ,@rest))
 
-;; (defmethod print-object ((o ruler) s)
-;;   (pprint-indent :current 0 s)
-;;   (pprint-logical-block (s nil)
-;;     (format s "defruler ")
-;;     (pprint-field-nil major o s)
-;;     (pprint-field-nil minor o s)
-;;     (pprint-field vertical o s)
-;;     (pprint-field invert o s)
-;;     (print-mixin o s)))
+;;; methods ---------------------------------------------------------
 
 (defmethod on-command ((object ruler) &key)
   (if (visible object)

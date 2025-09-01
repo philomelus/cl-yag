@@ -5,8 +5,9 @@
 (defclass color-mixin ()
   ((color :initarg :color :initform nil :type list :accessor color)))
 
-(defmethod print-mixin ((o color-mixin) s)
-  (pprint-color-nil color o s)
+(defmethod print-mixin ((o color-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-color-nil color o s)
   (my-next-method))
 
 ;;;; color-3d-mixin ===========================================================
@@ -18,32 +19,49 @@
    (very-dark :initarg :very-dark :initform nil :accessor very-dark-color)
    (very-light :initarg :very-light :initform nil :accessor very-light-color)))
 
-(defmethod print-mixin ((object color-3d-mixin) stream)
-  (pprint-color-nil normal object stream)
-  (pprint-color-nil dark object stream)
-  (pprint-color-nil light object stream)
-  (pprint-color-nil very-dark object stream)
-  (pprint-color-nil very-light object stream)
+(defmethod print-mixin ((object color-3d-mixin) &optional stream)
+  (declare (ignore stream))
+  ;; (pprint-color-nil normal object stream)
+  ;; (pprint-color-nil dark object stream)
+  ;; (pprint-color-nil light object stream)
+  ;; (pprint-color-nil very-dark object stream)
+  ;; (pprint-color-nil very-light object stream)
   (my-next-method))
 
-;;;; color-fore-back-mixin ====================================================
+;;;; back-color-mixin =========================================================
 
-(defclass color-fore-back-mixin ()
-  ((fore-color :initarg :fore-color :initform nil :type list :accessor fore-color)
-   (back-color :initarg :back-color :initform nil :type list :accessor back-color)))
+(defclass back-color-mixin ()
+  ((back-color :initarg :back-color :initform nil :accessor back-color)))
 
-(defmethod print-mixin ((o color-fore-back-mixin) s)
-  (pprint-color-nil fore-color o s)
-  (pprint-color-nil back-color o s)
+(defmethod print-mixin ((o back-color-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-color-nil back-color o s)
   (my-next-method))
+
+;;;; fore-color-mixin =========================================================
+
+(defclass fore-color-mixin ()
+  ((fore-color :initarg :fore-color :initform nil :accessor fore-color)))
+
+(defmethod print-mixin ((o fore-color-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-color-nil fore-color o s)
+  (my-next-method))
+
+;;;; back-fore-color-mixin ====================================================
+
+(defclass back-fore-color-mixin (back-color-mixin
+                                 fore-color-mixin)
+  ())
 
 ;;;; frame-color-mixin ========================================================
 
 (defclass frame-color-mixin ()
   ((frame-color :initarg :frame-color :initform nil :accessor frame-color)))
 
-(defmethod print-mixin ((o frame-color-mixin) s)
-  (pprint-color-nil frame-color o s)
+(defmethod print-mixin ((o frame-color-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-color-nil frame-color o s)
   (my-next-method))
 
 ;;;; interior-color-mixin =====================================================
@@ -51,6 +69,7 @@
 (defclass interior-color-mixin ()
   ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
 
-(defmethod print-mixin ((o interior-color-mixin) s)
-  (pprint-color-nil interior-color o s)
+(defmethod print-mixin ((o interior-color-mixin) &optional s)
+  (declare (ignore s))
+  ;; (pprint-color-nil interior-color o s)
   (my-next-method))
