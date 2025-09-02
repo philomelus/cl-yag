@@ -28,6 +28,8 @@
     (on-paint child)))
 
 (defmethod process-events (queue (object manager) &key &allow-other-keys)
+  ;; TODO: BUGBUG:  This needs to be unbound when this method returns
+  ;;                I don't currently know exactly how to do that
   (defmethod on-mouse-down-accept (o (m (eql object)))
     (v:debug :event "on-mouse-down-accept: ~a" (print-raw-object o))
     (setf (slot-value object 'last-mouse-down) o))

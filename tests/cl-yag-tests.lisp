@@ -117,7 +117,6 @@ regardless of result."))
         (setf iw2 (defwindow +I2X+ +I2Y+ +I2W+ +I2H+ :content (list icl2)))
         (assert (not (eql iw2 nil)))
 
-        (v:info :fuckyou "iw1:~a iw2:~a" (print-raw-object iw1) (print-raw-object iw2))
         (values iw1 iw2)))))
 
 (defun tests-main (data)

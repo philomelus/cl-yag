@@ -2,6 +2,25 @@
 
 ;;;; macros ===================================================================
 
+(defmacro foro (object)
+  "Returns object of first object.
+
+If object is an atom, returns it.
+If object is an atom, and is a symbol, returns value of symbol.
+If object is list, and first item in list is object, returns it.
+If object is list, and first tiem is symbol, returns value of it."
+  (let ((lobject (gensym))
+        (cobject (gensym)))
+    `(let ((,lobject ,object))
+       (if (consp ,lobject)
+           (let ((,cobject (first ,lobject)))
+             (when (symbolp ,cobject)
+               (setq ,cobject (symbol-value ,cobject)))
+             ,cobject)
+           (if (symbolp ,lobject)
+               (symbol-value ,lobject)
+               ,lobject)))))
+
 (defmacro my-next-method ()
   `(if (next-method-p) (call-next-method)))
 

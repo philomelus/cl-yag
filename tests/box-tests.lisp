@@ -132,27 +132,13 @@
                                                                        "<2> - alternates top/middle/bottom"
                                                                        "<3> - alterdate v-align top/middle/bottom"
                                                                        "<4> - alternates theme-flat/theme-3d"))
-      (v:info :fuckyou "tmp1:~a " (print-raw-object tmp1))
-      (v:info :fuckyou "tmp2:~a " (print-raw-object tmp2))
-      
       (setf iw1 tmp1)
       (setf iw2 tmp2))
-
-    (v:info :fuckyou "iw1:~a iw2:~a" (print-raw-object iw1) (print-raw-object iw2))
 
     ;; The one in charge
     (let ((objs (list rv1 rv2 r1 r2 r3 r4 r5 r6 r7 r8 iw1 iw2)))
       (setf manager (make-instance 'manager :content objs)))
   
-    (v:info :fuckyou "again iw1:~a iw2:~a"
-            (print-raw-object (tests-data-iw1 data))
-            (print-raw-object (tests-data-iw2 data)))
-
-    (v:info :fuckyou "content: ~a" (content (tests-data-manager data)))
-
-    (v:info :fuckyou "iw1 content:~a" (content (tests-data-iw1 data)))
-    (v:info :fuckyou "iw2 content:~a" (content (tests-data-iw2 data)))
-    
     ;; Adjust vertical rulers
     (setf (left rv1) (- (left w1) 10))
     (setf (top rv1) (top w1))

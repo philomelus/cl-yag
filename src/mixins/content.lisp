@@ -14,23 +14,27 @@
 (defmethod initialize-instance :after ((obj content-mixin) &key)
   ;; Let children know who their parent is
   (dolist (child (content obj))
-    ;; If child has a parent slot
-    (when (typep child 'parent-mixin)
-      (setf (parent child) obj)))
-
+    (let ((co (foro child)))
+      ;; If child has a parent
+      (when (typep co 'parent-mixin)
+        (v:debug :parent "[initialize-instance] {content-mixin} setting child parent: ~a" (print-raw-object co))
+        (setf (parent co) obj))))
+  
   (my-next-method))
 
 (defmethod (setf content) :after (value (obj content-mixin))
   ;; Let children know who their parent is
   (dolist (child (content obj))
-    ;; If child has a parent slot
-    (when (typep child 'parent-mixin)
-      (setf (parent child) obj))
+    (let ((co (foro child)))
+      ;; If child has a parent slot
+      (when (typep co 'parent-mixin)
+        (v:debug :parent "[setf content] {content-mixin} setting child parent: ~a" (print-raw-object co))
+        (setf (parent co) obj))
 
-    ;; If child has content
-    (when (typep child 'content-mixin)
-      (calc-area child obj)))
+      ;; If child has content
+      (when (typep co 'content-mixin)
+        (v:debug :layout "[setf content] {content-mixin} calc-area for ~a" co)
+        (calc-area co obj))))
 
   (my-next-method))
-
 

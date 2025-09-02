@@ -13,25 +13,26 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod (setf content) :after (value (object parent-mixin))
-  (v:info :parent "[setf content] {parent-mixin} updating children")
+  (v:debug :parent "[setf content] {parent-mixin} updating children")
+  
   (dolist (child value)
-    (when (typep child 'parent-mixin)
-      (with-accessors ((p parent)) child
+    (let ((co (foro child)))
+      (with-accessors ((p parent)) co
         (unless (eql p object)
-          (v:info :parent "[setf content] {parent-mixin} setting child parent: ~a" (print-raw-object child))
-          (setf (parent child) object)))))
+          (v:debug :parent "[setf content] {parent-mixin} setting child parent: ~a" (print-raw-object co))
+          (setf p object)))))
   (my-next-method))
 
 (defmethod (setf parent) :after (val (obj parent-mixin))
-  (v:info :parent "[setf parent] {parent-mixin} updating children")
+  (v:debug :parent "[setf parent] {parent-mixin} updating children")
   
   ;; If we have content
   (if (typep obj 'content-mixin)
       (dolist (child (content obj))
-        ;; If child has a parent slot
-        (when (typep child 'parent-mixin)
-          (v:info :parent "[setf parent] {parent-mixin} setting child parent: ~a" (print-raw-object child))
-          (setf (parent child) obj))))
+        (let ((co (foro child)))
+          (when (typep co 'parent-mixin)
+            (v:debug :parent "[setf parent] {parent-mixin} setting child parent: ~a" (print-raw-object co))
+            (setf (parent co) obj)))))
   (my-next-method))
 
 (defmethod owner ((obj parent-mixin))
