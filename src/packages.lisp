@@ -139,6 +139,7 @@
            #:theme-3d-n
            #:theme-3d-vd
            #:theme-3d-vl
+           #:thickness
            #:top
            #:title
            #:v-align
@@ -175,8 +176,21 @@
            #:within
            
            ;; Misc
+           #:area-allocated
            #:area-br
+           #:cleanup-method
+           #:find-parent-content
            #:print-raw-object
+           #:theme-field
+           #:theme-field-object
+           #:with-area
+           #:with-area-rb
+           #:with-border-area
+           #:with-border-and-padding-area
+           #:with-local-accessors
+           #:with-local-slots
+           #:with-theme
+           #:with-object-or-theme
            
            ;; Allegro specific
            #:color-a

@@ -14,8 +14,12 @@
 
 ;;;; ruler ====================================================================
 
+;; TODO:  alignment: (:begin :middle/:center :end) to make it draw the main
+;;                   line at left/top, center/middle, right/bottom
+
 (defclass ruler (ruler-theme-mixin
                  area-mixin
+                 parent-mixin
                  shortcuts-mixin
                  visible-mixin)
   ((major :initarg :major :initform 10 :accessor major)
@@ -115,3 +119,19 @@
     (setf (major-color object) mj)
     (setf (minor-color object) mn)))
 
+;;;; macros ===================================================================
+
+;; These are great ideas ... just have no clue how to make them work
+;;
+;; What I want is when I create a bunch of the same type of rulers,
+;; to specify the ruler colors once and have the defruler macro
+;; automatically pick it up.  Again, no idea how to make it happen.
+
+;; (defmacro with-ruler-colors (major-color minor-color)
+;;   )
+
+;; (defmacro with-ruler-major-color (major-color)
+;;   )
+
+;; (defmacro with-ruler-minor-color (minor-color)
+;;   )

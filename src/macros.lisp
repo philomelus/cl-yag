@@ -2,6 +2,9 @@
 
 ;;;; macros ===================================================================
 
+(defmacro cleanup-method (func args)
+  `(remove-method #',func (find-method #',func () ,args)))
+
 (defmacro foro (object)
   "Returns object of first object.
 
@@ -197,8 +200,22 @@ updated on setq/setf."
                        slots))
          ,@body))))
 
+(defmacro with-theme ((&rest fields) theme-object &body body)
+  (let ((instance (gensym)))
+    `(let ((,instance ,theme-object))
+       (let (,@(mapcar #'(lambda (f)
+                           (if (consp f)
+                               `(,(first f) (,(second f) ,instance))
+                               `(,(first f) (,(first f) ,instance))))
+                       fields))
+         ,@(mapcar #'(lambda (f)
+                       `(assert (not (eql ,(first f) nil))))
+                   fields)
+         ,@body))))
+
 ;; BUGBUG: TODO:  Args evaluated more than one time
-(defmacro with-theme-object ((&rest fields) object &body body)
+;; BUGBUG: TODO:  I don't think this is valid anymore ... test test test
+(defmacro with-object-or-theme ((&rest fields) object &body body)
   (let ((instance (gensym))
         (theme (gensym)))
     `(let ((,instance ,object))
@@ -213,17 +230,6 @@ updated on setq/setf."
                            `(when (not ,(first f))
                               (setq ,(first f) (,(second f) ,theme))))
                        fields)))
-         ,@(mapcar #'(lambda (f)
-                       `(assert (not (eql ,(first f) nil))))
-                   fields)
-         ,@body))))
-
-(defmacro with-theme ((&rest fields) theme-object &body body)
-  (let ((instance (gensym)))
-    `(let ((,instance ,theme-object))
-       (let (,@(mapcar #'(lambda (f)
-                           `(,(first f) (,(second f) ,instance)))
-                       fields))
          ,@(mapcar #'(lambda (f)
                        `(assert (not (eql ,(first f) nil))))
                    fields)

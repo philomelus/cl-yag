@@ -100,7 +100,7 @@
            ;; (setf (interior-color *w*) (al:map-rgb 191 63 63))
            
            (setf (padding *w*) 10)
-           
+
            (defmethod on-command ((obj (eql *a1*)) &key)
              (v:info :app "Item 1 clicked"))
 
@@ -135,12 +135,17 @@
            
            (process-events queue *boss*)
 
-           ;; (princ cl2)           
-           )
+           ;; Remove methods
+           (cleanup-method on-command (list (list 'eql *a1*)))
+           (cleanup-method on-command (list (list 'eql *a2*)))
+           (cleanup-method on-command (list (list 'eql *a3*)))
+           (cleanup-method on-char (list t t (list 'eql *boss*)))
+           (cleanup-method on-timer (list t t (list 'eql *boss*))))
       
       (progn
         (cffi:foreign-free event)
         (al:destroy-display screen)
         (al:destroy-timer timer)
-        (al:destroy-event-queue queue)))))
+        (al:destroy-event-queue queue))))
+  nil)
 

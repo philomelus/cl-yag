@@ -131,12 +131,12 @@
 
 (macrolet ((paint-border-side-flat (theme &body body)
              `(let ((color (color ,theme)))
-                (with-accessors ((b-width thickness)) border
-                  (assert (> b-width 0))
-                  (with-accessors ((left left) (top top) (o-width width) (height height)) object
+                (with-accessors ((tn thickness)) border
+                  (assert (> tn 0))
+                  (with-accessors ((left left) (top top) (width width) (height height)) object
                     (let ((c color)
-                          (w b-width)
-                          (w2 (truncate (/ b-width 2))))
+                          (w tn)
+                          (w2 (truncate (/ tn 2))))
                       (if (eql c nil)
                           (setq c (frame-color theme)))
                       ,@body))))))
@@ -150,16 +150,16 @@
   (defmethod paint-border-top ((border border) (object area-mixin) (theme theme-flat))
     (paint-border-side-flat theme
                             (let ((yy (+ top w2)))
-                              (al:draw-line left yy (+ left o-width) yy c w)))))
+                              (al:draw-line left yy (+ left width) yy c w)))))
 
 (macrolet ((paint-border-side-flat (other-border theme &body body)
              `(let ((color (color ,theme)))
-                (with-accessors ((b-width thickness)) border
-                  (assert (> b-width 0))
-                  (with-accessors ((left left) (top top) (o-width width) (height height) (bo ,other-border)) object
+                (with-accessors ((tn thickness)) border
+                  (assert (> tn 0))
+                  (with-accessors ((left left) (top top) (width width) (height height) (bo ,other-border)) object
                     (let ((c color)
-                          (w b-width)
-                          (w2 (truncate (/ b-width 2)))
+                          (w tn)
+                          (w2 (truncate (/ tn 2)))
                           (bow 0))
                       (if (eql c nil)
                           (setq c (frame-color theme)))
@@ -170,102 +170,95 @@
   (defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-flat))
     (paint-border-side-flat border-bottom theme
                             (let ((yy (+ (+ top (- height bow)) w2)))
-                              (al:draw-line left yy (+ left o-width) yy c w))))
+                              (al:draw-line left yy (+ left width) yy c w))))
 
   (defmethod paint-border-right ((border border) (object area-mixin) (theme theme-flat))
     (paint-border-side-flat border-left theme
-                            (let ((xx (+ (+ left (- o-width bow)) w2)))
+                            (let ((xx (+ (+ left (- width bow)) w2)))
                               (al:draw-line xx top xx (+ top height) c w)))))
 
 (macrolet ((with-theme-3d-colors
-               ((n d l vd vl) border theme &body body)
-               (let ((border-var (gensym))
-                     (theme-var (gensym)))
-                 `(let ((,border-var ,border)
-                        (,theme-var ,theme))
-                    (let ((,n (normal-color ,border-var))
-                          (,d (dark-color ,border-var))
-                          (,l (light-color ,border-var))
-                          (,vd (very-dark-color ,border-var))
-                          (,vl (very-light-color ,border-var)))
-                      (when (eql ,n nil)
-                        (setf ,n (normal-color ,theme-var)))
-                      (when (eql ,d nil)
-                        (setf ,d (dark-color ,theme-var)))
-                      (when (eql ,l nil)
-                        (setf ,l (light-color ,theme-var)))
-                      (when (eql ,vd nil)
-                        (setf ,vd (very-dark-color ,theme-var)))
-                      (when (eql ,vl nil)
-                        (setf ,vl (very-light-color ,theme-var)))
+               ((n d l vd vl) theme &body body)
+               (let ((theme-var (gensym)))
+                 `(let ((,theme-var ,theme))
+                    (let ((,n (normal-color ,theme-var))
+                          (,d (dark-color ,theme-var))
+                          (,l (light-color ,theme-var))
+                          (,vd (very-dark-color ,theme-var))
+                          (,vl (very-light-color ,theme-var)))
+                      (assert (not (eql ,n nil)))
+                      (assert (not (eql ,d nil)))
+                      (assert (not (eql ,l nil)))
+                      (assert (not (eql ,vd nil)))
+                      (assert (not (eql ,vl nil)))
                       ,@body)))))
   
   (defmethod paint-border-left ((border border) (object area-mixin) (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) border theme
+    (with-theme-3d-colors (n d l vd vl) theme
       (with-accessors ((left left) (top top)) object
-        (with-local-slots ((bw width)) border
+        (with-local-slots ((tn thickness)) border
           (let (c1 c2)
-            (case (style border)
+            (case (border-style theme)
               (:inset (setf c1 vd c2 d))
               ((:outset :default) (setf c1 n c2 vl))
               (:flat (setf c1 vd c2 d)))
             (let ((b (+ top (height object)))
-                  (hw (/ bw 2)))
-              (let ((l1 (+ left (/ bw 4)))
-                    (l2 (+ left (* bw 0.75))))
+                  (hw (/ tn 2)))
+              (let ((l1 (+ left (/ tn 4)))
+                    (l2 (+ left (* tn 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line l1 (+ top hw) l1 (- b hw) c1 hw)
-                  (al:draw-line l2 (+ top bw) l2 (- b bw) c2 hw)))))))))
+                  (al:draw-line l2 (+ top tn) l2 (- b tn) c2 hw)))))))))
   
   (defmethod paint-border-top ((border border) (object area-mixin) (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) border theme
+    (with-theme-3d-colors (n d l vd vl) theme
       (with-accessors ((left left) (top top)) object
-        (with-local-slots ((bw width)) border
+        (with-local-slots ((tn thickness)) border
           (let (c1 c2)
-            (case (style border)
+            (case (border-style theme)
               (:inset (setf c1 vd c2 d))
               ((:outset :default) (setf c1 n c2 vl))
               (:flat (setf c1 vd c2 d)))
             (let ((r (+ left (width object)))
-                  (hw (/ bw 2)))
-              (let ((t1 (+ top (/ bw 4)))
-                    (t2 (+ top (* bw 0.75))))
+                  (hw (/ tn 2)))
+              (let ((t1 (+ top (/ tn 4)))
+                    (t2 (+ top (* tn 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line left t1 (- r hw) t1 c1 hw)
-                  (al:draw-line (+ left hw) t2 (- r bw) t2 c2 hw)))))))))
+                  (al:draw-line (+ left hw) t2 (- r tn) t2 c2 hw)))))))))
   
   (defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) border theme
+    (with-theme-3d-colors (n d l vd vl) theme
       (with-accessors ((left left) (top top)) object
-        (with-local-slots ((bw width)) border
+        (with-local-slots ((tn thickness)) border
           (let (c1 c2)
-            (case (style border)
+            (case (border-style theme)
               (:inset (setf c1 vl c2 n))
               ((:outset :default) (setf c1 vd c2 d))
               (:flat (setf c1 vd c2 d)))
             (let ((b (+ top (height object)))
                   (r (+ left (width object)))
-                  (hw (/ bw 2)))
-              (let ((b1 (- b (/ bw 4)))
-                    (b2 (- b (* bw 0.75))))
+                  (hw (/ tn 2)))
+              (let ((b1 (- b (/ tn 4)))
+                    (b2 (- b (* tn 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line left b1 r b1 c1 hw)
                   (al:draw-line (+ left hw) b2 (- r hw) b2 c2 hw)))))))))
   
   (defmethod paint-border-right ((border border) (object area-mixin) (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) border theme
+    (with-theme-3d-colors (n d l vd vl) theme
       (with-accessors ((left left) (top top)) object
-        (with-slots ((bw width)) border
+        (with-slots ((tn thickness)) border
           (let (c1 c2)
-            (case (style border)
+            (case (border-style theme)
               (:inset (setf c1 vl c2 n))
               ((:outset :default) (setf c1 vd c2 d))
               (:flat (setf c1 vd c2 d)))
             (let ((r (+ left (width object)))
                   (b (+ top (height object)))
-                  (hw (/ bw 2)))
-              (let ((r1 (- r (/ bw 4)))
-                    (r2 (- r (* bw 0.75))))
+                  (hw (/ tn 2)))
+              (let ((r1 (- r (/ tn 4)))
+                    (r2 (- r (* tn 0.75))))
                 (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
                   (al:draw-line r1 top r1 (- b hw) c1 hw)
                   (al:draw-line r2 (+ top hw) r2 (- b hw) c2 hw))))))))))

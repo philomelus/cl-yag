@@ -2,7 +2,7 @@
 
 ;;;; functions ================================================================
 
-(declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-height))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-height))
 (defun text-calc-height (type area object)
   (with-local-accessors ((rv height)) area
     (case type
@@ -18,12 +18,13 @@
            (setq rv (min fh (height area)))))))
     rv))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-left))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-left))
 (defun text-calc-left (type area object)
   (with-local-accessors ((rv left)) area
     (case type
       ((:left :auto)
-       (incf rv (padding-left object)))
+       (incf rv (padding-left object))
+       (v:debug :layout "[text-calc-left] {:left/:auto} start:~d padding:~d" (left area) (padding-left object)))
       
       (:center
        (with-local-slots ((w width)) object
@@ -37,12 +38,13 @@
        (with-local-slots ((w width)) object
          (incf w (padding-left object))
          (incf w (padding-right object))
-         (setq rv (- (width area) w)))))
+         (setq rv (- (width area) w))
+         (v:debug :layout "[text-calc-left] {:right} start:~d witdh:~d padding:~d" (left area) w (padding-right object)))))
     rv))
 
 (defun text-calc-title-top (obj)
   (with-local-accessors ((at top) (va v-align)) obj
-    (with-theme-object ((fnt font)) obj
+    (with-object-or-theme ((fnt font)) obj
       (assert (and (not (eql fnt nil))
                    (not (cffi:null-pointer-p fnt))))
       
@@ -68,7 +70,7 @@
          (error "text unknown vertical alignment: ~a" va)))
       at)))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-top))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-top))
 (defun text-calc-top (type area object)
   (with-local-accessors ((rv top)) area
     (case type
@@ -92,7 +94,7 @@
          (incf rv (- (height area) h)))))
     rv))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) number) text-calc-width))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-width))
 (defun text-calc-width (type area object)
   (let (rv)
     (case type
@@ -148,35 +150,35 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod calc-height (type (area %rect) (object text))
-  (v:debug :layout "[calc-height] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-height] {text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-height type area object)))
-    (v:debug :layout "[calc-height] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-height] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod calc-left (type (area %rect) (object text))
-  (v:debug :layout "[calc-left] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-left] {text} area: (~d ~d) @ (~d ~d) ~a" 
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-left type area object)))
-    (v:debug :layout "[calc-left] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-left] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod calc-top (type (area %rect) (object text))
-  (v:debug :layout "[calc-top] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-top] {text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-top type area object)))
-    (v:debug :layout "[calc-top] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-top] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod calc-width (type (area %rect) (object text))
-  (v:debug :layout "[calc-width] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-width] {text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-width type area object))) 
-    (v:debug :layout "[calc-width] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-width] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod on-paint ((obj text) &key)
-  (with-theme-object ((fc fore-color) (fnt font) (ic interior-color)) obj
+  (with-object-or-theme ((fc fore-color) (fnt font) (ic interior-color)) obj
 
     ;; Draw background
     (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
@@ -188,13 +190,18 @@
       (case (h-align obj)
         ((:none :left)
          (setq x (left obj))
-         (setq f +ALIGN-LEFT+))
+         (setq f +ALIGN-LEFT+)
+         (v:debug :paint "[on-paint] {text} aligning text left:~d ~a" x (print-raw-object obj)))
         (:center
          (setq x (+ (left obj) (/ (width obj) 2)))
-         (setq f +ALIGN-CENTER+))
+         (setq f +ALIGN-CENTER+)
+         (v:debug :paint "[on-paint] {text} aligning text center:~d ~a" x (print-raw-object obj)))
         (:right
-         (setq x (right obj))
-         (setq f +ALIGN-RIGHT+)))
+         (let ((area (area-allocated obj)))
+           (setq x (right area))
+           (decf x (padding-right obj))
+           (setq f +ALIGN-RIGHT+)
+           (v:debug :paint "[on-paint] {text} aligning text right:~d ~a" x (print-raw-object obj)))))
       (with-local-slots ((l left) (t_ top) (w width) (h height)) obj
         (with-clipping (l t_ w h)
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
@@ -239,31 +246,31 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod calc-height (type (area %rect) (object active-text))
-  (v:debug :layout "[calc-height] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-height] {active-text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-height type area object)))
-    (v:debug :layout "[calc-height] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-height] {active-text} result:~d" rv (print-raw-object object))
     rv))
 
 (defmethod calc-left (type (area %rect) (object active-text))
-  (v:debug :layout "[calc-left] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-left] {active-text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-left type area object)))
-    (v:debug :layout "[calc-left] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-left] {active-text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod calc-top (type (area %rect) (object active-text))
-  (v:debug :layout "[calc-top] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-top] {active-text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-top type area object)))
-    (v:debug :layout "[calc-top] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-top] {active-text} result:~d" rv (print-raw-object object))
     rv))
 
 (defmethod calc-width (type (area %rect) (object active-text))
-  (v:debug :layout "[calc-width] {~a} area: (~d ~d) @ (~d ~d)" (print-raw-object object)
-          (width area) (height area) (left area) (top area))
+  (v:debug :layout "[calc-width] {active-text} area: (~d ~d) @ (~d ~d) ~a"
+           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-width type area object))) 
-    (v:debug :layout "[calc-width] {~a} result: ~d" (print-raw-object object) rv)
+    (v:debug :layout "[calc-width] {active-text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod on-mouse-down (x y b (obj active-text) &key)
@@ -302,10 +309,10 @@
 
 (defmethod on-paint ((obj active-text) &key)
   (with-local-slots ((in inside) (down was-down)) obj
-    (with-theme-object ((cd down-color) (ch hover-color) (cu up-color)
-                        (fg fore-color) (bg back-color) (ic interior-color)
-                        (fnt font))
-                       obj
+    (with-object-or-theme ((cd down-color) (ch hover-color) (cu up-color)
+                           (fg fore-color) (bg back-color) (ic interior-color)
+                           (fnt font))
+                          obj
       ;; Draw background
       (assert (not (eql bg nil)))
       (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
@@ -320,11 +327,13 @@
            (setq x (left obj))
            (setq f +ALIGN-LEFT+))
           (:center
-           (setq x (+ (left obj) (/ (width obj) 2)))
-           (setq f +ALIGN-CENTER+))
+           (let ((area (area-allocated obj)))
+             (setq x (+ (left obj) (/ (width obj) 2)))
+             (setq f +ALIGN-CENTER+)))
           (:right
-           (setq x (right obj))
-           (setq f +ALIGN-RIGHT+)))
+           (let ((area (area-allocated obj)))
+             (setq x (right obj))
+             (setq f +ALIGN-RIGHT+))))
         (with-clipping ((left obj) (top obj) (width obj) (height obj))
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
             (assert (not (eql (if down cd cu) nil)))

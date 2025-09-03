@@ -4,248 +4,218 @@
                            (:conc-name box-tests-))
   b1 b2 b3 b4 b5 b6 b7 b8
   cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
-  rv1 rv2
-  r1 r2 r3 r4 r5 r6 r7 r8
   w1 w2 w3 w4 w5 w6 w7 w8
-
-  ;; iw1 iw2
-  ;; icl1 icl2
-  ;; it1 it2 it3 it4 it5 it6 it7 it8
-  
-  ;; Keyboard state handling
-  horiz                                 ; 1 = :left :center :right
-  vert                                  ; 2 = :top :middle :bottom
-  vert-align                            ; 3 = :top :middle :bottom
-  theme1
-  theme2
   )
 
 (defparameter *box-data* (make-box-tests-data))
 
 (defmethod tests-create ((data (eql *box-data*)))
-  (with-slots (manager
-               b1 b2 b3 b4 b5 b6 b7 b8
-               cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
-               rv1 rv2
-               r1 r2 r3 r4 r5 r6 r7 r8
-               w1 w2 w3 w4 w5 w6 w7 w8
-               
-               iw1 iw2
-               icl1 icl2
-               it1 it2 it3 it4 it5 it6 it7 it8
-               )
-      data
 
-    ;; Vertical rulers
-    (setf rv1 (defruler :major 25 :minor 5 :width 10 :height 300 :visible t :vertical t))
-    (setf rv2 (defruler :major 25 :minor 5 :width 10 :height 300 :visible t :vertical t))
-
-    ;; Horizontal rulers
-    (setf r1 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r2 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r3 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r4 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r5 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r6 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r7 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-    (setf r8 (defruler :major 25 :minor 5 :height 10 :width 200 :visible t))
-
-    ;; (setf it1 (deftext :title "<1> - alternates left/center/right" :height :auto-min :padding-left 10))
-    ;; (setf it2 (deftext :title "<2> - alternates top/middle/bottom" :height :auto-min :padding-left 10))
-    ;; (setf it3 (deftext :title "<3> - alterdate v-align top/middle/bottom" :height :auto-min :padding-left 10))
-    ;; (setf it4 (deftext :title "<4> - alternates theme-flat/theme-3d" :height :auto-min :padding-left 10))
-    ;; (setf icl1 (defcolumn-layout :content (list (list it1 :min-height)
-    ;;                                             (list it2 :min-height)
-    ;;                                             (list it3 :min-height)
-    ;;                                             (list it4 :min-height))))
-    ;; (setf iw1 (defwindow +I1X+ +I1Y+ +I1W+ +I1H+))
-    ;; (setf iw2 (defwindow +I2X+ +I2Y+ +I2W+ +I2H+))
+  (let (objs)
+    (with-slots (manager
+                 b1 b2 b3 b4 b5 b6 b7 b8
+                 cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
+                 w1 w2 w3 w4 w5 w6 w7 w8
+                 )
+        data
+      
+      ;; Test 1
+      (setf b1 (defbox :left (+ +W1X+ 10) :top (+ +W1Y+ 10) :width (- +W1W+ 20) :height (- +W1H+ 20)
+                       :filled t
+                       :thickness 2
+                       :title "Test Box 1" :title-position :left-top
+                       :v-align :top))
+      (setf cl1 (defcolumn-layout :content (list b1)))
+      (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+ :content (list cl1)))
+      (push w1 objs)
+      
+      ;; Test 2
+      (setf b2 (defbox :left (+ +W2X+ 10) :top (+ +W2Y+ 10) :width (- +W2W+ 20) :height (- +W2H+ 20)
+                       :filled t
+                       :thickness 2
+                       :title "Test Box 2" :title-position :left-top
+                       :v-align :middle))
+      (setf cl2 (defcolumn-layout :content (list b2)))
+      (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+ :content (list cl2)))
+      (push w2 objs)
+      
+      ;; Test 3
+      (setf b3 (defbox :left (+ +W3X+ 10) :top (+ +W3Y+ 10) :width (- +W3W+ 20) :height (- +W3H+ 20)
+                       :filled t
+                       :thickness 2
+                       :title "Test Box 3" :title-position :left-top
+                       :v-align :bottom))
+      (setf cl3 (defcolumn-layout :content (list b3)))
+      (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+ :content (list cl3)))
+      (push w3 objs)
+      
+      ;; Test 4
+      (setf b4 (defbox :left (+ +W4X+ 10) :top (+ +W4Y+ 10) :width (- +W4W+ 20) :height (- +W4H+ 20)))
+      (setf cl4 (defcolumn-layout :content (list b4)))
+      (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+ :content (list cl4)))
+      (push w4 objs)
+      
+      ;; Test 5
+      (setf b5 (defbox :left (+ +W5X+ 10) :top (+ +W5Y+ 10) :width (- +W5W+ 20) :height (- +W5H+ 20)
+                       :filled t
+                       :thickness 10
+                       :title "Test Box 5" :title-position :left-top
+                       :v-align :top))
+      (setf cl5 (defcolumn-layout :content (list b5)))
+      (setf w5 (defwindow +W5X+ +W5Y+ +W5W+ +W5H+ :content (list cl5)))
+      (push w5 objs)
+      
+      ;; Test 6
+      (setf b6 (defbox :left (+ +W6X+ 10) :top (+ +W6Y+ 10) :width (- +W6W+ 20) :height (- +W6H+ 20)
+                       :filled t
+                       :thickness 10
+                       :title "Test Box 6" :title-position :left-top
+                       :v-align :middle))
+      (setf cl6 (defcolumn-layout :content (list b6)))
+      (setf w6 (defwindow +W6X+ +W6Y+ +W6W+ +W6H+ :content (list cl6)))
+      (push w6 objs)
+      
+      ;; Test 7
+      (setf b7 (defbox :left (+ +W7X+ 10) :top (+ +W7Y+ 10) :width (- +W7W+ 20) :height (- +W7H+ 20)
+                       :filled t
+                       :thickness 10
+                       :title "Test Box 7" :title-position :left-top
+                       :v-align :bottom))
+      (setf cl7 (defcolumn-layout :content (list b7)))
+      (setf w7 (defwindow +W7X+ +W7Y+ +W7W+ +W7H+ :content (list cl7)))
+      (push w7 objs)
     
-    ;; Test 1
-    (setf b1 (defbox :left 35 :top 35 :width 180 :height 280
-                     :filled t
-                     :thickness 5
-                     :title "Test Box 1" :title-position :left-top
-                     :v-align :top))
-    (setf cl1 (defcolumn-layout :content (list b1)))
-    (setf w1 (defwindow 25 25 200 300 :content (list cl1)))
+      ;; Test 8
+      (setf b8 (defbox :left (+ +W8X+ 10) :top (+ +W8Y+ 10) :width (- +W8W+ 20) :height (- +W8H+ 20)
+                       :filled t :thickness 10
+                       :title "Text Box 8" :title-position :center-middle))
+      (setf cl8 (defcolumn-layout :content (list b8)))
+      (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+ :content (list cl8)))
+      (push w8 objs)
+      
+      ;; Instructions
+      (mapcar #'(lambda (o) (push o objs))
+              (multiple-value-list (tests-instructions-create
+                                    data
+                                    (list "<1> - alternates left/center/right"
+                                          "<2> - alternates top/middle/bottom"
+                                          "<3> - alterdate v-align top/middle/bottom"
+                                          "<4> - alternates theme-flat/theme-3d")
+                                    (list "increase border width - <5>"
+                                          "decrease border width - <6>"
+                                          "window interior red/default - <7>"
+                                          "- <8>"))))
 
-    ;; Test 2
-    (setf b2 (defbox :left 260 :top 35 :width 180 :height 280
-                     :filled t
-                     :thickness 2
-                     :title "Test Box 2" :title-position :left-top
-                     :v-align :middle))
-    (setf cl2 (defcolumn-layout :content (list b2)))
-    (setf w2 (defwindow 250 25 200 300 :content (list cl2)))
+      ;; Rulers
+      (mapcar #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create data t t)))
 
-    ;; Test 3
-    (setf b3 (defbox :left 485 :top 35 :width 180 :height 280
-                     :filled t
-                     :thickness 5
-                     :title "Test Box 3" :title-position :left-top
-                     :v-align :bottom))
-    (setf cl3 (defcolumn-layout :content (list b3)))
-    (setf w3 (defwindow 475 25 200 300 :content (list cl3)))
+      ;; The one in charge
+      (setf manager (make-instance 'manager :content objs)))))
 
-    ;; Test 4
-    (setf b4 (defbox :left 710 :top 35 :width 180 :height 280))
-    (setf cl4 (defcolumn-layout :content (list b4)))
-    (setf w4 (defwindow 700 25 200 300 :content (list cl4)))
+(defmethod tests-destroy ((data (eql *box-data*)))
+  (remove-method #'tests-command-1 (find-method #'tests-command-1 () (list (list 'eql data))))
+  (remove-method #'tests-command-2 (find-method #'tests-command-2 () (list (list 'eql data))))
+  (remove-method #'tests-command-3 (find-method #'tests-command-3 () (list (list 'eql data))))
+  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
+  (remove-method #'tests-command-5 (find-method #'tests-command-5 () (list (list 'eql data))))
+  (remove-method #'tests-command-6 (find-method #'tests-command-6 () (list (list 'eql data))))
+  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
+  nil)
 
-    ;; Test 5
-    (setf b5 (defbox :left 35 :top 360 :width 180 :height 280
-                     :filled t
-                     :thickness 5
-                     :title "Test Box 5" :title-position :left-top
-                     :v-align :top))
-    (setf cl5 (defcolumn-layout :content (list b5)))
-    (setf w5 (defwindow 25 350 200 300 :content (list cl5)))
-    
-    ;; Test 6
-    (setf b6 (defbox :left 260 :top 360 :width 180 :height 280
-                     :filled t
-                     :thickness 2
-                     :title "Test Box 6" :title-position :left-top
-                     :v-align :middle))
-    (setf cl6 (defcolumn-layout :content (list b6)))
-    (setf w6 (defwindow 250 350 200 300 :content (list cl6)))
-    
-    ;; Test 7
-    (setf b7 (defbox :left 485 :top 360 :width 180 :height 280
-                     :filled t
-                     :thickness 5
-                     :title "Test Box 7" :title-position :left-top
-                     :v-align :bottom))
-    (setf cl7 (defcolumn-layout :content (list b7)))
-    (setf w7 (defwindow 475 350 200 300 :content (list cl7)))
-    
-    
-    ;; Test 8
-    (setf b8 (defbox :left 710 :top 360 :width 180 :height 280 :filled t :thickness 10
-                     :title "Text Box 8" :title-position :center-middle))
-    (setf cl8 (defcolumn-layout :content (list b8)))
-    (setf w8 (defwindow 700 350 200 300 :content (list cl8)))
-    
-    ;; Instructions
-    (multiple-value-bind (tmp1 tmp2) (tests-add-instruction data (list "<1> - alternates left/center/right"
-                                                                       "<2> - alternates top/middle/bottom"
-                                                                       "<3> - alterdate v-align top/middle/bottom"
-                                                                       "<4> - alternates theme-flat/theme-3d"))
-      (setf iw1 tmp1)
-      (setf iw2 tmp2))
+(defmethod tests-ready (box-data)
+  (defmethod tests-command-1 ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b5 b6 b7) data
+      (dolist (obj (list b1 b2 b3 b5 b6 b7))
+        (with-accessors ((tp title-position)) obj
+          (case tp
+            (:left-top
+             (setf tp :left-middle))
+            (:left-middle
+             (setf tp :left-bottom))
+            (:left-bottom
+             (setf tp :left-top))
+          
+            (:center-top
+             (setf tp :center-middle))
+            (:center-middle
+             (setf tp :center-bottom))
+            (:center-bottom
+             (setf tp :center-top))
+          
+            (:right-top
+             (setf tp :right-middle))
+            (:right-middle
+             (setf tp :right-bottom))
+            (:right-bottom
+             (setf tp :right-top))))))
+    nil)
 
-    ;; The one in charge
-    (let ((objs (list rv1 rv2 r1 r2 r3 r4 r5 r6 r7 r8 iw1 iw2)))
-      (setf manager (make-instance 'manager :content objs)))
-  
-    ;; Adjust vertical rulers
-    (setf (left rv1) (- (left w1) 10))
-    (setf (top rv1) (top w1))
-    (setf (left rv2) (- (left w5) 10))
-    (setf (top rv2) (top w5))
+  (defmethod tests-command-2 ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b5 b6 b7) data
+      (dolist (obj (list b1 b2 b3 b5 b6 b7))
+        (with-accessors ((tp title-position)) obj
+          (case tp
+            (:left-top
+             (setf tp :center-top))
+            (:left-middle
+             (setf tp :center-middle))
+            (:left-bottom
+             (setf tp :center-bottom))
+          
+            (:center-top
+             (setf tp :right-top))
+            (:center-middle
+             (setf tp :right-middle))
+            (:center-bottom
+             (setf tp :right-bottom))
+          
+            (:right-top
+             (setf tp :left-top))
+            (:right-middle
+             (setf tp :left-middle))
+            (:right-bottom
+             (setf tp :left-bottom))))))
+    nil)
 
-    ;; Adjust horizontal rulers
-    (setf (left r1) (left w1))
-    (setf (top r1) (- (top w1) 10))
-    (setf (left r2) (left w2))
-    (setf (top r2) (- (top w2) 10))
-    (setf (left r3) (left w3))
-    (setf (top r3) (- (top w3) 10))
-    (setf (left r4) (left w4))
-    (setf (top r4) (- (top w4) 10))
-
-    (setf (left r5) (left w5))
-    (setf (top r5) (- (top w5) 10))
-    (setf (left r6) (left w6))
-    (setf (top r6) (- (top w6) 10))
-    (setf (left r7) (left w7))
-    (setf (top r7) (- (top w7) 10))
-    (setf (left r8) (left w8))
-    (setf (top r8) (- (top w8) 10))
-    )
-  
-  (setf (box-tests-horiz data) :left)
-  (setf (box-tests-vert data) :top)
-  (setf (box-tests-vert-align data) :middle)
-  (setf (box-tests-theme1 data) (theme-flat-gray))
-  (setf (font (box-tests-theme1 data)) (default-font -24))
-  (setf (box-tests-theme2 data) (theme-3d-gray))
-  (setf (font (box-tests-theme2 data)) (default-font -24))
-  (setf (theme (box-tests-manager data)) (box-tests-theme1 data)))
-
-(defmethod tests-destroy ((data (eql *box-data*))))
-
-(defmethod tests-ready (data)
-  (with-slots (manager b1 b2 b3) data
-    (flet ((update-objects ()
-             (let (tp)
-               (with-slots (horiz vert vert-align) *box-data*
-                 (case horiz
-                   (:left
-                    (case vert
-                      (:top
-                       (setq tp :left-top))
-                      (:middle
-                       (setq tp :left-middle))
-                      (:bottom
-                       (setq tp :left-bottom))))
-                   (:center
-                    (case vert
-                      (:top
-                       (setq tp :center-top))
-                      (:middle
-                       (setq tp :center-middle))
-                      (:bottom
-                       (setq tp :center-bottom))))
-                   (:right
-                    (case vert
-                      (:top
-                       (setq tp :right-top))
-                      (:middle
-                       (setq tp :right-middle))
-                      (:bottom
-                       (setq tp :right-bottom))))))
-
-               (let ((objs (list b1 b2 b3))
-                     (va (box-tests-vert-align *box-data*)))
-                 (mapcar #'(lambda (obj)
-                             (setf (cl-yag:title-position obj) tp)
-                             (setf (cl-yag:v-align obj) va))
-                         objs))) ))
-
-  
-      (defmethod cl-yag::on-char ((key (eql :1)) mods (object (eql manager)) &key)
-        (with-slots (horiz) *box-data*
-          (case horiz
-            (:left
-             (setf horiz :center))
-            (:center
-             (setf horiz :right))
-            (:right
-             (setf horiz :left))))
-        (update-objects))
-    
-      (defmethod cl-yag::on-char ((key (eql :2)) mods (object (eql manager)) &key)
-        (with-slots (vert) *box-data*
-          (case vert
+  (defmethod tests-command-3 ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b5 b6 b7) data
+      (dolist (obj (list b1 b2 b3 b5 b6 b7))
+        (with-accessors ((va v-align)) obj
+          (case va
             (:top
-             (setf vert :middle))
+             (setf va :middle))
             (:middle
-             (setf vert :bottom))
+             (setf va :bottom))
             (:bottom
-             (setf vert :top))))
-        (update-objects))
+             (setf va :top))))))
+    nil)
+  
+  (defmethod tests-command-4 ((data (eql box-data)))
+    (tests-toggle-theme data)
+    nil)
 
-      (defmethod cl-yag::on-char ((key (eql :3)) mods (object (eql manager)) &key)
-        )
+  (defmethod tests-command-5 ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
+      (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
+        (dolist (obj objs)
+          (with-accessors ((tn thickness)) obj
+            (unless (= tn 0)
+              (setf tn (1- tn)))))))
+    nil)
 
-      (defmethod cl-yag::on-char ((key (eql :4)) mods (object (eql manager)) &key)
-        (with-slots (theme1 theme2) *box-data*
-          (if (eql (theme object) theme1)
-              (setf (theme object) theme2)
-              (setf (theme object) theme1))))
-      )))
+  (defmethod tests-command-6 ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
+      (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
+        (dolist (obj objs)
+          (with-accessors ((tn thickness)) obj
+            (incf tn 1)))))
+    nil)
+
+  (defmethod tests-command-7 ((data (eql box-data)))
+    (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
+      (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
+    nil)
+  nil)
 
 (defun box-tests-main ()
   (tests-main *box-data*))

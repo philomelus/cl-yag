@@ -20,6 +20,7 @@
 
 (defclass grid (grid-theme-mixin
                 area-mixin
+                parent-mixin
                 shortcuts-mixin
                 visible-mixin)
   ((major :initarg :major :initform 25 :accessor major)

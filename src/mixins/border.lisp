@@ -20,7 +20,8 @@
 
 (defclass border-3d-theme-mixin (color-3d-mixin
                                  style-3d-mixin)
-  ((thickness :initform 2.0)))
+  ((thickness :initform 2.0)
+   (style :accessor border-style)))
 
 (defclass border (border-theme-mixin)
   ((thickness :initarg :thickness :initform 1.0 :accessor thickness)))

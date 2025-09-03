@@ -4,7 +4,9 @@
 
 ;;;; layout-base ==============================================================
 
-(defparameter +LAYOUT-CHILD-OPTIONS+ '(:min-height :min-width :max-height :max-width))
+(defparameter +LAYOUT-CHILD-OPTIONS+ '(:min-height :min-width :max-height :max-width
+                                       :left :center :right
+                                       :top :middle :bottom))
 
 (defclass layout-base (container-mixin
                        parent-mixin
@@ -16,6 +18,12 @@
 
    ;; Internal
    (child-area :initform nil)))
+
+(defmethod initialize-instance :after ((object layout-base) &key)
+  (validate-layout-base-options object))
+
+(defmethod (setf content) :after (value (object layout-base))
+  (validate-layout-base-options object))
 
 ;;; methods ---------------------------------------------------------
 
@@ -306,14 +314,22 @@ recalculates the sizes of the children that are affected by it."
         (setq options (rest co)))
       (dolist (opt options)
         (case opt
+          (:bottom)
+          (:center)
+          (:left)
+          (:middle)
           (:min-height
            (setq upd-ch-h-p t)
            (v:debug :layout "[update-layout-child-areas] child ~d has option :min-height" index))
           (:min-width
            (setq upd-ch-w-p t)
            (v:debug :layout "[update-layout-child-areas] child ~d has option :min-width" index ))
-          (:max-height)
-          (:max-width))))
+          (:max-height
+           (setq upd-ch-h-p t))
+          (:max-width
+           (setq upd-ch-w-p t))
+          (:right)
+          (:top))))
     
     (let* ((num-children (length (content object)))
            (affected (- num-children index 1)))
@@ -326,7 +342,7 @@ recalculates the sizes of the children that are affected by it."
       (with-slots (child-area) object
 
         (v:debug :layout "[update-layout-child-areas] child ~d updating internal:" index)
-        (v:debug :layout "[update-layout-child-areas]         {~a}" (print-raw-object (nth index (content object))))
+        (v:debug :layout "[update-layout-child-areas]         {~a}" (print-raw-object (foro (nth index (content object)))))
         (v:debug :layout "[update-layout-child-areas]         from (~d ~d) @ (~d ~d)"
                  (width (aref child-area index)) (height (aref child-area index))
                  (left (aref child-area index)) (top (aref child-area index)))
@@ -335,7 +351,7 @@ recalculates the sizes of the children that are affected by it."
                    (slot-value co 'width) (slot-value co 'height)
                    (slot-value co 'left) (slot-value co 'top)))
 
-        ;; Calculate newly available height
+        ;; Calculate newly available area
         (let ((new-height (- (height (aref child-area index))
                              (height (foro (nth index (content object)))))))
           ;; Add height of all prior siblings
@@ -357,15 +373,15 @@ recalculates the sizes of the children that are affected by it."
               (when upd-ch-w-p
                 (setf (width (aref child-area index)) (slot-value (foro (nth index content)) 'width))
                 (v:debug :layout "[update-layout-child-areas] child ~d internal width updated (~d)"
-                         index (height (aref child-area index))))
+                         index (width (aref child-area index))))
               (when upd-ch-l-p
                 (setf (left (aref child-area index)) (slot-value (foro (nth index content)) 'left))
                 (v:debug :layout "[update-layout-child-areas] child ~d internal left updated (~d)"
-                         index (height (aref child-area index))))
+                         index (left (aref child-area index))))
               (when upd-ch-t-p
                 (setf (top (aref child-area index)) (slot-value (foro (nth index content)) 'top))
                 (v:debug :layout "[update-layout-child-areas] child ~d internal top updated (~d)"
-                         index (height (aref child-area index)))))
+                         index (top (aref child-area index)))))
             
             ;; Update child areas
             (loop :for i :from (1+ index) :to (1- num-children) :do
@@ -396,8 +412,12 @@ recalculates the sizes of the children that are affected by it."
                     (setf (slot-value child 'child-area) nil)
                     (dolist (gc (content child))
                       (when (typep gc 'area-mixin)
+                        (when (slot-value gc 'width-calc)
+                          (setf (slot-value gc 'width) (slot-value gc 'width-calc)))
                         (when (slot-value gc 'height-calc)
                           (setf (slot-value gc 'height) (slot-value gc 'height-calc)))
+                        (when (slot-value gc 'left-calc)
+                          (setf (slot-value gc 'left) (slot-value gc 'left-calc)))
                         (when (slot-value gc 'top-calc)
                           (setf (slot-value gc 'top) (slot-value gc 'top-calc)))))))))
             
@@ -421,29 +441,53 @@ recalculates the sizes of the children that are affected by it."
 
 ;;;; functions ================================================================
 
-;; Separate children into objects and options
-(defun parse-children (object)
-  
-  ;; Allocate options storage
-  (setf (slot-value object 'child-options) (make-array (length (content object)) :initial-element nil))
+(defun area-allocated (object)
+  "Returns the area allocated to a widget.
+This will be the same or larger than the widgets actual area slots.
+Returns nil if not found."
 
-  ;; Separate the children and their options
-  (dotimes (i (length (content object)))
-    (let ((child (nth i (content object))))
-      (when (consp child)
-        
-        (let ((child-object)
-              (options (rest child)))
-          (typecase (first child)
-            (symbol
-             (setq child-object (symbol-value (first child))))
-            (t
-             (setq child-object (first child))))
-          ;; Make sure options area valid
-          ;; #+safety
-          (dolist (option options)
-            (unless (member option +LAYOUT-CHILD-OPTIONS+)
-              (error "unknown child option: ~a" option)))
-          (setf (nth i (content object)) child-object)
-          (setf (aref (slot-value object 'child-options) i) options)))))
-  )
+  (let ((owner (find-parent-content object)))
+    (let ((op (position object (content owner) :key #'(lambda (o) (foro o)))))
+      (unless (eql op nil)
+        (return-from area-allocated (aref (slot-value owner 'child-area) op)))))
+  nil)
+
+;; TODO: find-if works here ...
+(defun find-parent-content (object)
+  "Return the first parent of object with type content-mixin."
+
+  (let ((parobj (parent object)))
+    (loop
+      (when (typep parobj 'content-mixin)
+        (return-from find-parent-content parobj))
+      (unless (typep parobj 'parent-mixin)
+        (error "no more parents, object not owned by content??? ~a" (print-raw-object object)))
+      (setq parobj (parent parobj)))))
+
+(defmethod validate-layout-base-options (object)
+  ;; Validate layout options
+  ;; #+safety
+  (with-slots (content) object
+    (unless (eql content nil)
+      (dolist (child content)
+        ;; Child have layout options?
+        (when (consp child)
+          ;; Yes so validate them
+          (let ((options (rest child)))
+            (dolist (option (rest child))
+              (unless (member option +LAYOUT-CHILD-OPTIONS+)
+                (error "unknown layout option: ~a" option)))
+            (when (and (member :min-height options)
+                       (member :max-height options))
+              (error "MIN-HEIGHT and MAX-HEIGHT are mutually exclusive"))
+            (when (and (member :min-width options)
+                       (member :max-width options))
+              (error "MIN-WIDTH and MAX-WIDTH are mutually exclusive"))
+            (when (and (member :top options)
+                       (member :middle options)
+                       (member :bottom options))
+              (error "TOP, MIDDLE, and RIGHT are mutually exclusive"))
+            (when (and (member :left options)
+                       (member :center options)
+                       (member :rightr options))
+              (error "LEFT, CENTER, and RIGHT are mutually exclusive"))))))))

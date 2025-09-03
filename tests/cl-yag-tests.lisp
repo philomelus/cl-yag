@@ -1,5 +1,13 @@
 (in-package :cl-yag-tests)
 
+;; TODO: Provide way to create sub-windows easier, like tests-create-window-1, etc.
+;;       where the window gets created and its just up to the called method to fill
+;;       it in or the like.  It has to be flexible.  Right now there is hard-coding
+;;       the below constants all over the place, and that seems unnecessary.
+;;
+;;       Another option is to provide have defun's that create the windows and adds
+;;       the passed in args as the content.  Or the like.
+
 (defconstant +W1X+ 25)
 (defconstant +W1Y+ 25)
 (defconstant +W1W+ 200)
@@ -54,11 +62,30 @@
   manager event queue timer
   iw1 iw2
   icl1 icl2
-  it1 it2 it3 it4 it5 it6 it7 it8)
+  it1 it2 it3 it4 it5 it6 it7 it8
+
+  rv1 rv2
+  rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8
+
+  theme1
+  theme2)
+
+(defgeneric tests-command-0 (data) (:documentation "Called when 0 is pressed.") (:method (data)))
+(defgeneric tests-command-1 (data) (:documentation "Called when 1 is pressed.") (:method (data)))
+(defgeneric tests-command-2 (data) (:documentation "Called when 2 is pressed.") (:method (data)))
+(defgeneric tests-command-3 (data) (:documentation "Called when 3 is pressed.") (:method (data)))
+(defgeneric tests-command-4 (data) (:documentation "Called when 4 is pressed.") (:method (data)))
+(defgeneric tests-command-5 (data) (:documentation "Called when 5 is pressed.") (:method (data)))
+(defgeneric tests-command-6 (data) (:documentation "Called when 6 is pressed.") (:method (data)))
+(defgeneric tests-command-7 (data) (:documentation "Called when 7 is pressed.") (:method (data)))
+(defgeneric tests-command-8 (data) (:documentation "Called when 8 is pressed.") (:method (data)))
+(defgeneric tests-command-9 (data) (:documentation "Called when 9 is pressed.") (:method (data)))
+
+(defgeneric tests-command-update (data) (:documentation "Called after calling a tests-command-* and it returns t."))
 
 (defgeneric tests-create (data) (:documentation "Create windows/object/data for tests."))
 
-(defgeneric tests-destroy (data) (:documentation "Clean up data created for tests."))
+(defgeneric tests-destroy (data) (:documentation "Clean up data created for tests.") (:method (data)))
 
 (defgeneric tests-ready (data) (:documentation "Called just before entering event loop."))
 
@@ -69,55 +96,105 @@
 paint for manager object.  Display is flipped automatically after call
 regardless of result."))
 
-(defun tests-add-instruction (data left &optional right)
-  (declare (ignore right))
-  (macrolet ((make-inst (used field title)
+(defun tests-instructions-create (data left &optional right)
+  (macrolet ((make-inst (used field title is-left)
                (let ((u (gensym)))
                  `(let ((,u ,used))
                     (when ,u
-                      (setf ,field (deftext :title ,title :height :auto-min :padding-left 10)))
+                      ,(if is-left
+                          `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-left 10))
+                          `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-right 10 :h-align :right))))
                     ,u))))
     
     (with-slots (iw1 iw2 icl1 icl2 it1 it2 it3 it4 it5 it6 it7 it8) data
       (let ((num-left (length left))
             (num-right 0)
-            ;; widgets-l widgets-r
-            )
-        (declare (ignore num-right))
+            widgets-l widgets-r)
         
         (assert (<= num-left 4))
-        ;; (unless (eql right nil)
-        ;;   (setq num-right (length right))
-        ;;   (assert (<= num-right 4)))
+        (unless (eql right nil)
+          (setq num-right (length right))
+          (assert (<= num-right 4)))
 
         ;; Create left instructions
-        ;; (if (make-inst (>= num-left 1) it1 (first left)) (push (list it1 :min-height) widgets-l))
-        ;; (if (make-inst (>= num-left 2) it2 (second left)) (push (list it2 :min-height) widgets-l))
-        ;; (if (make-inst (>= num-left 3) it3 (third left)) (push (list it3 :min-height) widgets-l))
-        ;; (if (make-inst (>= num-left 4) it4 (fourth left)) (push (list it4 :min-height) widgets-l))
+        (if (make-inst (>= num-left 4) it4 (fourth left) t) (push (list it4 :min-height) widgets-l))
+        (if (make-inst (>= num-left 3) it3 (third left) t) (push (list it3 :min-height) widgets-l))
+        (if (make-inst (>= num-left 2) it2 (second left) t) (push (list it2 :min-height) widgets-l))
+        (if (make-inst (>= num-left 1) it1 (first left) t) (push (list it1 :min-height) widgets-l))
 
         ;; Create right instructions
-        ;; (if (make-inst (>= num-right 1) it5 (first right)) (push (list it5 :min-height) widgets-r))
-        ;; (if (make-inst (>= num-right 2) it6 (second right)) (push (list it6 :min-height) widgets-r))
-        ;; (if (make-inst (>= num-right 3) it7 (third right)) (push (list it7 :min-height) widgets-r))
-        ;; (if (make-inst (>= num-right 4) it8 (fourth right)) (push (list it8 :min-height) widgets-r))
+        (if (make-inst (>= num-right 4) it8 (fourth right) nil) (push (list it8 :min-height) widgets-r))
+        (if (make-inst (>= num-right 3) it7 (third right) nil) (push (list it7 :min-height) widgets-r))
+        (if (make-inst (>= num-right 2) it6 (second right) nil) (push (list it6 :min-height) widgets-r))
+        (if (make-inst (>= num-right 1) it5 (first right) nil) (push (list it5 :min-height) widgets-r))
 
         ;; Final left preparations
         (setf icl1 (defcolumn-layout))
-        ;; (when (> (length widgets-l) 0)
-        ;;   (setf (content icl1) widgets-l))
+        (when (> (length widgets-l) 0)
+          (setf (content icl1) widgets-l))
         (setf iw1 (defwindow +I1X+ +I1Y+ +I1W+ +I1H+ :content (list icl1)))
         ;; (setf iw1 (defwindow +I1X+ +I1Y+ +I1W+ +I1H+))
         (assert (not (eql iw1 nil)))
 
         ;; Final right preparations
         (setf icl2 (defcolumn-layout))
-        ;; (when (> (length widgets-r) 0)
-        ;;   (setf (content icl2) widgets-r))
+        (when (> (length widgets-r) 0)
+          (setf (content icl2) widgets-r))
         (setf iw2 (defwindow +I2X+ +I2Y+ +I2W+ +I2H+ :content (list icl2)))
         (assert (not (eql iw2 nil)))
 
         (values iw1 iw2)))))
+
+(defun tests-rulers-create (data top-row bottom-row)
+  (with-slots (rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8) data
+    (when top-row
+      (let ((majc (al:map-rgb-f 1 0 0))
+            (minc (al:map-rgb-f 0.8 0 0)))
+        (let ((majc (al:map-rgb-f 1 0 0))
+              (minc (al:map-rgb-f 0.8 0 0)))
+          (setf rv1 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc :vertical t
+                              :left (- +W1X+ 10) :top +W1Y+ :width 10 :height +W1H+ ))
+          (setf rh1 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W1X+ :top (- +W1Y+ 10) :width +W1W+ :height 10))
+          (setf rh2 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W2X+ :top (- +W2Y+ 10) :width +W2W+ :height 10))
+          (setf rh3 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W3X+ :top (- +W3Y+ 10) :width +W3W+ :height 10))
+          (setf rh4 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W4X+ :top (- +W4Y+ 10) :width +W4W+ :height 10)))
+        (when bottom-row
+          (setf rv2 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc :vertical t 
+                              :left (- +W5X+ 10) :top +W5Y+ :width 10 :height +W5H+))
+          (setf rh5 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W5X+ :top (- +W5Y+ 10) :width +W5W+ :height 10))
+          (setf rh6 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W6X+ :top (- +W6Y+ 10) :width +W6W+ :height 10))
+          (setf rh7 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W7X+ :top (- +W7Y+ 10) :width +W7W+ :height 10))
+          (setf rh8 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+                              :left +W8X+ :top (- +W8Y+ 10) :width +W8W+ :height 10)))))
+    (if (and top-row bottom-row)
+        (values rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
+        (if top-row
+            (values rv1 rh1 rh2 rh3 rh4)
+            (values rv2 rh5 rh6 rh7 rh8)))))
+
+(defun tests-toggle-interior-color (data widgets)
+  (with-slots (manager theme1) data
+    (let ((ic1 (interior-color theme1))
+          (ic2 (al:map-rgb-f 1 0 0)))
+      (dolist (w widgets)
+        (with-local-slots ((ic interior-color)) w
+          (if (or (equal ic ic1)
+                  (eql ic nil))
+              (setf (interior-color w) ic2)
+              (setf (interior-color w) ic1)))))))
+
+(defun tests-toggle-theme (data)
+  (with-slots (manager theme1 theme2) data
+    (if (eql (theme manager) theme1)
+        (setf (theme manager) theme2)
+        (setf (theme manager) theme1))))
 
 (defun tests-main (data)
   "Main entry point for tests.
@@ -155,12 +232,21 @@ Default event processing watches for :display-close event as well."
            (al:register-event-source queue (al:get-timer-event-source timer))
            (al:register-event-source queue (al:get-mouse-event-source))
 
-           ;; Use larger font
-           (setf (font *theme-default*) (default-font -24))
-
-           ;; Set up window/objects
+           ;; Set up themes
+           (let ((fnt (default-font -24)))
+             (setf (font *theme-default*) fnt)
+             (setf (tests-data-theme1 data) (theme-flat-gray))
+             (setf (font (tests-data-theme1 data)) fnt)
+             (setf (tests-data-theme2 data) (theme-3d-gray))
+             (setf (font (tests-data-theme2 data)) fnt))
+           
+           ;; Let test set up window/objects
            (tests-create data)
 
+           ;; Set initial theme
+           (setf (theme (tests-data-manager data)) (tests-data-theme1 data))
+
+           ;; Final preparations
            (al:start-timer timer)
            (al:clear-keyboard-state screen)
 
@@ -168,8 +254,55 @@ Default event processing watches for :display-close event as well."
              (setf (process object) nil)
              t)
 
-           ;; (defmethod cl-yag::on-char ((key (eql :1)) mods (object (eql (tests-data-manager data))) &key)
-           ;;   (v:info :tests "[on-char] {:1} caught!"))
+           (defmethod cl-yag::on-char ((key (eql :0)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-0 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :1)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-1 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :2)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-2 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :3)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-3 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :4)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-4 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :5)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-5 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :6)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-6 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :7)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-7 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :8)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-8 data)
+                 (tests-command-update data))
+             t)
+           
+           (defmethod cl-yag::on-char ((key (eql :9)) mods (object (eql (tests-data-manager data))) &key)
+             (if (tests-command-9 data)
+                 (tests-command-update data))
+             t)
            
            (defmethod cl-yag::on-timer (timer count (object (eql (tests-data-manager data))) &key)
              ;; Let test render.  If returns nil, perform default rendering
@@ -185,8 +318,15 @@ Default event processing watches for :display-close event as well."
            
            ;; Handle events until process is nil
            (process-events queue (tests-data-manager data))
+
+           ;; Remove methods
+           (with-local-slots ((m manager)) data
+             (mapcar #'(lambda (char)
+                         (cleanup-method cl-yag::on-char (list (list 'eql char) t (list 'eql m))))
+                     (list :0 :1 :2 :3 :4 :5 :6 :7 :8 :9))
+             (cleanup-method cl-yag::on-timer (list t t (list 'eql m))))
            
-           ;; Clean up windows/objects
+           ;; Clean up test
            (tests-destroy data))
 
       (progn
