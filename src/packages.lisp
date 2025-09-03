@@ -88,6 +88,7 @@
            
            ;; Class generics
            #:active
+           #:align
            #:back-color
            #:border
            #:border-h

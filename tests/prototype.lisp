@@ -1,13 +1,13 @@
 (in-package :cl-yag-tests)
 
-(defstruct (layout-tests-data (:include tests-data)
-                            (:conc-name layout-tests-))
+(defstruct (prototype-tests-data (:include tests-data)
+                            (:conc-name prototype-tests-))
   w1 w2 w3 w4 w5 w6 w7 w8
   )
 
-(defparameter *layout-data* (make-layout-tests-data))
+(defparameter *prototype-data* (make-prototype-tests-data))
 
-(defmethod tests-create ((data (eql *layout-data*)))
+(defmethod tests-create ((data (eql *prototype-data*)))
   (let (widgets)
     (with-slots (manager w1 w2 w3 w4 w5 w6 w7 w8)
         data
@@ -63,22 +63,22 @@
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))
 
-(defmethod tests-destroy ((data (eql *layout-data*)))
+(defmethod tests-destroy ((data (eql *prototype-data*)))
   (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
   (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
   nil)
 
-(defmethod tests-ready ((layout-data (eql *layout-data*)))
-  (defmethod tests-command-4 ((data (eql layout-data)))
+(defmethod tests-ready ((prototype-data (eql *prototype-data*)))
+  (defmethod tests-command-4 ((data (eql prototype-data)))
     (tests-toggle-theme data)
     nil)
   
-  (defmethod tests-command-7 ((data (eql layout-data)))
+  (defmethod tests-command-7 ((data (eql prototype-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
       (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
     nil)
   nil)
 
-(defun layout-tests-main ()
-  (tests-main *layout-data*))
+(defun prototype-tests-main ()
+  (tests-main *prototype-data*))
 

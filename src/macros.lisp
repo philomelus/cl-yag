@@ -183,7 +183,7 @@ updated on setq/setf."
        (let (,@(mapcar #'(lambda (obj)
                            (if (consp obj)
                                `(,(first obj) (,(second obj) ,in))
-                               (error "malformed slots")))
+                               `(,obj (,obj ,in))))
                        slots))
          ,@body))))
 
@@ -196,7 +196,7 @@ updated on setq/setf."
        (let (,@(mapcar #'(lambda (obj)
                            (if (consp obj)
                                `(,(first obj) (slot-value ,in ',(second obj)))
-                               (error "malformed slots")))
+                               `(,obj (slot-value ,in ',obj))))
                        slots))
          ,@body))))
 
@@ -206,7 +206,7 @@ updated on setq/setf."
        (let (,@(mapcar #'(lambda (f)
                            (if (consp f)
                                `(,(first f) (,(second f) ,instance))
-                               `(,(first f) (,(first f) ,instance))))
+                               `(,f (,f ,instance))))
                        fields))
          ,@(mapcar #'(lambda (f)
                        `(assert (not (eql ,(first f) nil))))

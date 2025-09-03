@@ -44,15 +44,24 @@
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect
-         (progn                   ; Not needed, because of the let ...
+         (let ((c1 (al:map-rgb-f 0.75 0 0))
+               (c2 (al:map-rgb-f 0.50 0 0)))
            (setq *rl* (defruler :vertical t :major 10 :minor 2 :left 190 :top 200 :width 10 :height 400
-                                :shortcuts (list '(:1))))
+                                :major-color c1 :minor-color c2 :color c1
+                                :shortcuts (list '(:1))
+                                :align :end))
            (setq *rt* (defruler :vertical nil :major 10 :minor 2 :left 200 :top 190 :width 400 :height 10
-                                :shortcuts (list '(:2))))
+                                :major-color c1 :minor-color c2 :color c1
+                                :shortcuts (list '(:2))
+                                :align :end))
            (setq *rr* (defruler :vertical t :major 10 :minor 2 :left 510 :top 200 :width 10 :height 400
-                                :shortcuts (list '(:3)) :invert t))
+                                :major-color c1 :minor-color c2 :color c1
+                                :shortcuts (list '(:3))
+                                :align :begin))
            (setq *rb* (defruler :vertical nil :major 10 :minor 2 :left 200 :top 510 :width 400 :height 10
-                                :shortcuts (list '(:4)) :invert t))
+                                :major-color c1 :minor-color c2 :color c1
+                                :shortcuts (list '(:4))
+                                :align :begin))
            
            (setq *g* (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
                               :shortcuts (list '(:5))))
@@ -87,11 +96,6 @@
            (setf (height *rr*) (1+ (height *w*)))
            (setf (top *rb*) (+ (top *w*) (height *w*) 11))
            (setf (width *rb*) (width *w*))
-           
-           (setf (color *rl*) (al:map-rgb-f 1 0 0))
-           (setf (color *rt*) (al:map-rgb-f 1 0 0))
-           (setf (color *rr*) (al:map-rgb-f 1 0 0))
-           (setf (color *rb*) (al:map-rgb-f 1 0 0))
            
            ;; Set grid color
            (setf (major-color *g*) (al:map-rgb-f 0 0.35 0))
