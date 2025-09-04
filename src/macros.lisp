@@ -3,15 +3,23 @@
 ;;;; macros ===================================================================
 
 (defmacro cleanup-method (func args)
+  "Calls remove-method after calling find-method to locate method.
+
+func should be symbol of function (not function pointer).
+args should be the specialization list.
+If :where is specified it should be the type of method (:before, :after, etc.)
+(where unimplement as haven't needed it ... yet"
+
   `(remove-method #',func (find-method #',func () ,args)))
 
 (defmacro foro (object)
-  "Returns object of first object.
+  "Returns object or first object.
 
 If object is an atom, returns it.
 If object is an atom, and is a symbol, returns value of symbol.
 If object is list, and first item in list is object, returns it.
 If object is list, and first tiem is symbol, returns value of it."
+  
   (let ((lobject (gensym))
         (cobject (gensym)))
     `(let ((,lobject ,object))
@@ -28,7 +36,11 @@ If object is list, and first tiem is symbol, returns value of it."
   `(if (next-method-p) (call-next-method)))
 
 ;;;------------------------------------------------------------------
+
 ;; For print-mixin (and print-object sometimes)
+;; Seemed like a good idea, but I'm not so sure now.  print-object
+;; is a bit of a pain to work with (which probably means I still'
+;; don't fully understand how it works)
 
 (defmacro pprint-color (field object stream)
   `(progn
@@ -103,16 +115,31 @@ If object is list, and first tiem is symbol, returns value of it."
 ;;;; various ==================================================================
 
 (defmacro theme-field (field obj)
-  `(let ((th-ob (,field ,obj)))
-     (when (eql th-ob nil)
-       (setq th-ob (,field (find-theme ,obj))))
-     th-ob))
+  "Return value of slot within object. If the value is nil, locate theme for
+object and return the slot value from it.  Field should be an accessor."
+  
+  (let ((instance (gensym))
+        (value (gensym))
+        (theme (gensym)))
+    `(let* ((,instance ,obj)
+            (,value (,field ,instance)))
+       (when (eql ,value nil)
+         (let ((,theme (find-theme ,instance)))
+           (assert (not (eql ,theme nil)))
+           (setq ,value (,field ,theme))))
+       ,value)))
 
 (defmacro theme-field-object (field obj theme-obj)
-  `(let ((th-ob (,field ,obj)))
-     (when (eql th-ob nil)
-       (setq th-ob (,field ,theme-obj)))
-     th-ob))
+  "Return value of slot within object.  If the value is nil, return slot value
+from theme. Field should be an accessor."
+  
+  (let ((instance (gensym))
+        (value (gensym)))
+    `(let* ((,instance ,obj)
+            (,value (,field ,instance)))
+       (when (eql ,value nil)
+         (setq value (,field ,theme-obj)))
+       ,value)))
 
 ;;;; with-* ===================================================================
 
@@ -188,9 +215,9 @@ updated on setq/setf."
          ,@body))))
 
 (defmacro with-local-slots ((&rest slots) instance &body body)
-  "Like with-slots, but slots are cached in local variables and changes are not
-updated on setq/setf."
-  
+  "Like with-slots, but slots are cached in local variables and slots are not
+updated (changes are local only)."
+
   (let ((in (gensym)))
     `(let ((,in ,instance))
        (let (,@(mapcar #'(lambda (obj)
@@ -201,6 +228,7 @@ updated on setq/setf."
          ,@body))))
 
 (defmacro with-theme ((&rest fields) theme-object &body body)
+  "Create local instances of theme slots."
   (let ((instance (gensym)))
     `(let ((,instance ,theme-object))
        (let (,@(mapcar #'(lambda (f)
@@ -214,8 +242,10 @@ updated on setq/setf."
          ,@body))))
 
 ;; BUGBUG: TODO:  Args evaluated more than one time
-;; BUGBUG: TODO:  I don't think this is valid anymore ... test test test
 (defmacro with-object-or-theme ((&rest fields) object &body body)
+  "Create local instances of theme related slots from object.  If the object's
+slot value is nil, locate the active theme for object and get the value from it."
+  
   (let ((instance (gensym))
         (theme (gensym)))
     `(let ((,instance ,object))

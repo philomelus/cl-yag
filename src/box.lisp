@@ -114,70 +114,54 @@
                 (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ct tn)) (1+ (- or tn)) (1+ (- cb tn)) ic)))
 
             ;; Draw frame
-            (if (eql va ':middle)
-                (let ((tw (al:get-text-width fnt ti))
-                      (th2 (/ th 2))
-                      (th4 (/ th 4))
-                      ;; (nt (+ ct tn2 ))
-                      v)
-                  (let ((x1 (+ ol tn2))
-                        (y1 (+ ct tn2))
-                        (x2 (- or tn2))
-                        (y2 (- cb tn2)))
-                    (let ((x1x1 (- x1 tn2))
-                          (x1x4 (+ x1 tn2))
-                          (y1y1 (- y1 tn2))
-                          (y1y2 (+ y1 tn2))
-                          (x2x1 (- x2 tn2))
-                          (x2x2 (+ x2 tn2))
-                          (y2y1 (- y2 tn2))
-                          (y2y2 (+ y2 tn2)))
-                      (let ((x1x2 (+ x1x1 (/ th 3)))
-                            (x1x3 (+ x1x1 tw (* (/ th 3) 2))))
+            (when (/= tn 0)
+              (if (eql va ':middle)
+                  (let ((tw (al:get-text-width fnt ti))
+                        ;; (th2 (/ th 2))
+                        ;; (th4 (/ th 4))
+                        ;; (nt (+ ct tn2 ))
+                        v)
+                    (let ((x1 (+ ol tn2))
+                          (y1 (+ ct tn2))
+                          (x2 (- or tn2))
+                          (y2 (- cb tn2)))
+                      (let ((x1x1 (- x1 tn2))
+                            (x1x4 (+ x1 tn2))
+                            (y1y1 (- y1 tn2))
+                            (y1y2 (+ y1 tn2))
+                            (x2x1 (- x2 tn2))
+                            (x2x2 (+ x2 tn2))
+                            (y2y1 (- y2 tn2))
+                            (y2y2 (+ y2 tn2)))
+                        (let ((x1x2 (+ x1x1 (/ th 3)))
+                              (x1x3 (+ x1x1 tw (* (/ th 3) 2))))
 
-                        ;; Top mid right to top end right
-                        (push (list x1x3 y1y1 fc) v) ; outside top mid
-                        (push (list x1x3 y1y2 fc) v) ; inside top mid
+                          ;; After text
+                          (push (list x1x3 y1y1 fc) v)
+                          (push (list x1x3 y1y2 fc) v)
 
-                        (push (list x2x2 y1y1 fc) v) ; outside top right
-                        (push (list x2x1 y1y2 fc) v) ; inside top right
+                          ;; To the right upper corner
+                          (push (list x2x2 y1y1 fc) v)
+                          (push (list x2x1 y1y2 fc) v)
                       
-                        ;; ;; Right side
-                        (push (list x2x2 y2y2 fc) v)
-                        (push (list x2x1 y2y1 fc) v)
+                          ;; To right lower corner
+                          (push (list x2x2 y2y2 fc) v)
+                          (push (list x2x1 y2y1 fc) v)
 
-                        ;; ;; Bottom side
-                        (push (list x1x1 y2y2 fc) v)
-                        (push (list x1x4 y2y1 fc) v)
+                          ;; To left lower corner
+                          (push (list x1x1 y2y2 fc) v)
+                          (push (list x1x4 y2y1 fc) v)
 
-                        ;; ;; Left side
-                        (push (list x1x1 y1y1 fc) v)
-                        (push (list x1x4 y1y2 fc) v)
+                          ;; To left upper corner
+                          (push (list x1x1 y1y1 fc) v)
+                          (push (list x1x4 y1y2 fc) v)
 
-                        (push (list x1x2 y1y1 fc) v)
-                        (push (list x1x2 y1y2 fc) v)
-                        ;; (push (list x1x1 y1y1 fc) v)
-                        ;; (push (list x1x4 y1y2 fc) v)
-                        )
-                      
-                      )
-                    ;; (v:info :box "x1:~d y1:~d x2:~d y2:~d" (coerce x1 'float) (coerce y1 'float)
-                    ;;         (coerce x2 'float) (coerce y2 'float))
-                    ;; (v:info :box "vertexes: ~a" v)
-                    )
-
+                          ;; Left upper corner to before text
+                          (push (list x1x2 y1y1 fc) v)
+                          (push (list x1x2 y1y2 fc) v))))
                   
-                  (draw-prim v :triangle-strip)
-                  
-                  ;; (al:draw-line (+ ol tn2 tw th2) nt (- or tn2) nt fc tn)
-                  ;; (al:draw-line (+ ol tn2) nt (+ ol tn2 th4) nt fc tn)
-                  ;; (al:draw-line (- or tn2) (+ ct tn2 (- tn2)) (- or tn2) (- cb tn2) fc tn)
-                  ;; (al:draw-line (+ ol tn2) (- cb tn2) (- or tn2) (- cb tn2) fc tn)
-                  ;; (al:draw-line (+ ol tn2) (+ ct tn2 (- tn2)) (+ ol tn2) (- cb tn2) fc tn)
-                  )
-                
-                (al:draw-rectangle (+ ol tn2) (+ ct tn2) (- or tn2) (- cb tn2) fc tn))
-            
+                    (draw-prim v :triangle-strip))
+                  (al:draw-rectangle (+ ol tn2) (+ ct tn2) (- or tn2) (- cb tn2) fc tn)))
           
             ;; Display title
             (unless (= (length (title object)) 0)

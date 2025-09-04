@@ -1,16 +1,28 @@
 (in-package #:cl-yag)
 
-;; TODO: Add ability to thickness of lines
-;; TODO: Add ability to specify length of lines (as percentage or exact length)
-;; TODO: Add ability to have more than 1 major and 1 minor
-;; TODO: As previous, but allow full options for all available divisions,
-;;       regardless of the number of them.  Specify division, length,
-;;       thickness, and color per division.  I'm thinking implementing like
-;;       how borders are done where divisions are generic, and you specify
-;;       the details.  Having some default sizes (10,2) (10,5) (25,5) (100,25,10)
-;;       and whatever others make sense.
+;;;; division =================================================================
+;; TODO: Implement below ...
 
-;;;; theme-mixin ==============================================================
+;;; theme-mixin -----------------------------------------------------
+
+;; (defclass division-theme-mixin (color-mixin))
+
+;;; division --------------------------------------------------------
+
+;; (defparameter +LENGTH-TYPE-OPTIONS+ '(:percent :absolute))
+
+;; (defclass division (division-theme-mixin)
+;;   ((thickness :initarg :thickness :initform -0.5 :accessor thickness)
+;;    (length :initarg :length :initform 0.50 :accessor length)
+;;    (length-type :initarg :length-type :initform :percent :accessor length-type)
+;;    (period :initarg :period :initform 1 :accessor period)))
+
+;; (defmacro defdivision (&rest rest &key &allow-other-keys)
+;;   `(make-instance 'division ,@rest))
+
+;;;; ruler ====================================================================
+
+;;; theme-mixin -----------------------------------------------------
 
 (defclass ruler-theme-mixin (color-mixin)
   ((major-color :initarg :major-color :initform nil :accessor major-color)
@@ -22,7 +34,7 @@
   ;; (pprint-color-nil major-color object stream)
   (my-next-method))
 
-;;;; ruler ====================================================================
+;;; ruler -----------------------------------------------------------
 
 (defparameter +RULER-ALIGN-OPTIONS+ '(:begin :center :middle :end))
 

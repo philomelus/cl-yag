@@ -327,12 +327,12 @@
            (setq x (left obj))
            (setq f +ALIGN-LEFT+))
           (:center
-           (let ((area (area-allocated obj)))
-             (setq x (+ (left obj) (/ (width obj) 2)))
-             (setq f +ALIGN-CENTER+)))
+           (setq x (+ (left obj) (/ (width obj) 2)))
+           (setq f +ALIGN-CENTER+))
           (:right
            (let ((area (area-allocated obj)))
-             (setq x (right obj))
+             (setq x (right area))
+             (decf x (padding-right obj))
              (setq f +ALIGN-RIGHT+))))
         (with-clipping ((left obj) (top obj) (width obj) (height obj))
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
