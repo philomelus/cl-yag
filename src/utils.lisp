@@ -60,3 +60,11 @@
 (defun print-thread-name ()
   (format nil "~a" (bt:thread-name (bt:current-thread))))
 
+(defun remove-keyword-params (args declared-keys)
+  "Removes keyword parameters and their values from a list of arguments.
+   ARGS is the list of arguments (e.g., from &rest).
+   DECLARED-KEYS is a list of keywords that are expected as parameters."
+  (loop for (key val) on args by #'cddr
+        unless (member key declared-keys)
+          collect key
+          and collect val))

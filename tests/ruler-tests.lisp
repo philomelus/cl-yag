@@ -17,42 +17,50 @@
       (let ((c1 (al:map-rgb-f 0 0.75 0))
             (c2 (al:map-rgb-f 0 0 1)))
         ;; Test 1
-        (setf r1 (defruler :left (+ +W1X+ 10) :top (+ +W1Y+ 10) :height 10 :width (- +W1W+ 20)
-                           :major-color c1 :minor-color c2 :color c1 :visible t))
-        (setf r5 (defruler :left (+ +W1X+ 10) :top (+ +W1Y+ 50) :height 25 :width (- +W1W+ 20)
-                           :major-color c1 :minor-color c2 :color c1 :visible t))
+        (setf r1 (ruler-10-2 :left (+ +W1X+ 10) :top (+ +W1Y+ 10) :height 10 :width (- +W1W+ 20)
+                             :div-10-color c1 :div-10-extent 1
+                             :div-2-color c2
+                             :line-color c1 :visible t))
+        (setf r5 (ruler-10-2 :left (+ +W1X+ 10) :top (+ +W1Y+ 50) :height 25 :width (- +W1W+ 20)
+                             :div-10-color c1 :div-10-extent 1
+                             :div-2-color c2
+                             :line-color c1 :visible t))
         (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+ :content `(,r1 ,r5)))
         (push w1 widgets)
       
         ;; Test 2
-        (setf r2 (defruler :left (+ +W2X+ 10) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 10
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :vertical t))
-        (setf r6 (defruler :left (+ +W2X+ 50) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 25
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :vertical t))
+        (setf r2 (ruler-10-2 :left (+ +W2X+ 10) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 10
+                             :div-10-color c1 :div-10-extent 1
+                             :div-2-color c2
+                             :line-color c1 :visible t :vertical t))
+        (setf r6 (ruler-10-2 :left (+ +W2X+ 50) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 25
+                             :div-10-color c1 :div-10-extent 1
+                             :div-2-color c2
+                             :line-color c1 :visible t :vertical t))
         (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+ :content `(,r2 ,r6)))
         (push w2 widgets)
       
         ;; Test 3
-        (setf r3 (defruler :left (+ +W3X+ 10) :top (+ +W3Y+ 10) :height 10 :width (- +W3W+ 20)
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :major 25 :minor 5))
-        (setf r7 (defruler :left (+ +W3X+ 10) :top (+ +W3Y+ 50) :height 25 :width (- +W3W+ 20)
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :major 25 :minor 5))
+        (setf r3 (ruler-25-5 :left (+ +W3X+ 10) :top (+ +W3Y+ 10) :height 10 :width (- +W3W+ 20)
+                             :div-25-color c1 :div-25-extent 1
+                             :div-5-color c2
+                             :line-color c1 :visible t))
+        (setf r7 (ruler-25-5 :left (+ +W3X+ 10) :top (+ +W3Y+ 50) :height 25 :width (- +W3W+ 20)
+                             :div-25-color c1 :div-25-extent 1
+                             :div-5-color c2
+                             :line-color c1 :visible t))
         (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+ :content `(,r3 ,r7)))
         (push w3 widgets)
       
         ;; Test 4
-        (setf r4 (defruler :left (+ +W4X+ 10) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 10
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :vertical t
-                           :major 25 :minor 5))
-        (setf r8 (defruler :left (+ +W4X+ 50) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 25
-                           :major-color c1 :minor-color c2 :color c1 :visible t
-                           :vertical t
-                           :major 25 :minor 5))
+        (setf r4 (ruler-25-5 :left (+ +W4X+ 10) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 10
+                             :div-25-color c1 :div-25-extent 1
+                             :div-5-color c2
+                             :line-color c1 :visible t :vertical t))
+        (setf r8 (ruler-25-5 :left (+ +W4X+ 50) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 25
+                             :div-25-color c1 :div-25-extent 1
+                             :div-5-color c2
+                             :line-color c1 :visible t :vertical t))
         (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+ :content `(,r4 ,r8)))
         (push w4 widgets)
       

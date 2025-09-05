@@ -159,8 +159,8 @@
                   (setf (minor-color-h ,object) f)
                   (setf (minor-color-v ,object) f)
                   ;; ruler-theme-mixin
-                  (setf (major-color ,object) f)
-                  (setf (minor-color ,object) f)
+                  (setf (division-color ,object) f)
+                  (setf (line-color ,object) f)
                   ;; text-theme-mixin covered by active-text-theme-mixin
                   ;; window-theme-mixin covered by theme-flat
 
@@ -226,8 +226,8 @@
                   (setf (minor-color-h ,object) vd)
                   (setf (minor-color-v ,object) vd)
                   ;; ruler-theme-mixin
-                  (setf (major-color ,object) vl)
-                  (setf (minor-color ,object) l)
+                  (setf (division-color ,object) l)
+                  (setf (line-color ,object) l)
                   ;; text-theme-mixin covered by active-text-theme-mixin
                   ;; window-theme-mixin converted by active-text-theme-mixin
 

@@ -9,7 +9,8 @@
   :source-control (:git "https://github.com/philomelus/cl-yag.git")
 
   ;; Dependencies.
-  :depends-on ("bordeaux-threads"
+  :depends-on ("alexandria"
+               "bordeaux-threads"
                "cl-liballegro"
                "cffi-object"
                "closer-mop"

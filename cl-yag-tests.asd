@@ -17,7 +17,12 @@
                 :components ((:file "packages")
                              (:file "cl-yag-tests")
                              (:file "box-tests")
-                             (:file "text-tests"))))
+                             (:file "grid-tests")
+                             (:file "layout-tests")
+                             (:file "prototype")
+                             (:file "ruler-tests")
+                             (:file "text-tests")
+                             (:file "window-tests"))))
   
   ;; :perform (test-op (o c) (symbol-call :cl-yag-tests :run-all-tests))
   )

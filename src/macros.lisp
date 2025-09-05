@@ -265,3 +265,25 @@ slot value is nil, locate the active theme for object and get the value from it.
                    fields)
          ,@body))))
 
+(defmacro with-object-and-theme ((&rest fields) object theme &body body)
+  "Create local instances of theme related slots from object.  If the object's
+slot value is nil, use the slot from the theme."
+  
+  (let ((instance (gensym))
+        (theme-obj (gensym)))
+    `(let ((,instance ,object))
+       (let (,@(mapcar #'(lambda (f)
+                           `(,(first f) (,(second f) ,instance)))
+                       fields))
+         (when (or ,@(mapcar #'(lambda (f)
+                                 `(eql ,(first f) nil))
+                             fields))
+           (let ((,theme-obj ,theme))
+             ,@(mapcar #'(lambda (f)
+                           `(when (not ,(first f))
+                              (setq ,(first f) (,(second f) ,theme-obj))))
+                       fields)))
+         ,@(mapcar #'(lambda (f)
+                       `(assert (not (eql ,(first f) nil))))
+                   fields)
+         ,@body))))

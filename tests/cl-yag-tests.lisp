@@ -147,32 +147,51 @@ regardless of result."))
 
 (defun tests-rulers-create (data top-row bottom-row)
   (with-slots (rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8) data
-    (when top-row
-      (let ((majc (al:map-rgb-f 1 0 0))
-            (minc (al:map-rgb-f 0.8 0 0)))
-        (let ((majc (al:map-rgb-f 1 0 0))
-              (minc (al:map-rgb-f 0.8 0 0)))
-          (setf rv1 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc :vertical t
+    (let ((majc (al:map-rgb-f 1 0 0))
+          (minc (al:map-rgb-f 0.8 0 0)))
+      (when top-row
+        (setf rv1 (ruler-25-5 :visible t :line-color majc :vertical t
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left (- +W1X+ 10) :top +W1Y+ :width 10 :height +W1H+ ))
-          (setf rh1 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh1 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W1X+ :top (- +W1Y+ 10) :width +W1W+ :height 10))
-          (setf rh2 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh2 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W2X+ :top (- +W2Y+ 10) :width +W2W+ :height 10))
-          (setf rh3 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh3 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W3X+ :top (- +W3Y+ 10) :width +W3W+ :height 10))
-          (setf rh4 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh4 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W4X+ :top (- +W4Y+ 10) :width +W4W+ :height 10)))
-        (when bottom-row
-          (setf rv2 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc :vertical t 
+      (when bottom-row
+        (setf rv2 (ruler-25-5 :visible t :line-color majc :vertical t
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left (- +W5X+ 10) :top +W5Y+ :width 10 :height +W5H+))
-          (setf rh5 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh5 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W5X+ :top (- +W5Y+ 10) :width +W5W+ :height 10))
-          (setf rh6 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh6 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W6X+ :top (- +W6Y+ 10) :width +W6W+ :height 10))
-          (setf rh7 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
+        (setf rh7 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
                               :left +W7X+ :top (- +W7Y+ 10) :width +W7W+ :height 10))
-          (setf rh8 (defruler :major 25 :minor 5 :visible t :major-color majc :minor-color minc
-                              :left +W8X+ :top (- +W8Y+ 10) :width +W8W+ :height 10)))))
+        (setf rh8 (ruler-25-5 :visible t :line-color majc
+                              :div-25-color majc :div-25-extent 1
+                              :div-5-color minc :div-5-extent 0.5
+                              :left +W8X+ :top (- +W8Y+ 10) :width +W8W+ :height 10))))
+    
     (if (and top-row bottom-row)
         (values rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
         (if top-row

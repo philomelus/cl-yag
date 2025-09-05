@@ -2,6 +2,7 @@
 (defpackage :cl-yag
   (:use #:cl)
   (:local-nicknames
+   (#:a #:alexandria)
    (#:v #:org.shirakumo.verbose)
    (#:bt #:bordeaux-threads))
   (:import-from #:cffi
@@ -53,9 +54,17 @@
            #:deftheme-base
            #:deftheme-flat
            #:defwindow
+           #:division
+           #:division-10
+           #:division-100
+           #:division-2
+           #:division-25
+           #:division-5
            #:layout
-           #:manager                    ;class
+           #:manager
            #:ruler
+           #:ruler-10-2
+           #:ruler-25-5
            #:text
            #:text-base
            #:theme-3d

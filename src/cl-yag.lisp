@@ -20,6 +20,8 @@
 (defparameter *rb* nil)
 (defparameter *g* nil)
 
+(defparameter *outline* t)
+
 (defun main-init ()
   (must-init (al:init) "allegro")
   (must-init (al:install-keyboard) "keyboard")
@@ -46,22 +48,30 @@
     (unwind-protect
          (let ((c1 (al:map-rgb-f 0.75 0 0))
                (c2 (al:map-rgb-f 0.50 0 0)))
-           (setq *rl* (defruler :vertical t :major 10 :minor 2 :left 190 :top 200 :width 10 :height 400
-                                :major-color c1 :minor-color c2 :color c1
-                                :shortcuts (list '(:1))
-                                :align :end))
-           (setq *rt* (defruler :vertical nil :major 10 :minor 2 :left 200 :top 190 :width 400 :height 10
-                                :major-color c1 :minor-color c2 :color c1
-                                :shortcuts (list '(:2))
-                                :align :end))
-           (setq *rr* (defruler :vertical t :major 10 :minor 2 :left 510 :top 200 :width 10 :height 400
-                                :major-color c1 :minor-color c2 :color c1
-                                :shortcuts (list '(:3))
-                                :align :begin))
-           (setq *rb* (defruler :vertical nil :major 10 :minor 2 :left 200 :top 510 :width 400 :height 10
-                                :major-color c1 :minor-color c2 :color c1
-                                :shortcuts (list '(:4))
-                                :align :begin))
+
+           ;; Left ruler
+           (setq *rl* (ruler-10-2 :left 190 :top 200 :width 10 :height 400 :align :end
+                                  :line-color c1 :shortcuts `((:1)) :vertical t
+                                  :div-10-color c1 :div-2-color c2
+                                  :div-10-extent 1 :div-2-extent 0.5))
+
+           ;; Top ruler
+           (setq *rt* (ruler-10-2 :left 200 :top 190 :width 300 :height 10 :align :end
+                                  :line-color c1 :shortcuts `((:2))
+                                  :div-10-color c1 :div-2-color c2
+                                  :div-10-extent 1 :div-2-extent 0.5))
+
+           ;; Right ruler
+           (setq *rr* (ruler-10-2 :left 500 :top 200 :width 10 :height 400 :align :begin
+                                  :line-color c1 :shortcuts `((:3)) :vertical t
+                                  :div-10-color c1 :div-2-color c2
+                                  :div-10-extent 1 :div-2-extent 0.5))
+           
+           ;; Bottom ruler
+           (setq *rb* (ruler-10-2 :left 200 :top 600 :width 300 :height 10 :align :begin
+                                  :line-color c1 :shortcuts `((:4))
+                                  :div-10-color c1 :div-2-color c2
+                                  :div-10-extent 1 :div-2-extent 0.5))
            
            (setq *g* (defgrid :major 50 :minor 10 :left 50 :top 50 :width 860 :height 620
                               :shortcuts (list '(:5))))
@@ -90,12 +100,12 @@
            (setf *boss* (defmanager :content (list *w* *rl* *rt* *rr* *rb* *g*)))
            
            ;; Adjust rulers
-           (setf (height *rl*) (1+ (height *w*)))
-           (setf (width *rt*) (width *w*))
-           (setf (left *rr*) (+ (left *w*) (width *w*) 11))
-           (setf (height *rr*) (1+ (height *w*)))
-           (setf (top *rb*) (+ (top *w*) (height *w*) 11))
-           (setf (width *rb*) (width *w*))
+           ;; (setf (height *rl*) (1+ (height *w*)))
+           ;; (setf (width *rt*) (width *w*))
+           ;; (setf (left *rr*) (+ (left *w*) (width *w*)))
+           ;; (setf (height *rr*) (1+ (height *w*)))
+           ;; (setf (top *rb*) (+ (top *w*) (height *w*)))
+           ;; (setf (width *rb*) (width *w*))
            
            ;; Set grid color
            (setf (major-color *g*) (al:map-rgb-f 0 0.35 0))
@@ -115,6 +125,11 @@
              (v:info :app "Item 3 clicked")
              (setf (process *boss*) nil))
 
+           (defmethod on-char ((key (eql :0)) mods (object (eql *boss*)) &key)
+             (if *outline*
+                 (setf *outline* nil)
+                 (setf *outline* t)))
+           
            (defmethod on-char (key mods (object (eql *boss*)) &key)
              (if (equal key :escape)
                  ;; Go away now!
@@ -124,6 +139,11 @@
 
            (defmethod on-timer (source count (object (eql *boss*)) &key)
              (al:clear-to-color (al:map-rgb-f 0 0 0))
+             (when *outline*
+               (al:draw-line 200.0 0 200.0 719 (al:map-rgb-f 0 1 0) 1)
+               (al:draw-line 500.0 0 500.0 719 (al:map-rgb-f 0 1 0) 1)
+               (al:draw-line 0 200.0 959 200.0 (al:map-rgb-f 0 1 0) 1)
+               (al:draw-line 0 600.0 959 600.0 (al:map-rgb-f 0 1 0) 1))
              (paint *boss*)
              (al:flip-display))
 
@@ -140,11 +160,12 @@
            (process-events queue *boss*)
 
            ;; Remove methods
-           (cleanup-method on-command (list (list 'eql *a1*)))
-           (cleanup-method on-command (list (list 'eql *a2*)))
-           (cleanup-method on-command (list (list 'eql *a3*)))
-           (cleanup-method on-char (list t t (list 'eql *boss*)))
-           (cleanup-method on-timer (list t t (list 'eql *boss*))))
+           (cleanup-method on-command (list `(eql ,*a1*)))
+           (cleanup-method on-command (list `(eql ,*a2*)))
+           (cleanup-method on-command (list `(eql ,*a3*)))
+           (cleanup-method on-char (list `(eql :0) t `(eql ,*boss*)))
+           (cleanup-method on-char (list t t `(eql ,*boss*)))
+           (cleanup-method on-timer (list t t `(eql ,*boss*))))
       
       (progn
         (cffi:foreign-free event)
