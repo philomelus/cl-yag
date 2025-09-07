@@ -145,10 +145,6 @@ from theme. Field should be an accessor."
 
 (defmacro with-area ((left top width height) object &body body)
   "Creates local bingings of let, top, width, and height of an area-mixin"
-  
-  ;; `(with-slots ((,left left) (,top top) (,width width) (,height height))
-  ;;      ,object
-  ;;    ,@body)
 
   (let ((instance (gensym)))
     `(let ((,instance ,object))
@@ -167,8 +163,8 @@ bottom for an area-mixin."
                (,bottom (bottom ,instance)))
            ,@body)))))
 
-(defmacro with-border-area ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, adjusting for border."
+(defmacro with-area-border ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordinates of object, removing border space."
   (let ((bl (gensym))
         (bt (gensym))
         (br (gensym))
@@ -191,15 +187,29 @@ bottom for an area-mixin."
          (decf ,bottom (width ,bb)))
        ,@body)))
 
-(defmacro with-border-and-padding-area ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, adjusting for
-border and spacing of object."
-  `(with-border-area (,left ,top ,right ,bottom) object
+(defmacro with-area-border-and-padding ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordinates of object, removing border and
+ spacing of object."
+  
+  `(with-area-border (,left ,top ,right ,bottom) object
      (incf ,left (padding-left ,object))
      (incf ,top (padding-top ,object))
      (decf ,right (padding-right ,object))
      (decf ,bottom (padding-bottom ,object))
      ,@body))
+
+(defmacro with-area-padding ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordiates of object, removing padding
+space."
+  
+  (let ((instance (gensym)))
+    `(let ((,instance ,object))
+       (with-area-rb (,left ,top ,right ,bottom) ,instance
+         (incf ,left (padding-left ,instance))
+         (incf ,top (padding-top ,instance))
+         (decf ,right (padding-right ,instance))
+         (decf ,bottom (padding-bottom ,instance))
+         ,@body))))
 
 (defmacro with-local-accessors ((&rest slots) instance &body body)
   "Like with-slots, but slots are cached in local variables and changes are not
@@ -237,7 +247,9 @@ updated (changes are local only)."
                                `(,f (,f ,instance))))
                        fields))
          ,@(mapcar #'(lambda (f)
-                       `(assert (not (eql ,(first f) nil))))
+                       (if (atom f)
+                           `(assert (not (eql ,f nil)))
+                           `(assert (not (eql ,(first f) nil)))))
                    fields)
          ,@body))))
 
@@ -273,17 +285,26 @@ slot value is nil, use the slot from the theme."
         (theme-obj (gensym)))
     `(let ((,instance ,object))
        (let (,@(mapcar #'(lambda (f)
-                           `(,(first f) (,(second f) ,instance)))
+                           (if (atom f)
+                               `(,f (,f ,instance))
+                               `(,(first f) (,(second f) ,instance))))
                        fields))
          (when (or ,@(mapcar #'(lambda (f)
-                                 `(eql ,(first f) nil))
+                                 (if (atom f)
+                                     `(eql ,f nil)
+                                     `(eql ,(first f) nil)))
                              fields))
            (let ((,theme-obj ,theme))
              ,@(mapcar #'(lambda (f)
-                           `(when (not ,(first f))
-                              (setq ,(first f) (,(second f) ,theme-obj))))
+                           (if (atom f)
+                               `(when (eql ,f nil)
+                                  (setq ,f (,f ,theme-obj)))
+                               `(when (eql ,(first f) nil)
+                                  (setq ,(first f) (,(second f) ,theme-obj)))))
                        fields)))
          ,@(mapcar #'(lambda (f)
-                       `(assert (not (eql ,(first f) nil))))
+                       (if (atom f)
+                           `(assert (not (eql ,f nil)))
+                           `(assert (not (eql ,(first f) nil)))))
                    fields)
          ,@body))))

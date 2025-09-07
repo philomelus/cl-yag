@@ -8,55 +8,58 @@
 ;;       Another option is to provide have defun's that create the windows and adds
 ;;       the passed in args as the content.  Or the like.
 
+(defconstant +WW+ 200)
+(defconstant +WH+ 300)
+
 (defconstant +W1X+ 25)
 (defconstant +W1Y+ 25)
-(defconstant +W1W+ 200)
-(defconstant +W1H+ 300)
+(defconstant +W1W+ +WW+)
+(defconstant +W1H+ +WH+)
 
 (defconstant +W2X+ 250)
 (defconstant +W2Y+ 25)
-(defconstant +W2W+ 200)
-(defconstant +W2H+ 300)
+(defconstant +W2W+ +WW+)
+(defconstant +W2H+ +WH+)
 
 (defconstant +W3X+ 475)
 (defconstant +W3Y+ 25)
-(defconstant +W3W+ 200)
-(defconstant +W3H+ 300)
+(defconstant +W3W+ +WW+)
+(defconstant +W3H+ +WH+)
 
 (defconstant +W4X+ 700)
 (defconstant +W4Y+ 25)
-(defconstant +W4W+ 200)
-(defconstant +W4H+ 300)
+(defconstant +W4W+ +WW+)
+(defconstant +W4H+ +WH+)
 
 (defconstant +W5X+ 25)
 (defconstant +W5Y+ 350)
-(defconstant +W5W+ 200)
-(defconstant +W5H+ 300)
+(defconstant +W5W+ +WW+)
+(defconstant +W5H+ +WH+)
 
 (defconstant +W6X+ 250)
 (defconstant +W6Y+ 350)
-(defconstant +W6W+ 200)
-(defconstant +W6H+ 300)
+(defconstant +W6W+ +WW+)
+(defconstant +W6H+ +WH+)
 
 (defconstant +W7X+ 475)
 (defconstant +W7Y+ 350)
-(defconstant +W7W+ 200)
-(defconstant +W7H+ 300)
+(defconstant +W7W+ +WW+)
+(defconstant +W7H+ +WH+)
 
 (defconstant +W8X+ 700)
 (defconstant +W8Y+ 350)
-(defconstant +W8W+ 200)
-(defconstant +W8H+ 300)
+(defconstant +W8W+ +WW+)
+(defconstant +W8H+ +WH+)
 
 (defconstant +I1X+ 25)
 (defconstant +I1Y+ 675)
 (defconstant +I1W+ 400)
-(defconstant +I1H+ 110)
+(defconstant +I1H+ 115)
 
 (defconstant +I2X+ 500)
 (defconstant +I2Y+ 675)
 (defconstant +I2W+ 400)
-(defconstant +I2H+ 110)
+(defconstant +I2H+ 115)
 
 (defstruct tests-data
   manager event queue timer
@@ -203,11 +206,12 @@ regardless of result."))
     (let ((ic1 (interior-color theme1))
           (ic2 (al:map-rgb-f 1 0 0)))
       (dolist (w widgets)
-        (with-local-slots ((ic interior-color)) w
-          (if (or (equal ic ic1)
-                  (eql ic nil))
-              (setf (interior-color w) ic2)
-              (setf (interior-color w) ic1)))))))
+        (unless (eql w nil)
+          (with-local-slots ((ic interior-color)) w
+            (if (or (equal ic ic1)
+                    (eql ic nil))
+                (setf (interior-color w) ic2)
+                (setf (interior-color w) ic1))))))))
 
 (defun tests-toggle-theme (data)
   (with-slots (manager theme1 theme2) data
@@ -235,7 +239,7 @@ Default event processing watches for :display-close event as well."
   (al:set-new-display-option :samples 0 :require)
 
   ;;                                     25     250    475    700   [925]   25     350    675   [810]
-  (let ((screen (al:create-display (+ 25 200 25 200 25 200 25 200 25) (+ 25 300 25 300 25 110 25) ))
+  (let ((screen (al:create-display (+ 25 +WW+ 25 +WW+ 25 +WW+ 25 +WW+ 25) (+ 25 +WH+ 25 +WH+ 25 110 25) ))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (event (cffi:foreign-alloc '(:union al:event))))
@@ -268,7 +272,7 @@ Default event processing watches for :display-close event as well."
            ;; Final preparations
            (al:start-timer timer)
            (al:clear-keyboard-state screen)
-
+           
            (defmethod cl-yag::on-char ((key (eql :escape)) mods (object (eql (tests-data-manager data))) &key)
              (setf (process object) nil)
              t)

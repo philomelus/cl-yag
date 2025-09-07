@@ -76,22 +76,22 @@
       (push w6 objs)
       
       ;; Test 7
-      (setf b7 (defbox :left (+ +W7X+ 10) :top (+ +W7Y+ 10) :width (- +W7W+ 20) :height (- +W7H+ 20)
+      (setf b7 (defbox :left (+ +W7X+ 10) :top (+ +W7Y+ 10) :width (- (+ +W7W+ 25 +W8W+) 20) :height (- +W7H+ 20)
                        :filled t
                        :thickness 10
                        :title "Test Box 7" :title-position :left-top
                        :v-align :bottom))
       (setf cl7 (defcolumn-layout :content (list b7)))
-      (setf w7 (defwindow +W7X+ +W7Y+ +W7W+ +W7H+ :content (list cl7)))
+      (setf w7 (defwindow +W7X+ +W7Y+ (+ +W7W+ 25 +W8W+) +W7H+ :content (list cl7)))
       (push w7 objs)
     
       ;; Test 8
-      (setf b8 (defbox :left (+ +W8X+ 10) :top (+ +W8Y+ 10) :width (- +W8W+ 20) :height (- +W8H+ 20)
-                       :filled t :thickness 10
-                       :title "Text Box 8" :title-position :center-middle))
-      (setf cl8 (defcolumn-layout :content (list b8)))
-      (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+ :content (list cl8)))
-      (push w8 objs)
+      ;; (setf b8 (defbox :left (+ +W8X+ 10) :top (+ +W8Y+ 10) :width (- +W8W+ 20) :height (- +W8H+ 20)
+      ;;                  :filled t :thickness 10
+      ;;                  :title "Text Box 8" :title-position :center-middle))
+      ;; (setf cl8 (defcolumn-layout :content (list b8)))
+      ;; (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+ :content (list cl8)))
+      ;; (push w8 objs)
       
       ;; Instructions
       (mapcar #'(lambda (o) (push o objs))
@@ -101,8 +101,8 @@
                                           "<2> - alternates top/middle/bottom"
                                           "<3> - alterdate v-align top/middle/bottom"
                                           "<4> - alternates theme-flat/theme-3d")
-                                    (list "increase border width - <5>"
-                                          "decrease border width - <6>"
+                                    (list "decrease border width - <5>"
+                                          "increase border width - <6>"
                                           "window interior red/default - <7>"
                                           "- <8>"))))
 
@@ -110,16 +110,19 @@
       (mapcar #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create data t t)))
 
       ;; The one in charge
-      (setf manager (make-instance 'manager :content objs)))))
+      (setf manager (make-instance 'manager :content (reverse objs))))))
 
 (defmethod tests-destroy ((data (eql *box-data*)))
-  (remove-method #'tests-command-1 (find-method #'tests-command-1 () (list (list 'eql data))))
-  (remove-method #'tests-command-2 (find-method #'tests-command-2 () (list (list 'eql data))))
-  (remove-method #'tests-command-3 (find-method #'tests-command-3 () (list (list 'eql data))))
-  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
-  (remove-method #'tests-command-5 (find-method #'tests-command-5 () (list (list 'eql data))))
-  (remove-method #'tests-command-6 (find-method #'tests-command-6 () (list (list 'eql data))))
-  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
+  (let ((args `((eql ,data))))
+    (cl-yag::cleanup-method tests-command-1 args)
+    (cl-yag::cleanup-method tests-command-2 args)
+    (cl-yag::cleanup-method tests-command-3 args)
+    (cl-yag::cleanup-method tests-command-4 args)
+    (cl-yag::cleanup-method tests-command-5 args)
+    (cl-yag::cleanup-method tests-command-6 args)
+    (cl-yag::cleanup-method tests-command-7 args)
+    (cl-yag::cleanup-method tests-command-update args)
+    (cl-yag::cleanup-method tests-render args))
   nil)
 
 (defmethod tests-ready (box-data)
@@ -148,7 +151,7 @@
              (setf tp :right-bottom))
             (:right-bottom
              (setf tp :right-top))))))
-    nil)
+    t)
 
   (defmethod tests-command-2 ((data (eql box-data)))
     (with-slots (b1 b2 b3 b5 b6 b7) data
@@ -175,7 +178,7 @@
              (setf tp :left-middle))
             (:right-bottom
              (setf tp :left-bottom))))))
-    nil)
+    t)
 
   (defmethod tests-command-3 ((data (eql box-data)))
     (with-slots (b1 b2 b3 b5 b6 b7) data
@@ -188,7 +191,7 @@
              (setf va :bottom))
             (:bottom
              (setf va :top))))))
-    nil)
+    t)
   
   (defmethod tests-command-4 ((data (eql box-data)))
     (tests-toggle-theme data)
@@ -198,23 +201,61 @@
     (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
       (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
         (dolist (obj objs)
-          (with-accessors ((tn thickness)) obj
-            (unless (= tn 0)
-              (setf tn (1- tn)))))))
+          (unless (eql obj nil)
+            (with-accessors ((tn thickness)) obj
+              (unless (= tn 0)
+                (decf tn)))))))
     nil)
 
   (defmethod tests-command-6 ((data (eql box-data)))
     (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
       (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
         (dolist (obj objs)
-          (with-accessors ((tn thickness)) obj
-            (incf tn 1)))))
+          (unless (eql obj nil)
+            (with-accessors ((tn thickness)) obj
+              (incf tn))))))
     nil)
 
   (defmethod tests-command-7 ((data (eql box-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
       (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
     nil)
+
+  (defmethod tests-command-update ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
+      (dolist (obj (list b1 b2 b3 b5 b6 b7))
+        (unless (eql obj nil)
+          (with-accessors ((tp title-position) (va v-align)) obj
+            (unless (eql tp nil)
+              (let ((new-title
+                      (case tp
+                        (:center-bottom "Ctr / B")
+                        (:center-middle "Ctr / M")
+                        (:center-top "Ctr / T")
+                        (:left-bottom "Lft / B")
+                        (:left-middle "Lfy / M")
+                        (:left-top "Lft / T")
+                        (:right-bottom "Rht / B")
+                        (:right-middle "Rhy / M")
+                        (:right-top "Rht / T"))))
+                (setq new-title (concatenate 'string new-title (case va
+                                                                 (:top "-t")
+                                                                 (:middle "-m")
+                                                                 (:bottom "-b"))))
+                (setf (title obj) new-title)))))))
+    nil)
+
+  (defmethod tests-render ((data (eql box-data)))
+    (with-slots (manager b1 b2 b3 b4 b5 b6 b7 b8) data
+      (al:clear-to-color (al:map-rgb-f 0.25 0.25 0.25))  
+      (paint manager))
+    t)
+  
+  ;; Initial call to set titles
+  (tests-command-update box-data)
+
+  ;; Change frame color
+  (setf (frame-color (tests-data-theme1 box-data)) (al:map-rgb-f 0.5 0.5 0.5))
   nil)
 
 (defun box-tests-main ()

@@ -56,7 +56,7 @@
     
     ;; Fill interior if desired
     (with-object-or-theme ((ic interior-color)) obj
-      (with-border-area (l t_ r b) obj
+      (with-area-border (l t_ r b) obj
         (al:draw-filled-rectangle l t_ r b ic)))
     
     ;; Draw border

@@ -115,6 +115,7 @@
            #:enabled
            #:font
            #:fore-color
+           #:frame-color
            #:h-align
            #:height
            #:interior-color
@@ -195,8 +196,9 @@
            #:theme-field-object
            #:with-area
            #:with-area-rb
-           #:with-border-area
-           #:with-border-and-padding-area
+           #:with-area-border
+           #:with-area-border-and-padding
+           #:with-area-padding
            #:with-local-accessors
            #:with-local-slots
            #:with-theme
