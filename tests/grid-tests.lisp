@@ -13,35 +13,35 @@
         data
 
       ;; Test 1
-      (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+))
+      (setf w1 (deftests-window :standard 1))
       (push w1 widgets)
       
       ;; Test 2
-      (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+))
+      (setf w2 (deftests-window :standard 2))
       (push w2 widgets)
       
       ;; Test 3
-      (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+))
+      (setf w3 (deftests-window :standard 3))
       (push w3 widgets)
       
       ;; Test 4
-      (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+))
+      (setf w4 (deftests-window :standard 4))
       (push w4 widgets)
       
       ;; Test 5
-      (setf w5 (defwindow +W5X+ +W5Y+ +W5W+ +W5H+))
+      (setf w5 (deftests-window :standard 5))
       (push w5 widgets)
       
       ;; Test 6
-      (setf w6 (defwindow +W6X+ +W6Y+ +W6W+ +W6H+))
+      (setf w6 (deftests-window :standard 6))
       (push w6 widgets)
       
       ;; Test 7
-      (setf w7 (defwindow +W7X+ +W7Y+ +W7W+ +W7H+))
+      (setf w7 (deftests-window :standard 7))
       (push w7 widgets)
       
       ;; Test 8
-      (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+))
+      (setf w8 (deftests-window :standard 8))
       (push w8 widgets)
       
       ;; Instructions

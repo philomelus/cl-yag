@@ -1,65 +1,50 @@
 (in-package :cl-yag-tests)
 
-;; TODO: Provide way to create sub-windows easier, like tests-create-window-1, etc.
-;;       where the window gets created and its just up to the called method to fill
-;;       it in or the like.  It has to be flexible.  Right now there is hard-coding
-;;       the below constants all over the place, and that seems unnecessary.
-;;
-;;       Another option is to provide have defun's that create the windows and adds
-;;       the passed in args as the content.  Or the like.
+;;;; stubs ====================================================================
 
-(defconstant +WW+ 200)
-(defconstant +WH+ 300)
+(defmethod tests-command-0 (data)
+  )
 
-(defconstant +W1X+ 25)
-(defconstant +W1Y+ 25)
-(defconstant +W1W+ +WW+)
-(defconstant +W1H+ +WH+)
+(defmethod tests-command-1 (data)
+  )
 
-(defconstant +W2X+ 250)
-(defconstant +W2Y+ 25)
-(defconstant +W2W+ +WW+)
-(defconstant +W2H+ +WH+)
+(defmethod tests-command-2 (data)
+  )
 
-(defconstant +W3X+ 475)
-(defconstant +W3Y+ 25)
-(defconstant +W3W+ +WW+)
-(defconstant +W3H+ +WH+)
+(defmethod tests-command-3 (data)
+  )
 
-(defconstant +W4X+ 700)
-(defconstant +W4Y+ 25)
-(defconstant +W4W+ +WW+)
-(defconstant +W4H+ +WH+)
+(defmethod tests-command-4 (data)
+  )
 
-(defconstant +W5X+ 25)
-(defconstant +W5Y+ 350)
-(defconstant +W5W+ +WW+)
-(defconstant +W5H+ +WH+)
+(defmethod tests-command-5 (data)
+  )
 
-(defconstant +W6X+ 250)
-(defconstant +W6Y+ 350)
-(defconstant +W6W+ +WW+)
-(defconstant +W6H+ +WH+)
+(defmethod tests-command-6 (data)
+  )
 
-(defconstant +W7X+ 475)
-(defconstant +W7Y+ 350)
-(defconstant +W7W+ +WW+)
-(defconstant +W7H+ +WH+)
+(defmethod tests-command-7 (data)
+  )
 
-(defconstant +W8X+ 700)
-(defconstant +W8Y+ 350)
-(defconstant +W8W+ +WW+)
-(defconstant +W8H+ +WH+)
+(defmethod tests-command-8 (data)
+  )
 
-(defconstant +I1X+ 25)
-(defconstant +I1Y+ 675)
-(defconstant +I1W+ 400)
-(defconstant +I1H+ 115)
+(defmethod tests-command-9 (data)
+  )
 
-(defconstant +I2X+ 500)
-(defconstant +I2Y+ 675)
-(defconstant +I2W+ 400)
-(defconstant +I2H+ 115)
+(defmethod tests-command-update (data)
+  )
+
+(defmethod tests-destroy (data)
+  )
+
+(defmethod tests-ready (data)
+  )
+
+(defmethod tests-render (data)
+  )
+
+;; structs ====================================================================
 
 (defstruct tests-data
   manager event queue timer
@@ -73,151 +58,7 @@
   theme1
   theme2)
 
-(defgeneric tests-command-0 (data) (:documentation "Called when 0 is pressed.") (:method (data)))
-(defgeneric tests-command-1 (data) (:documentation "Called when 1 is pressed.") (:method (data)))
-(defgeneric tests-command-2 (data) (:documentation "Called when 2 is pressed.") (:method (data)))
-(defgeneric tests-command-3 (data) (:documentation "Called when 3 is pressed.") (:method (data)))
-(defgeneric tests-command-4 (data) (:documentation "Called when 4 is pressed.") (:method (data)))
-(defgeneric tests-command-5 (data) (:documentation "Called when 5 is pressed.") (:method (data)))
-(defgeneric tests-command-6 (data) (:documentation "Called when 6 is pressed.") (:method (data)))
-(defgeneric tests-command-7 (data) (:documentation "Called when 7 is pressed.") (:method (data)))
-(defgeneric tests-command-8 (data) (:documentation "Called when 8 is pressed.") (:method (data)))
-(defgeneric tests-command-9 (data) (:documentation "Called when 9 is pressed.") (:method (data)))
-
-(defgeneric tests-command-update (data) (:documentation "Called after calling a tests-command-* and it returns t."))
-
-(defgeneric tests-create (data) (:documentation "Create windows/object/data for tests."))
-
-(defgeneric tests-destroy (data) (:documentation "Clean up data created for tests.") (:method (data)))
-
-(defgeneric tests-ready (data) (:documentation "Called just before entering event loop."))
-
-(defgeneric tests-render (data)
-  (:method (data)
-    nil)
-  (:documentation "Called to render display.  If it returns nil, will clear screen and  call
-paint for manager object.  Display is flipped automatically after call
-regardless of result."))
-
-(defun tests-instructions-create (data left &optional right)
-  (macrolet ((make-inst (used field title is-left)
-               (let ((u (gensym)))
-                 `(let ((,u ,used))
-                    (when ,u
-                      ,(if is-left
-                          `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-left 10))
-                          `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-right 10 :h-align :right))))
-                    ,u))))
-    
-    (with-slots (iw1 iw2 icl1 icl2 it1 it2 it3 it4 it5 it6 it7 it8) data
-      (let ((num-left (length left))
-            (num-right 0)
-            widgets-l widgets-r)
-        
-        (assert (<= num-left 4))
-        (unless (eql right nil)
-          (setq num-right (length right))
-          (assert (<= num-right 4)))
-
-        ;; Create left instructions
-        (if (make-inst (>= num-left 4) it4 (fourth left) t) (push (list it4 :min-height) widgets-l))
-        (if (make-inst (>= num-left 3) it3 (third left) t) (push (list it3 :min-height) widgets-l))
-        (if (make-inst (>= num-left 2) it2 (second left) t) (push (list it2 :min-height) widgets-l))
-        (if (make-inst (>= num-left 1) it1 (first left) t) (push (list it1 :min-height) widgets-l))
-
-        ;; Create right instructions
-        (if (make-inst (>= num-right 4) it8 (fourth right) nil) (push (list it8 :min-height) widgets-r))
-        (if (make-inst (>= num-right 3) it7 (third right) nil) (push (list it7 :min-height) widgets-r))
-        (if (make-inst (>= num-right 2) it6 (second right) nil) (push (list it6 :min-height) widgets-r))
-        (if (make-inst (>= num-right 1) it5 (first right) nil) (push (list it5 :min-height) widgets-r))
-
-        ;; Final left preparations
-        (setf icl1 (defcolumn-layout))
-        (when (> (length widgets-l) 0)
-          (setf (content icl1) widgets-l))
-        (setf iw1 (defwindow +I1X+ +I1Y+ +I1W+ +I1H+ :content (list icl1)))
-        ;; (setf iw1 (defwindow +I1X+ +I1Y+ +I1W+ +I1H+))
-        (assert (not (eql iw1 nil)))
-
-        ;; Final right preparations
-        (setf icl2 (defcolumn-layout))
-        (when (> (length widgets-r) 0)
-          (setf (content icl2) widgets-r))
-        (setf iw2 (defwindow +I2X+ +I2Y+ +I2W+ +I2H+ :content (list icl2)))
-        (assert (not (eql iw2 nil)))
-
-        (values iw1 iw2)))))
-
-(defun tests-rulers-create (data top-row bottom-row)
-  (with-slots (rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8) data
-    (let ((majc (al:map-rgb-f 1 0 0))
-          (minc (al:map-rgb-f 0.8 0 0)))
-      (when top-row
-        (setf rv1 (ruler-25-5 :visible t :line-color majc :vertical t
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left (- +W1X+ 10) :top +W1Y+ :width 10 :height +W1H+ ))
-        (setf rh1 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W1X+ :top (- +W1Y+ 10) :width +W1W+ :height 10))
-        (setf rh2 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W2X+ :top (- +W2Y+ 10) :width +W2W+ :height 10))
-        (setf rh3 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W3X+ :top (- +W3Y+ 10) :width +W3W+ :height 10))
-        (setf rh4 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W4X+ :top (- +W4Y+ 10) :width +W4W+ :height 10)))
-      (when bottom-row
-        (setf rv2 (ruler-25-5 :visible t :line-color majc :vertical t
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left (- +W5X+ 10) :top +W5Y+ :width 10 :height +W5H+))
-        (setf rh5 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W5X+ :top (- +W5Y+ 10) :width +W5W+ :height 10))
-        (setf rh6 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W6X+ :top (- +W6Y+ 10) :width +W6W+ :height 10))
-        (setf rh7 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W7X+ :top (- +W7Y+ 10) :width +W7W+ :height 10))
-        (setf rh8 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W8X+ :top (- +W8Y+ 10) :width +W8W+ :height 10))))
-    
-    (if (and top-row bottom-row)
-        (values rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
-        (if top-row
-            (values rv1 rh1 rh2 rh3 rh4)
-            (values rv2 rh5 rh6 rh7 rh8)))))
-
-(defun tests-toggle-interior-color (data widgets)
-  (with-slots (manager theme1) data
-    (let ((ic1 (interior-color theme1))
-          (ic2 (al:map-rgb-f 1 0 0)))
-      (dolist (w widgets)
-        (unless (eql w nil)
-          (with-local-slots ((ic interior-color)) w
-            (if (or (equal ic ic1)
-                    (eql ic nil))
-                (setf (interior-color w) ic2)
-                (setf (interior-color w) ic1))))))))
-
-(defun tests-toggle-theme (data)
-  (with-slots (manager theme1 theme2) data
-    (if (eql (theme manager) theme1)
-        (setf (theme manager) theme2)
-        (setf (theme manager) theme1))))
+;;;; functions ================================================================
 
 (defun tests-main (data)
   "Main entry point for tests.

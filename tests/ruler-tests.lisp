@@ -17,69 +17,53 @@
       (let ((c1 (al:map-rgb-f 0 0.75 0))
             (c2 (al:map-rgb-f 0 0 1)))
         ;; Test 1
-        (setf r1 (ruler-10-2 :left (+ +W1X+ 10) :top (+ +W1Y+ 10) :height 10 :width (- +W1W+ 20)
+        (setf r1 (ruler-10-2 :left (+ +W1L+ 10) :top (+ +W1T+ 10) :height 10 :width (- +W1W+ 20)
                              :div-10-color c1 :div-10-extent 1
                              :div-2-color c2
                              :line-color c1 :visible t))
-        (setf r5 (ruler-10-2 :left (+ +W1X+ 10) :top (+ +W1Y+ 50) :height 25 :width (- +W1W+ 20)
+        (setf r2 (ruler-10-2 :left (+ +W1L+ 10) :top (+ +W1T+ 50) :height 25 :width (- +W1W+ 20)
                              :div-10-color c1 :div-10-extent 1
                              :div-2-color c2
                              :line-color c1 :visible t))
-        (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+ :content `(,r1 ,r5)))
+        (setf w1 (deftests-window :standard 1 :content `(,r1 ,r2)))
         (push w1 widgets)
       
         ;; Test 2
-        (setf r2 (ruler-10-2 :left (+ +W2X+ 10) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 10
+        (setf r3 (ruler-10-2 :left (+ +W2L+ 10) :top (+ +W2T+ 10) :height (- +W2H+ 20) :width 10
                              :div-10-color c1 :div-10-extent 1
                              :div-2-color c2
                              :line-color c1 :visible t :vertical t))
-        (setf r6 (ruler-10-2 :left (+ +W2X+ 50) :top (+ +W2Y+ 10) :height (- +W2H+ 20) :width 25
+        (setf r4 (ruler-10-2 :left (+ +W2L+ 50) :top (+ +W2T+ 10) :height (- +W2H+ 20) :width 25
                              :div-10-color c1 :div-10-extent 1
                              :div-2-color c2
                              :line-color c1 :visible t :vertical t))
-        (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+ :content `(,r2 ,r6)))
+        (setf w2 (deftests-window :standard 2 :content `(,r3 ,r4)))
         (push w2 widgets)
       
         ;; Test 3
-        (setf r3 (ruler-25-5 :left (+ +W3X+ 10) :top (+ +W3Y+ 10) :height 10 :width (- +W3W+ 20)
+        (setf r5 (ruler-25-5 :left (+ +W3L+ 10) :top (+ +W3T+ 10) :height 10 :width (- +W3W+ 20)
                              :div-25-color c1 :div-25-extent 1
                              :div-5-color c2
                              :line-color c1 :visible t))
-        (setf r7 (ruler-25-5 :left (+ +W3X+ 10) :top (+ +W3Y+ 50) :height 25 :width (- +W3W+ 20)
+        (setf r6 (ruler-25-5 :left (+ +W3L+ 10) :top (+ +W3T+ 50) :height 25 :width (- +W3W+ 20)
                              :div-25-color c1 :div-25-extent 1
                              :div-5-color c2
                              :line-color c1 :visible t))
-        (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+ :content `(,r3 ,r7)))
+        (setf w3 (deftests-window :standard 3 :content `(,r5 ,r6)))
         (push w3 widgets)
       
         ;; Test 4
-        (setf r4 (ruler-25-5 :left (+ +W4X+ 10) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 10
+        (setf r7 (ruler-25-5 :left (+ +W4L+ 10) :top (+ +W4T+ 10) :height (- +W4H+ 20) :width 10
                              :div-25-color c1 :div-25-extent 1
                              :div-5-color c2
                              :line-color c1 :visible t :vertical t))
-        (setf r8 (ruler-25-5 :left (+ +W4X+ 50) :top (+ +W4Y+ 10) :height (- +W4H+ 20) :width 25
+        (setf r8 (ruler-25-5 :left (+ +W4L+ 50) :top (+ +W4T+ 10) :height (- +W4H+ 20) :width 25
                              :div-25-color c1 :div-25-extent 1
                              :div-5-color c2
                              :line-color c1 :visible t :vertical t))
-        (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+ :content `(,r4 ,r8)))
-        (push w4 widgets)
+        (setf w4 (deftests-window :standard 4 :content `(,r7 ,r8)))
+        (push w4 widgets))
       
-        ;; Test 5
-        ;; (setf w5 (defwindow +W5X+ +W5Y+ +W5W+ +W5H+))
-        ;; (push w5 widgets)
-      
-        ;; Test 6
-        ;; (setf w6 (defwindow +W6X+ +W6Y+ +W6W+ +W6H+))
-        ;; (push w6 widgets)
-      
-        ;; Test 7
-        ;; (setf w7 (defwindow +W7X+ +W7Y+ +W7W+ +W7H+))
-        ;; (push w7 widgets)
-      
-        ;; Test 8
-        ;; (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+))
-        ;; (push w8 widgets)
-        )      
       ;; Instructions
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create

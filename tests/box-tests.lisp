@@ -20,79 +20,71 @@
         data
       
       ;; Test 1
-      (setf b1 (defbox :left (+ +W1X+ 10) :top (+ +W1Y+ 10) :width (- +W1W+ 20) :height (- +W1H+ 20)
+      (setf b1 (defbox :left (+ +W1L+ 10) :top (+ +W1T+ 10) :width (- +W1W+ 20) :height (- +W1H+ 20)
                        :filled t
                        :thickness 2
                        :title "Test Box 1" :title-position :left-top
                        :v-align :top))
       (setf cl1 (defcolumn-layout :content (list b1)))
-      (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+ :content (list cl1)))
+      (setf w1 (deftests-window :standard 1 :content (list cl1)))
       (push w1 objs)
       
       ;; Test 2
-      (setf b2 (defbox :left (+ +W2X+ 10) :top (+ +W2Y+ 10) :width (- +W2W+ 20) :height (- +W2H+ 20)
+      (setf b2 (defbox :left (+ +W2L+ 10) :top (+ +W2T+ 10) :width (- +W2W+ 20) :height (- +W2H+ 20)
                        :filled t
                        :thickness 2
                        :title "Test Box 2" :title-position :left-top
                        :v-align :middle))
       (setf cl2 (defcolumn-layout :content (list b2)))
-      (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+ :content (list cl2)))
+      (setf w2 (deftests-window :standard 2 :content (list cl2)))
       (push w2 objs)
       
       ;; Test 3
-      (setf b3 (defbox :left (+ +W3X+ 10) :top (+ +W3Y+ 10) :width (- +W3W+ 20) :height (- +W3H+ 20)
+      (setf b3 (defbox :left (+ +W3L+ 10) :top (+ +W3T+ 10) :width (- +W3W+ 20) :height (- +W3H+ 20)
                        :filled t
                        :thickness 2
                        :title "Test Box 3" :title-position :left-top
                        :v-align :bottom))
       (setf cl3 (defcolumn-layout :content (list b3)))
-      (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+ :content (list cl3)))
+      (setf w3 (deftests-window :standard 3 :content (list cl3)))
       (push w3 objs)
       
       ;; Test 4
-      (setf b4 (defbox :left (+ +W4X+ 10) :top (+ +W4Y+ 10) :width (- +W4W+ 20) :height (- +W4H+ 20)))
+      (setf b4 (defbox :left (+ +W4L+ 10) :top (+ +W4T+ 10) :width (- +W4W+ 20) :height (- +W4H+ 20)))
       (setf cl4 (defcolumn-layout :content (list b4)))
-      (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+ :content (list cl4)))
+      (setf w4 (deftests-window :standard 4 :content (list cl4)))
       (push w4 objs)
       
       ;; Test 5
-      (setf b5 (defbox :left (+ +W5X+ 10) :top (+ +W5Y+ 10) :width (- +W5W+ 20) :height (- +W5H+ 20)
+      (setf b5 (defbox :left (+ +W5L+ 10) :top (+ +W5T+ 10) :width (- +W5W+ 20) :height (- +W5H+ 20)
                        :filled t
                        :thickness 10
                        :title "Test Box 5" :title-position :left-top
                        :v-align :top))
       (setf cl5 (defcolumn-layout :content (list b5)))
-      (setf w5 (defwindow +W5X+ +W5Y+ +W5W+ +W5H+ :content (list cl5)))
+      (setf w5 (deftests-window :standard 5 :content (list cl5)))
       (push w5 objs)
       
       ;; Test 6
-      (setf b6 (defbox :left (+ +W6X+ 10) :top (+ +W6Y+ 10) :width (- +W6W+ 20) :height (- +W6H+ 20)
+      (setf b6 (defbox :left (+ +W6L+ 10) :top (+ +W6T+ 10) :width (- +W6W+ 20) :height (- +W6H+ 20)
                        :filled t
                        :thickness 10
                        :title "Test Box 6" :title-position :left-top
                        :v-align :middle))
       (setf cl6 (defcolumn-layout :content (list b6)))
-      (setf w6 (defwindow +W6X+ +W6Y+ +W6W+ +W6H+ :content (list cl6)))
+      (setf w6 (deftests-window :standard 6 :content (list cl6)))
       (push w6 objs)
       
       ;; Test 7
-      (setf b7 (defbox :left (+ +W7X+ 10) :top (+ +W7Y+ 10) :width (- (+ +W7W+ 25 +W8W+) 20) :height (- +W7H+ 20)
+      (setf b7 (defbox :left (+ +W-W4L+ 10) :top (+ +W-W4T+ 10) :width (- +W-W4W+ 20) :height (- +W-W4H+ 20)
                        :filled t
                        :thickness 10
                        :title "Test Box 7" :title-position :left-top
                        :v-align :bottom))
       (setf cl7 (defcolumn-layout :content (list b7)))
-      (setf w7 (defwindow +W7X+ +W7Y+ (+ +W7W+ 25 +W8W+) +W7H+ :content (list cl7)))
+      (setf w7 (deftests-window :wide 4 :content (list cl7)))
       (push w7 objs)
     
-      ;; Test 8
-      ;; (setf b8 (defbox :left (+ +W8X+ 10) :top (+ +W8Y+ 10) :width (- +W8W+ 20) :height (- +W8H+ 20)
-      ;;                  :filled t :thickness 10
-      ;;                  :title "Text Box 8" :title-position :center-middle))
-      ;; (setf cl8 (defcolumn-layout :content (list b8)))
-      ;; (setf w8 (defwindow +W8X+ +W8Y+ +W8W+ +W8H+ :content (list cl8)))
-      ;; (push w8 objs)
-      
       ;; Instructions
       (mapcar #'(lambda (o) (push o objs))
               (multiple-value-list (tests-instructions-create
@@ -125,7 +117,7 @@
     (cl-yag::cleanup-method tests-render args))
   nil)
 
-(defmethod tests-ready (box-data)
+(defmethod tests-ready ((box-data (eql *box-data*)))
   (defmethod tests-command-1 ((data (eql box-data)))
     (with-slots (b1 b2 b3 b5 b6 b7) data
       (dolist (obj (list b1 b2 b3 b5 b6 b7))

@@ -27,7 +27,7 @@
       (setf a2 (defactive-text :title "T 1 / O 2" :h-align :center :v-align :middle))
       (setf a3 (defactive-text :title "T 1 / O 3" :h-align :center :v-align :middle))
       (setf cl1 (defcolumn-layout :content (list a1 a2 a3)))
-      (setf w1 (defwindow +W1X+ +W1Y+ +W1W+ +W1H+ :content (list cl1)))
+      (setf w1 (deftests-window :standard 1 :content (list cl1)))
       (push w1 widgets)
       
       ;; Test 2
@@ -36,7 +36,7 @@
       (setf a5 (defactive-text :title "T 2 / O 2" :h-align :center :v-align :middle))
       (setf a6 (defactive-text :title "T 2 / O 3" :h-align :center :v-align :middle))
       (setf cl2 (defcolumn-layout :content (list (list t1 :min-height) a4 a5 a6)))
-      (setf w2 (defwindow +W2X+ +W2Y+ +W2W+ +W2H+ :content (list cl2)))
+      (setf w2 (deftests-window :standard 2 :content (list cl2)))
       (push w2 widgets)
       
       ;; Test 3
@@ -58,7 +58,7 @@
                                :padding-top 10 :padding-bottom 10))
       (setf cl3 (defcolumn-layout :content (list a7 a8 a9)))
       (setf cl4 (defcolumn-layout :content (list (list t2 :min-height) cl3)))
-      (setf w3 (defwindow +W3X+ +W3Y+ +W3W+ +W3H+ :content (list cl4)))
+      (setf w3 (deftests-window :standard 3 :content (list cl4)))
       (push w3 widgets)
       
       ;; Test 4
@@ -83,7 +83,7 @@
                                 :left :center :top :top
                                 :padding-top 10 :padding-bottom 10))
       (setf cl5 (defcolumn-layout :content (list (list t3 :min-height) a10 a11 a12)))
-      (setf w4 (defwindow +W4X+ +W4Y+ +W4W+ +W4H+ :content (list cl5)))
+      (setf w4 (deftests-window :standard 4 :content (list cl5)))
       (push w4 widgets)
       
       ;; Instructions
