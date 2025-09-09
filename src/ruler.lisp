@@ -202,7 +202,7 @@
                 (let ((not-used (unused np divs-divs)))
                   (when not-used
                     (push np pd)))))
-        
+
             ;; Save periods for next loop
             (push pd divs-divs))))))
   
@@ -267,6 +267,43 @@
 
 ;;;; macros ===================================================================
 
+;; TODO: Deduplicate once I figure out how
+(defmacro ruler-100-25-5 (&rest rest &key (div-100-color nil div-100-colorp) (div-100-extent nil div-100-extentp)
+                                       (div-25-color nil div-25-colorp) (div-25-extent nil div-25-extentp)
+                                       (div-5-color nil div-5-colorp) (div-5-extent nil div-5-extentp)
+                          &allow-other-keys)
+  (let ((name (make-ruler-custom-name "%ruler-25-5"))
+        (object (gensym)))
+    `(let ((,object))
+       (closer-mop:ensure-class ',name
+                                :direct-superclasses (list (find-class 'cl-yag::ruler))
+                                :direct-slots '((:name div-100 :readers (div-100))
+                                                (:name div-25 :readers (div-25))
+                                                (:name div-5 :readers (div-5))))
+       (setf ,object (make-instance ',name ,@(remove-keyword-params rest '(:div-100-color :div-100-extent :div-100-extent-type
+                                                                           :div-25-color :div-25-extent :div-25-extent-type
+                                                                           :div-5-color :div-5-extent :div-5-extent-type))))
+       (setf (slot-value ,object 'div-100) (division-100))
+       ,(if div-100-colorp
+            `(setf (division-color (slot-value ,object 'div-100)) ,div-100-color))
+       ,(if div-100-extentp
+            `(setf (extent (slot-value ,object 'div-100)) ,div-100-extent))
+       (setf (slot-value ,object 'div-25) (division-25))
+       ,(if div-25-colorp
+            `(setf (division-color (slot-value ,object 'div-25)) ,div-25-color))
+       ,(if div-25-extentp
+            `(setf (extent (slot-value ,object 'div-25)) ,div-25-extent))
+       (setf (slot-value ,object 'div-5) (division-5))
+       ,(if div-5-colorp
+            `(setf (division-color (slot-value ,object 'div-5)) ,div-5-color))
+       ,(if div-5-extentp
+            `(setf (extent (slot-value ,object 'div-5)) ,div-5-extent))
+       (setf (divisions ,object) (list (slot-value ,object 'div-100)
+                                       (slot-value ,object 'div-25)
+                                       (slot-value ,object 'div-5)))
+       ,object)))
+
+;; TODO: Deduplicate once I figure out how
 (defmacro ruler-10-2 (&rest rest &key (div-10-color nil div-10-colorp) (div-10-extent nil div-10-extentp)
                                    (div-2-color nil div-2-colorp) (div-2-extent nil div-2-extentp)
                       &allow-other-keys)
@@ -293,6 +330,7 @@
                                        (slot-value ,object 'div-2)))
        ,object)))
 
+;; TODO: Deduplicate once I figure out how
 (defmacro ruler-25-5 (&rest rest &key (div-25-color nil div-25-colorp) (div-25-extent nil div-25-extentp)
                                    (div-5-color nil div-5-colorp) (div-5-extent nil div-5-extentp)
                       &allow-other-keys)

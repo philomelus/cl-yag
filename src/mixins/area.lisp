@@ -64,7 +64,8 @@
   (with-slots (left top width height) object
     ;; Validate fields are valid
     (macrolet ((validate (field opts)
-                 `(unless (typep ,field 'number)
+                 `(unless (or (typep ,field 'number)
+                              (constantp ,field))
                     (if (typep ,field 'keyword)
                         (unless (member ,field ,opts)
                           (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
@@ -79,10 +80,11 @@
              (if (typep field 'keyword)
                  field
                  nil)))
-     (setf (slot-value object 'left-calc) (is-keyword left))
-     (setf (slot-value object 'top-calc) (is-keyword top))
-     (setf (slot-value object 'width-calc) (is-keyword width))
-     (setf (slot-value object 'height-calc) (is-keyword height))))
+      (setf (slot-value object 'left-calc) (is-keyword left))
+      (setf (slot-value object 'top-calc) (is-keyword top))
+      (setf (slot-value object 'width-calc) (is-keyword width))
+      (setf (slot-value object 'height-calc) (is-keyword height))
+      ))
   (my-next-method))
 
 (defmethod bottom ((obj area-mixin))

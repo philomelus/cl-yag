@@ -63,6 +63,7 @@
            #:layout
            #:manager
            #:ruler
+           #:ruler-100-25-5
            #:ruler-10-2
            #:ruler-25-5
            #:text

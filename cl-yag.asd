@@ -57,7 +57,11 @@
                              
                              (:file "manager")
                              (:file "fonts")
+
+                             ;; Layouts
                              (:file "layout")
+                             (:file "column-layout" :depends-on ("layout"))
+                             (:file "grid-layout" :depends-on ("layout"))
 
                              ;; Interactive objects
                              (:file "box")
