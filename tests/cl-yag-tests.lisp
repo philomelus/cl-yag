@@ -1,5 +1,7 @@
 (in-package :cl-yag-tests)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; stubs ====================================================================
 
 (defmethod tests-command-0 (data)

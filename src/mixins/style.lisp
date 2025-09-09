@@ -1,5 +1,7 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; style-3d-mixin ===========================================================
 
 (defvar +STYLE-3D-MIXIN-OPTIONS+ '(:default :inset :outset :flat))

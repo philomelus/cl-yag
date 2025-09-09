@@ -1,5 +1,7 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; layout-base ==============================================================
 
 (defparameter +LAYOUT-CHILD-OPTIONS+ '(:min-height :min-width :max-height :max-width
@@ -7,8 +9,7 @@
                                        :top :middle :bottom))
 
 (defclass layout-base (container-mixin
-                       parent-mixin
-                       ready-mixin)
+                       parent-mixin)
   ((left :initform :auto :initarg nil)
    (top :initform :auto :initarg nil)
    (width :initform :auto :initarg nil)
@@ -27,28 +28,33 @@
 
 (defmethod on-char (key mods (obj layout-base) &key)
   (dolist (child (content obj))
-    (when (on-char key mods (foro child))
-      (return-from on-char t)))
+    (unless (eql child nil)
+     (when (on-char key mods (foro child))
+       (return-from on-char t))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj layout-base) &key)
   (dolist (child (content obj))
-    (if (on-mouse-down x y b (foro child))
-        (return-from on-mouse-down t)))
+    (unless (eql child nil)
+     (if (on-mouse-down x y b (foro child))
+         (return-from on-mouse-down t))))
   nil)
 
 (defmethod on-mouse-move (x y dx dy (obj layout-base) &key)
   (dolist (child (content obj))
-    (on-mouse-move x y dx dy (foro child))))
+    (unless (eql child nil)
+      (on-mouse-move x y dx dy (foro child)))))
 
 (defmethod on-mouse-up (x y b (obj layout-base) &key)
   (dolist (child (content obj))
-    (on-mouse-up x y b (foro child))))
+    (unless (eql child nil)
+      (on-mouse-up x y b (foro child)))))
 
 (defmethod on-paint ((obj layout-base) &key)
   (dolist (c (content obj))
-    (let ((co (foro c)))
-      (on-paint co)))
+    (unless (eql c nil)
+      (let ((co (foro c)))
+        (on-paint co))))
   (my-next-method))
 
 ;;;; functions ================================================================
@@ -67,14 +73,14 @@ Returns nil if not found."
 (defun calc-layout-area (object)
   "Calculate area of a layout itself."
   ;; Start with existing area
-  (with-area (ll lt lw lh) object
+  (with-local-slots ((ll left) (lt top) (lw width) (lh height)) object
 
     ;; Calculate our area if needed
     (when (or (typep ll 'keyword)
               (typep lt 'keyword)
               (typep lw 'keyword)
               (typep lh 'keyword))
-      (v:debug :layout "[calc-layout-area] {~a} calculating layout area" (print-raw-object object))
+      (v:debug :layout "[calc-layout-area] calculating layout area ~a" (print-raw-object object))
       
       ;; Locate first parent that's layout or has area
       (let ((pam (find-parent-area-mixin-or-layout object)))
@@ -84,8 +90,8 @@ Returns nil if not found."
               ;; Yeah, so get our area from its child-area
               (let ((pamo (position object (content pam))))
                 (assert (not (eql pamo nil)))
-                (with-area (pl pt pw ph)
-                           (aref (slot-value pam 'child-area) pamo)
+                (with-local-slots ((pl left) (pt top) (pw width) (ph height))
+                                  (aref (slot-value pam 'child-area) pamo)
                   (setf pal pl pat pt paw pw pah ph)
                   (assert (typep pal 'number))
                   (assert (typep pat 'number))
@@ -97,8 +103,8 @@ Returns nil if not found."
                     paw (slot-value pam 'width)
                     pah (slot-value pam 'height)))
 
-          (v:debug :layout "[calc-layout-area] {~a} parent area: (~d ~d) @ (~d ~d)"
-                  (print-raw-object object) paw pah pal pat)
+          (v:debug :layout "[calc-layout-area] parent area: (~d ~d) @ (~d ~d) ~a"
+                   paw pah pal pat (print-raw-object object))
           
           ;; If parent has borders
           (when (typep pam 'border-mixin)
@@ -138,12 +144,11 @@ Returns nil if not found."
           (when (member lt *AREA-TOP-OPTS*)
             (setf (slot-value object 'top) pat))
 
-          (v:debug :layout "[calc-layout-area] {~a} new area: (~d ~d) @ (~d ~d)"
-                  (print-raw-object object) paw pah pal pat)
-          (v:debug :layout "[calc-layout-area] {~a} actual area: (~d ~d) @ (~d ~d)"
-                  (print-raw-object object) (slot-value object 'width)
-                  (slot-value object 'height) (slot-value object 'left)
-                  (slot-value object 'top))
+          (v:debug :layout "[calc-layout-area] new area: (~d ~d) @ (~d ~d) ~a"
+                   paw pah pal pat (print-raw-object object))
+          (v:debug :layout "[calc-layout-area] actual area: (~d ~d) @ (~d ~d) ~a"
+                   (slot-value object 'width) (slot-value object 'height) (slot-value object 'left)
+                   (slot-value object 'top) (print-raw-object object) )
           )))))
 
 (defun dump-layout (object &optional (indent ""))
@@ -153,7 +158,7 @@ Returns nil if not found."
       (dotimes (n (length (content object)))
         (let ((child (nth n content)))
           (v:debug :layout "~achild ~d area (~d ~d) @ (~d ~d)~%" (concatenate 'string indent "  ") n
-                  (slot-value child 'child) (slot-value child 'height) (slot-value child 'left) (slot-value child 'top))
+                  (slot-value child 'width) (slot-value child 'height) (slot-value child 'left) (slot-value child 'top))
           (when (typep child 'layout-base)
             (dump-layout child (concatenate 'string indent "  "))))))))
 

@@ -1,5 +1,7 @@
 (in-package :cl-yag-tests)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 (defstruct (grid-tests-data (:include tests-data)
                             (:conc-name grid-tests-))
   w1 w2 w3 w4 w5 w6 w7 w8

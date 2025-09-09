@@ -1,5 +1,7 @@
 (in-package :cl-yag-tests)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;; Standard window sizes
 ;; Size 200,300
 ;; Spacing 25,25
@@ -156,7 +158,6 @@ sized according to type and window number."
        (let ((,local-win-type ,win-type)
              (,local-number ,number)
              (,local-number-string))
-         (v:info :debug "win-type:~a number:~a" ,local-win-type ,local-number)
          (setq ,local-number-string (format nil "~1d" ,local-number))
          (ccase ,local-win-type
            (:standard

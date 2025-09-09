@@ -1,5 +1,7 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; window ===================================================================
 
 ;;; theme-mixin -----------------------------------------------------
@@ -26,6 +28,9 @@
   `(make-instance 'window :left ,l :top ,top :width ,w :height ,h ,@rest))
 
 ;;; methods ---------------------------------------------------------
+
+(defmethod calc-area (object (parent window) &key)
+  )
 
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
@@ -56,8 +61,8 @@
     
     ;; Fill interior if desired
     (with-object-or-theme ((ic interior-color)) obj
-      (with-area-border (l t_ r b) obj
-        (al:draw-filled-rectangle l t_ r b ic)))
+      (with-area-border (le to ri bo) obj
+        (al:draw-filled-rectangle le to ri bo ic)))
     
     ;; Draw border
     (paint-border obj (find-theme obj))

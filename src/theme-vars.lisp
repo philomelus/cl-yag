@@ -1,5 +1,7 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;; Theme stuff that can't be in main theme file because of dependancies
 
 ;;;; global object theme handlers =============================================

@@ -1,112 +1,6 @@
 (in-package #:cl-yag)
 
-;;;; functions ================================================================
-
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-height))
-(defun text-calc-height (type area object)
-  (with-local-accessors ((rv height)) area
-    (case type
-      ((:auto :auto-max))               ; nothing to do
-      
-      (:auto-min
-       (let ((fnt (theme-field font object)))
-         (assert (and (not (eql fnt nil))
-                      (not (cffi:null-pointer-p fnt))))
-         (let ((fh (al:get-font-line-height fnt)))
-           (incf fh (padding-top object))
-           (incf fh (padding-bottom object))
-           (setq rv (min fh (height area)))))))
-    rv))
-
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-left))
-(defun text-calc-left (type area object)
-  (with-local-accessors ((rv left)) area
-    (case type
-      ((:left :auto)
-       (incf rv (padding-left object))
-       (v:debug :layout "[text-calc-left] {:left/:auto} start:~d padding:~d" (left area) (padding-left object)))
-      
-      (:center
-       (with-local-slots ((w width)) object
-         (incf w (padding-left object))
-         (incf w (padding-right object))
-         (let ((aw (width area)))
-           (if (> aw w)
-               (incf rv (truncate (/ (- aw w) 2)))))))
-
-      (:right
-       (with-local-slots ((w width)) object
-         (incf w (padding-left object))
-         (incf w (padding-right object))
-         (setq rv (- (width area) w))
-         (v:debug :layout "[text-calc-left] {:right} start:~d witdh:~d padding:~d" (left area) w (padding-right object)))))
-    rv))
-
-(defun text-calc-title-top (obj)
-  (with-local-accessors ((at top) (va v-align)) obj
-    (with-object-or-theme ((fnt font)) obj
-      (assert (and (not (eql fnt nil))
-                   (not (cffi:null-pointer-p fnt))))
-      
-      ;; When auto-calculated, start at 0 offset from parent
-      (if (member at *AREA-TOP-OPTS*)
-          (setf at 0))
-
-      (case va
-        (:top)                          ; nothing to do
-        
-        (:middle
-         (let ((h (height obj))
-               (fh (al:get-font-line-height fnt)))
-           (incf at (truncate (/ (- h fh) 2)))))
-        
-        (:bottom
-         (let ((h (height obj))
-               (fh (al:get-font-line-height fnt)))
-           (incf at (- h fh))))
-        
-        (:none)
-        (otherwise
-         (error "text unknown vertical alignment: ~a" va)))
-      at)))
-
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-top))
-(defun text-calc-top (type area object)
-  (with-local-accessors ((rv top)) area
-    (case type
-      ((:top :auto))                    ; already done
-
-      (:middle
-       ;; Calculate our height
-       (with-local-slots ((h height)) object
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (with-local-accessors ((ha height)) area
-           ;; Is there room for us to move?
-           (if (> ha h)
-               ;; Yup, so move to middle
-               (incf rv (truncate (/ (- ha h) 2)))))))
-
-      (:bottom
-       (with-local-slots ((h height)) object
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (incf rv (- (height area) h)))))
-    rv))
-
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-width))
-(defun text-calc-width (type area object)
-  (let (rv)
-    (case type
-      ((:auto :auto-max)
-       (setq rv (width area)))
-
-      (:auto-min
-       (let ((tw (al:get-text-width (theme-field font object) (title object))))
-         (incf tw (padding-left object))
-         (incf tw (padding-right object))
-         (setq rv (min tw (width area))))))
-    rv))
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
 
 ;;;; text-base ================================================================
 
@@ -370,4 +264,112 @@
     (setf (up-color object) uc)
     (setf (fore-color object) fc)
     (setf (back-color object) bc)))
+
+;;;; functions ================================================================
+
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-height))
+(defun text-calc-height (type area object)
+  (with-local-accessors ((rv height)) area
+    (case type
+      ((:auto :auto-max))               ; nothing to do
+      
+      (:auto-min
+       (let ((fnt (theme-field font object)))
+         (assert (and (not (eql fnt nil))
+                      (not (cffi:null-pointer-p fnt))))
+         (let ((fh (al:get-font-line-height fnt)))
+           (incf fh (padding-top object))
+           (incf fh (padding-bottom object))
+           (setq rv (min fh (height area)))))))
+    rv))
+
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-left))
+(defun text-calc-left (type area object)
+  (with-local-accessors ((rv left)) area
+    (case type
+      ((:left :auto)
+       (incf rv (padding-left object))
+       (v:debug :layout "[text-calc-left] {:left/:auto} start:~d padding:~d" (left area) (padding-left object)))
+      
+      (:center
+       (with-local-slots ((w width)) object
+         (incf w (padding-left object))
+         (incf w (padding-right object))
+         (let ((aw (width area)))
+           (if (> aw w)
+               (incf rv (truncate (/ (- aw w) 2)))))))
+
+      (:right
+       (with-local-slots ((w width)) object
+         (incf w (padding-left object))
+         (incf w (padding-right object))
+         (setq rv (- (width area) w))
+         (v:debug :layout "[text-calc-left] {:right} start:~d witdh:~d padding:~d" (left area) w (padding-right object)))))
+    rv))
+
+(defun text-calc-title-top (obj)
+  (with-local-accessors ((at top) (va v-align)) obj
+    (with-object-or-theme ((fnt font)) obj
+      (assert (and (not (eql fnt nil))
+                   (not (cffi:null-pointer-p fnt))))
+      
+      ;; When auto-calculated, start at 0 offset from parent
+      (if (member at *AREA-TOP-OPTS*)
+          (setf at 0))
+
+      (case va
+        (:top)                          ; nothing to do
+        
+        (:middle
+         (let ((h (height obj))
+               (fh (al:get-font-line-height fnt)))
+           (incf at (truncate (/ (- h fh) 2)))))
+        
+        (:bottom
+         (let ((h (height obj))
+               (fh (al:get-font-line-height fnt)))
+           (incf at (- h fh))))
+        
+        (:none)
+        (otherwise
+         (error "text unknown vertical alignment: ~a" va)))
+      at)))
+
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-top))
+(defun text-calc-top (type area object)
+  (with-local-accessors ((rv top)) area
+    (case type
+      ((:top :auto))                    ; already done
+
+      (:middle
+       ;; Calculate our height
+       (with-local-slots ((h height)) object
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (with-local-accessors ((ha height)) area
+           ;; Is there room for us to move?
+           (if (> ha h)
+               ;; Yup, so move to middle
+               (incf rv (truncate (/ (- ha h) 2)))))))
+
+      (:bottom
+       (with-local-slots ((h height)) object
+         (incf h (padding-top object))
+         (incf h (padding-bottom object))
+         (incf rv (- (height area) h)))))
+    rv))
+
+(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-width))
+(defun text-calc-width (type area object)
+  (let (rv)
+    (case type
+      ((:auto :auto-max)
+       (setq rv (width area)))
+
+      (:auto-min
+       (let ((tw (al:get-text-width (theme-field font object) (title object))))
+         (incf tw (padding-left object))
+         (incf tw (padding-right object))
+         (setq rv (min tw (width area))))))
+    rv))
 

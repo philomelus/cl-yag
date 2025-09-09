@@ -1,5 +1,7 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; macros ===================================================================
 
 (defmacro cleanup-method (func args)
@@ -142,26 +144,6 @@ from theme. Field should be an accessor."
        ,value)))
 
 ;;;; with-* ===================================================================
-
-(defmacro with-area ((left top width height) object &body body)
-  "Creates local bingings of let, top, width, and height of an area-mixin"
-
-  (let ((instance (gensym)))
-    `(let ((,instance ,object))
-       (with-local-slots ((,left left) (,top top) (,width width) (,height height))
-                         ,instance
-         ,@body))))
-
-(defmacro with-area-rb ((left top right bottom) object &body body)
-  "Creates local bindings of left, top, and local bindings of result of right, and
-bottom for an area-mixin."
-  
-  (let ((instance (gensym)))
-    `(let ((,instance ,object))
-       (with-local-slots ((,left left) (,top top)) ,instance
-         (let ((,right (right ,instance))
-               (,bottom (bottom ,instance)))
-           ,@body)))))
 
 (defmacro with-area-border ((left top right bottom) object &body body)
   "Provide left, top, right, and bottom coordinates of object, removing border space."

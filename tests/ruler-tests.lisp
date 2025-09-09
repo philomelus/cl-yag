@@ -1,5 +1,7 @@
 (in-package :cl-yag-tests)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 (defstruct (ruler-tests-data (:include tests-data)
                              (:conc-name ruler-tests-))
   r1 r2 r3 r4 r5 r6 r7 r8

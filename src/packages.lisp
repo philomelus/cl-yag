@@ -47,6 +47,7 @@
            #:defbox
            #:defcolumn-layout
            #:defgrid
+           #:defgrid-layout
            #:defmanager
            #:defruler
            #:deftext
@@ -111,6 +112,7 @@
            #:color-down
            #:color-hover
            #:color-up
+           #:columns
            #:content
            #:dark
            #:enabled
@@ -125,7 +127,7 @@
            #:location
            #:location-x
            #:location-y
-           #:manager                    ;generic
+           #:manager
            #:normal
            #:padding
            #:padding-bottom
@@ -136,6 +138,7 @@
            #:padding-v
            #:parent
            #:process
+           #:rows
            #:spacing
            #:spacing-bottom
            #:spacing-h
@@ -195,8 +198,6 @@
            #:print-raw-object
            #:theme-field
            #:theme-field-object
-           #:with-area
-           #:with-area-rb
            #:with-area-border
            #:with-area-border-and-padding
            #:with-area-padding

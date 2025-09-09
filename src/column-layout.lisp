@@ -1,9 +1,12 @@
 (in-package #:cl-yag)
 
+(declaim (optimize (debug 3) (speed 0) (safety 3)))
+
 ;;;; column-layout ============================================================
 
 (defclass column-layout (layout-base
-                         padding-mixin)
+                         padding-mixin  ; border to interior
+                         spacing-mixin) ; outside to border
   ())
 
 (defmacro defcolumn-layout (&rest rest &key &allow-other-keys)
@@ -53,7 +56,7 @@
                   (setq options (rest co)))
                 (when (or (not (or clp ctp cwp chp))
                           (> (length options) 0))
-                  (with-area (lcl lct lcw lch) (aref child-area cp)
+                  (with-local-slots ((lcl left) (lct top) (lcw width) (lch height)) (aref child-area cp)
                     (v:debug :layout "[calc-area] {~a} child ~d internal area (~d ~d) @ (~d ~d)"
                              (print-raw-object child) cp lcw lch lcl lct))
                   (update-layout-child-areas cp parent)))
