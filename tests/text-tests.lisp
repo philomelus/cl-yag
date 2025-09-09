@@ -100,7 +100,8 @@
                                           "- <8>"))))
 
       ;; Rulers
-      (mapcar #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create data t nil)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard
+                                                                  data :r5 nil :r6 nil :r7 nil :r8 nil :rv2 nil)))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))

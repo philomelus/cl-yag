@@ -134,6 +134,89 @@
 (defconstant +I2T+ 675)
 (defconstant +I2W+ 400)
 
+(defmacro deftests-ruler (win-type number &rest rest &key &allow-other-keys)
+  "Creates tests window ruler of type and number.  Automatically positioned and
+sized according to type and window number."
+
+  (let ((local-win-type (gensym))
+        (local-number (gensym))
+        (local-number-string (gensym))
+        (generator (gensym)))
+    `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
+              (if r100-25-5
+                  (ruler-100-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
+                                  :div-100-color (al:map-rgb-f 1 0 0) :div-100-extent 1
+                                  :div-25-color (al:map-rgb-f 0.8 0 0) :div-25-extent 0.6667
+                                  :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.3333
+                                  :left l :top t_ :width w :height h ,@rest)
+                  (ruler-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
+                              :div-25-color (al:map-rgb-f 1 0 0) :div-25-extent 1
+                              :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
+                              :left l :top t_ :width w :height h ,@rest))))
+       (let ((,local-win-type ,win-type)
+             (,local-number ,number)
+             (,local-number-string))
+         (v:info :debug "win-type:~a number:~a" ,local-win-type ,local-number)
+         (setq ,local-number-string (format nil "~1d" ,local-number))
+         (ccase ,local-win-type
+           (:standard
+            (assert (<= ,local-number 8))
+            (,generator (symbol-value (a:symbolicate "+W" ,local-number-string "L+"))
+                        (- (symbol-value (a:symbolicate "+W" ,local-number-string "T+")) 10)
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "W+"))
+                        10))
+           (:tall
+            (assert (<= ,local-number 4))
+            (,generator (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+"))
+                        (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+")) 10)
+                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "W+"))
+                        10))
+           (:wide
+            (assert (<= ,local-number 4))
+            (,generator (symbol-value (a:symbolicate "+W-W" ,local-number-string "L+"))
+                        (- (symbol-value (a:symbolicate "+W-W" ,local-number-string "T+")) 10)
+                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "W+"))
+                        10))
+           (:wide-tall
+            (assert (<= ,local-number 2))
+            (,generator (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+"))
+                        (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+")) 10)
+                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "W+"))
+                        10))
+           (:standard-vertical
+            (assert (<= ,local-number 2))
+            (if (= ,local-number 2)
+                (setq ,local-number-string "5"))
+            (,generator (- (symbol-value (a:symbolicate "+W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "H+"))
+                        t))
+           (:tall-vertical
+            (assert (<= ,local-number 1))
+            (,generator (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "H+"))
+                        t t)            
+            )
+           (:wide-vertical
+            (if (= ,local-number 2)
+                (setq ,local-number-string "3"))
+            (assert (<= ,local-number 2))
+            (,generator (- (symbol-value (a:symbolicate "+W-W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "H+"))
+                        t))
+           (:wide-tall-vertical
+            (assert (<= ,local-number 1))
+            (,generator (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "H+"))
+                        t t)))))))
+
 ;; TODO: Figure out how to deduplicate the defwindow's.  I've tried symbol-macrolet
 ;;       and couldn't get it to work.
 (defmacro deftests-window (win-type number &rest rest &key &allow-other-keys)
@@ -243,59 +326,75 @@ regardless of result."))
 
         (values iw1 iw2)))))
 
-;; TODO:  Support tall, wide, and wide-tall rulers
-(defun tests-rulers-create (data top-row bottom-row)
-  (with-slots (rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8) data
-    (let ((majc (al:map-rgb-f 1 0 0))
-          (minc (al:map-rgb-f 0.8 0 0)))
-      (when top-row
-        (setf rv1 (ruler-25-5 :visible t :line-color majc :vertical t
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left (- +W1L+ 10) :top +W1T+ :width 10 :height +W1H+ ))
-        (setf rh1 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W1L+ :top (- +W1T+ 10) :width +W1W+ :height 10))
-        (setf rh2 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W2L+ :top (- +W2T+ 10) :width +W2W+ :height 10))
-        (setf rh3 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W3L+ :top (- +W3T+ 10) :width +W3W+ :height 10))
-        (setf rh4 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W4L+ :top (- +W4T+ 10) :width +W4W+ :height 10)))
-      (when bottom-row
-        (setf rv2 (ruler-25-5 :visible t :line-color majc :vertical t
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left (- +W5L+ 10) :top +W5T+ :width 10 :height +W5H+))
-        (setf rh5 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W5L+ :top (- +W5T+ 10) :width +W5W+ :height 10))
-        (setf rh6 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W6L+ :top (- +W6T+ 10) :width +W6W+ :height 10))
-        (setf rh7 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W7L+ :top (- +W7T+ 10) :width +W7W+ :height 10))
-        (setf rh8 (ruler-25-5 :visible t :line-color majc
-                              :div-25-color majc :div-25-extent 1
-                              :div-5-color minc :div-5-extent 0.5
-                              :left +W8L+ :top (- +W8T+ 10) :width +W8W+ :height 10))))
-    
-    (if (and top-row bottom-row)
-        (values rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
-        (if top-row
-            (values rv1 rh1 rh2 rh3 rh4)
-            (values rv2 rh5 rh6 rh7 rh8)))))
+(defun tests-rulers-create-standard (data &key
+                                            (r1 '(:standard 1 rh1))
+                                            (r2 '(:standard 2 rh2))
+                                            (r3 '(:standard 3 rh3))
+                                            (r4 '(:standard 4 rh4))
+                                            (r5 '(:standard 5 rh5))
+                                            (r6 '(:standard 6 rh6))
+                                            (r7 '(:standard 7 rh7))
+                                            (r8 '(:standard 8 rh8))
+                                            (rv1 '(:standard-vertical 1 rv1))
+                                            (rv2 '(:standard-vertical 2 rv2)))
+  (let (rulers)
+    (mapc #'(lambda (arg)
+              (when arg
+                (let ((a1 (first arg))
+                      (a2 (second arg))
+                      (a3 (third arg)))
+                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (push (slot-value data a3) rulers))))
+          (list rv1 rv2 r1 r2 r3 r4 r5 r6 r7 r8))
+    (values-list rulers)))
+
+(defun tests-rulers-create-tall (data &key (r1 '(:tall 1 rh1))
+                                        (r2 '(:tall 2 rh2))
+                                        (r3 '(:tall 3 rh3))
+                                        (r4 '(:tall 4 rh4))
+                                        (rv1 '(:tall-vertical 1 rv1)))
+  (let (rulers)
+    (mapc #'(lambda (arg)
+              (when arg
+                (let ((a1 (first arg))
+                      (a2 (second arg))
+                      (a3 (third arg)))
+                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (push (slot-value data a3) rulers))))
+          (list rv1 r1 r2 r3 r4))
+    (values-list rulers)))
+
+(defun tests-rulers-create-wide (data &key (r1 '(:wide 1 rh1))
+                                        (r2 '(:wide 2 rh2))
+                                        (r3 '(:wide 3 rh3))
+                                        (r4 '(:wide 4 rh4))
+                                        (rv1 '(:wide-vertical 1 rv1))
+                                        (rv2 '(:wide-vertical 2 rv2)))
+  (let (rulers)
+    (mapc #'(lambda (arg)
+              (when arg
+                (let ((a1 (first arg))
+                      (a2 (second arg))
+                      (a3 (third arg)))
+                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (push (slot-value data a3) rulers))))
+          (list rv1 rv2 r1 r2 r3 r4))
+    (values-list rulers)))
+
+(defun tests-rulers-create-wide-tall (data &key (r1 '(:wide-tall 1 rh1))
+                                             (r2 '(:wide-tall 2 rh2))
+                                             (rv1 '(:wide-tall-vertical 1 rv1)))
+  (let (rulers)
+    (mapc #'(lambda (arg)
+              (when arg
+                (let ((a1 (first arg))
+                      (a2 (second arg))
+                      (a3 (third arg)))
+                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (push (slot-value data a3) rulers))))
+          (list rv1 r1 r2))
+    (values-list rulers)))
+
 
 (defun tests-toggle-interior-color (data widgets)
   (with-slots (manager theme1) data

@@ -34,7 +34,7 @@
                                           "<8>"))))
 
       ;; Rulers
-      (mapcar #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create data t t)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide-tall data)))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))

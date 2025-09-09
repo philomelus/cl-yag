@@ -86,7 +86,7 @@
       (push w7 objs)
     
       ;; Instructions
-      (mapcar #'(lambda (o) (push o objs))
+      (mapc #'(lambda (o) (push o objs))
               (multiple-value-list (tests-instructions-create
                                     data
                                     (list "<1> - alternates left/center/right"
@@ -99,7 +99,8 @@
                                           "- <8>"))))
 
       ;; Rulers
-      (mapcar #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create data t t)))
+      (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-standard data :r7 nil :r8 nil)))
+      (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-wide data :r4 '(:wide 4 rh7))))
 
       ;; The one in charge
       (setf manager (make-instance 'manager :content (reverse objs))))))

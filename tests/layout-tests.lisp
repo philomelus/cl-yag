@@ -45,7 +45,7 @@
       (push w8 widgets)
       
       ;; Instructions
-      (mapcar #'(lambda (o) (push o widgets))
+      (mapc #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
                                     (list "<1>"
@@ -58,7 +58,7 @@
                                           "<8>"))))
 
       ;; Rulers
-      (mapcar #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create data t t)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))

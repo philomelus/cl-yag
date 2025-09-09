@@ -55,20 +55,23 @@
       (push w8 widgets)
       
       ;; Instructions
-      (mapcar #'(lambda (o) (push o widgets))
-              (multiple-value-list (tests-instructions-create
-                                    data
-                                    (list "<1>"
-                                          "<2>"
-                                          "<3>"
-                                          "<4> - alternates theme-flat/theme-3d")
-                                    (list "<5>"
-                                          "<6>"
-                                          "window interior red/default - <7>"
-                                          "<8>"))))
+      (mapc #'(lambda (o) (push o widgets))
+            (multiple-value-list (tests-instructions-create
+                                  data
+                                  (list "<1>"
+                                        "<2>"
+                                        "<3>"
+                                        "<4> - alternates theme-flat/theme-3d")
+                                  (list "<5>"
+                                        "<6>"
+                                        "window interior red/default - <7>"
+                                        "<8>"))))
 
       ;; Rulers
-      (mapcar #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create data t t)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
+      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-tall data)))
+      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data)))
+      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide-tall data)))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))

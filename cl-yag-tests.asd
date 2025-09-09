@@ -18,7 +18,7 @@
                              (:file "api")
                              (:file "cl-yag-tests" :depends-on ("api"))
                              (:file "box-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "layout-layout-tests" :depends-on ("api" "cl-yag-tests"))
+                             (:file "column-layout-tests" :depends-on ("api" "cl-yag-tests"))
                              (:file "grid-layout-tests" :depends-on ("api" "cl-yag-tests"))
                              (:file "grid-tests" :depends-on ("api" "cl-yag-tests"))
                              (:file "layout-tests" :depends-on ("api" "cl-yag-tests"))
