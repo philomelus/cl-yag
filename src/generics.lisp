@@ -45,9 +45,6 @@ type = member (:auto :auto-max :auto-min)
 area = (left top width height) within parent
 object = object doing width calculation for"))
 
-(defgeneric layout (object)
-  (:documentation "Force object and all children to calculate their layout."))
-
 (defgeneric must-init (test desc))
 
 (defgeneric on-char (key mods object &key &allow-other-keys)

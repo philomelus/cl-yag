@@ -314,7 +314,7 @@
                    (not (cffi:null-pointer-p fnt))))
       
       ;; When auto-calculated, start at 0 offset from parent
-      (if (member at *AREA-TOP-OPTS*)
+      (if (member at +AREA-TOP-OPTS+)
           (setf at 0))
 
       (case va

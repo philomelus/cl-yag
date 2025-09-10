@@ -29,9 +29,6 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod calc-area (object (parent window) &key)
-  )
-
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
     (when (on-char key mods child)

@@ -17,13 +17,13 @@
 (defclass border-theme-mixin ()
   ())
 
-(defclass border-flat-theme-mixin (color-mixin)
-  ())
-
 (defclass border-3d-theme-mixin (color-3d-mixin
                                  style-3d-mixin)
   ((thickness :initform 2.0)
    (style :accessor border-style)))
+
+(defclass border-flat-theme-mixin (color-mixin)
+  ())
 
 (defclass border (border-theme-mixin)
   ((thickness :initarg :thickness :initform 1.0 :accessor thickness)))

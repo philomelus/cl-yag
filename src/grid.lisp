@@ -120,13 +120,3 @@
 (defmethod (setf minor-color) (value (object grid))
   (setf (minor-color-h object) value)
   (setf (minor-color-v object) value))
-
-(defmethod (setf theme) ((theme grid-theme-mixin) (object grid))
-  (with-slots ((mjh major-color-h) (mjv major-color-v)
-               (mnh minor-color-h) (mnv minor-color-v))
-      theme
-    (setf (major-color-h object) mjh)
-    (setf (major-color-v object) mjv)
-    (setf (minor-color-h object) mnh)
-    (setf (minor-color-v object) mnv)))
- 

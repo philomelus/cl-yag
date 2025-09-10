@@ -95,7 +95,7 @@ Returns nil if not found."
       (v:debug :layout "[calc-layout-area] calculating layout area ~a" (print-raw-object object))
       
       ;; Locate first parent that's layout or has area
-      (let ((pam (find-parent-area-mixin-or-layout object)))
+      (let ((pam (find-parent-area-or-layout object)))
         (let (pal pat paw pah)
           ;; Get area of parent.  Is it another layout?
           (if (typep pam 'layout-base)
@@ -147,13 +147,13 @@ Returns nil if not found."
               (decf pah (+ pam-st (padding-bottom pam)))))
 
           ;; Save our area where needed
-          (when (member lh *AREA-HEIGHT-OPTS*)
+          (when (member lh +AREA-HEIGHT-OPTS+)
             (setf (slot-value object 'height) pah))
-          (when (member lw *AREA-WIDTH-OPTS*)
+          (when (member lw +AREA-WIDTH-OPTS+)
             (setf (slot-value object 'width) paw))
-          (when (member ll *AREA-LEFT-OPTS*)
+          (when (member ll +AREA-LEFT-OPTS+)
             (setf (slot-value object 'left) pal))
-          (when (member lt *AREA-TOP-OPTS*)
+          (when (member lt +AREA-TOP-OPTS+)
             (setf (slot-value object 'top) pat))
 
           (v:debug :layout "[calc-layout-area] new area: (~d ~d) @ (~d ~d) ~a"
@@ -174,7 +174,7 @@ Returns nil if not found."
           (when (typep child 'layout-base)
             (dump-layout child (concatenate 'string indent "  "))))))))
 
-(defun find-parent-area-mixin-or-layout (object &key (exclude nil excludep))
+(defun find-parent-area-or-layout (object &key (exclude nil excludep))
   "Locate first parent that either has area or is has layout-base as a superclass.
 Generates error on failure."
   

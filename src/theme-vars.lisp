@@ -11,17 +11,6 @@
 ;; TODO: Find a way to express the connections from themes to objects in
 ;;       a way to allow it to be specified once.
 
-;;;; theme-flat-all ===========================================================
-
-(defclass theme-flat-all (theme-flat
-                          active-text-theme-mixin
-                          border-flat-theme-mixin
-                          box-flat-theme-mixin
-                          grid-theme-mixin
-                          ruler-theme-mixin
-                          window-theme-mixin)
-  ())
-
 ;;;; theme-3d-all =============================================================
 
 (defclass theme-3d-all (theme-3d
@@ -35,99 +24,22 @@
                         window-theme-mixin)
   ())
 
-;;; active-text -----------------------------------------------------
+(defmacro deftheme-3d-all (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-3d-all ,@rest))
 
-(defmethod (setf theme) ((theme theme-flat) (object active-text))
-  (with-local-accessors ((f frame-color) (i interior-color)
-                         (fc fore-color) (bc back-color))
-                        theme
-    (setf (down-color object) f)
-    (setf (hover-color object) f)
-    (setf (interior-color object) i)
-    (setf (up-color object) i)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
+;;;; theme-flat-all ===========================================================
 
-(defmethod (setf theme) ((theme theme-3d) (object active-text))
-  (with-local-accessors ((d dark-color) (n normal-color)
-                         (vd very-dark-color) (vl very-light-color)
-                         (fc fore-color) (bc back-color))
-                        theme
-    (setf (down-color object) vd)
-    (setf (hover-color object) d)
-    (setf (interior-color object) n)
-    (setf (up-color object) vl)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
+(defclass theme-flat-all (theme-flat
+                          active-text-theme-mixin
+                          border-flat-theme-mixin
+                          box-flat-theme-mixin
+                          grid-theme-mixin
+                          ruler-theme-mixin
+                          window-theme-mixin)
+  ())
 
-;;; box -------------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object box))
-  (error "not implemented"))
-
-(defmethod (setf theme) ((theme theme-3d) (object box))
-  (error "not implemented"))
-
-;;; grid ------------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object grid))
-  (with-local-accessors ((fc frame-color)) theme
-    (setf (major-color-h object) fc)
-    (setf (major-color-v object) fc)
-    (setf (minor-color-h object) fc)
-    (setf (minor-color-v object) fc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object grid))
-  (with-local-accessors ((d dark-color) (vd very-dark-color)) theme
-    (setf (major-color-h object) d)
-    (setf (major-color-v object) d)
-    (setf (minor-color-h object) vd)
-    (setf (minor-color-v object) vd)))
-
-;;; ruler -----------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object ruler))
-  (with-local-accessors ((f frame-color)) theme
-    (setf (color object) f)
-    (setf (major-color object) f)
-    (setf (minor-color object) f)))
-
-(defmethod (setf theme) ((theme theme-3d) (object ruler))
-  (with-local-accessors ((l light-color) (vd very-dark-color) (vl very-light-color))
-                        theme
-    (setf (color object) vd)
-    (setf (major-color object) vl)
-    (setf (minor-color object) l)))
-
-;;; text ------------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object text))
-  (with-local-accessors ((i interior-color) (fc fore-color) (bc back-color))
-                        theme
-    (setf (interior-color object) i)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object text))
-  (with-local-accessors ((n normal-color) (fc fore-color) (bc back-color))
-                        theme
-    (setf (interior-color object) n)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
-;;; window ----------------------------------------------------------
-
-(defmethod (setf theme) ((theme theme-flat) (object window))
-  (with-local-accessors ((bc back-color) (fc fore-color) (i interior-color))
-                        theme
-    (setf (interior-color object) i)
-    (setf (back-color object) bc)
-    (setf (fore-color object) fc)))
-
-(defmethod (setf theme) ((theme theme-3d) (object window))
-  (with-local-accessors ((d dark-color) (n normal-color)) theme
-    (setf (frame-color object) d)
-    (setf (interior-color object) n)))
+(defmacro deftheme-flat-all (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme-flat-all ,@rest))
 
 ;;;; global themes ============================================================
 

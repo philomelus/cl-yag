@@ -2,63 +2,16 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; functions ================================================================
-
-(defun area (object)
-  "Return left, top, width, and height as mutliple values."
-  
-  (assert (typep object 'area-mixin))
-  (values (left object) (top object) (width object) (height object)))
-
-(defun area-rb (object)
-  "Return left, top, right, and bottom as multiple values."
-  
-  (assert (typep object 'area-mixin))
-  (values (left object) (top object) (right object) (bottom object)))
-
-(defun find-parent-area-mixin (object)
-  "Find first parent of OBJECT derived from parent-mixin. Generates error on
-failure."
-  
-  (assert (typep object 'parent-mixin))
-  (let ((p (parent object)))
-    (loop
-      (when (typep p 'manager)
-        (error "found manager when looking for area-mixin"))
-      
-      (when (eql p nil)
-        (error "no parent when looking for area-mixin"))
-      
-      ;; If it has area
-      (if (typep p 'area-mixin)
-          (return p))
-
-      ;; Get next parent
-      (assert (typep p 'area-mixin))
-      (setf p (parent p)))))
-
-(defun reset-area (object)
-  "Return layout of object to original state, allowing it to be
-relayed-out."
-
-  (macrolet ((update-value (dest src)
-               `(when (slot-value object ,src)
-                  (setf (slot-value object ,dest) (slot-value object ,src)))))
-    (update-value 'width 'width-calc)
-    (update-value 'height 'height-calc)
-    (update-value 'left 'left-calc)
-    (update-value 'top 'top-calc)))
-
 ;;;; area-mixin ===============================================================
 
 ;; TODO:
 ;; minimize maximize
 ;; none (means default or auto or both)
 
-(defvar *AREA-HEIGHT-OPTS* '(:auto :auto-max :auto-min))
-(defvar *AREA-LEFT-OPTS* '(:auto :left :center :right))
-(defvar *AREA-TOP-OPTS* '(:auto :top :middle :bottom))
-(defvar *AREA-WIDTH-OPTS* '(:auto :auto-max :auto-min))
+(defvar +AREA-HEIGHT-OPTS+ '(:auto :auto-max :auto-min))
+(defvar +AREA-LEFT-OPTS+ '(:auto :left :center :right))
+(defvar +AREA-TOP-OPTS+ '(:auto :top :middle :bottom))
+(defvar +AREA-WIDTH-OPTS+ '(:auto :auto-max :auto-min))
 
 (defclass area-mixin ()
   ((left :initarg :left :initform :auto :accessor left)
@@ -70,14 +23,6 @@ relayed-out."
    (top-calc :initform nil)
    (width-calc :initform nil)
    (height-calc :initform nil)))
-
-(defmethod print-mixin ((o area-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-field left o s :fmt "~d")
-  ;; (pprint-field top o s :fmt "~d")
-  ;; (pprint-field width o s :fmt "~d")
-  ;; (pprint-field height o s :fmt "~d")
-  (my-next-method))
 
 ;;; methods ---------------------------------------------------------
 
@@ -91,10 +36,10 @@ relayed-out."
                         (unless (member ,field ,opts)
                           (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
                         (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
-      (validate height *AREA-HEIGHT-OPTS*)
-      (validate left *AREA-LEFT-OPTS*)
-      (validate top *AREA-TOP-OPTS*)
-      (validate width *AREA-WIDTH-OPTS*))
+      (validate height +AREA-HEIGHT-OPTS+)
+      (validate left +AREA-LEFT-OPTS+)
+      (validate top +AREA-TOP-OPTS+)
+      (validate width +AREA-WIDTH-OPTS+))
 
     ;; Save original state of area
     (flet ((is-keyword (field)
@@ -115,7 +60,7 @@ relayed-out."
   (with-slots ((h height)) obj
     (when (typep h 'keyword)
       (v:debug :layout "[height] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member h *AREA-HEIGHT-OPTS*))
+      (assert (member h +AREA-HEIGHT-OPTS+))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'height) 'number))
       (setf h (slot-value obj 'height))
@@ -126,7 +71,7 @@ relayed-out."
   (with-slots ((l left)) obj
     (when (typep l 'keyword)
       (v:debug :layout "[left] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member l *AREA-LEFT-OPTS*))
+      (assert (member l +AREA-LEFT-OPTS+))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'left) 'number))
       (setf l (slot-value obj 'left))
@@ -162,7 +107,7 @@ relayed-out."
   (with-slots ((top top)) obj
     (when (typep top 'keyword)
       (v:debug :layout "[top] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member top *AREA-TOP-OPTS*))
+      (assert (member top +AREA-TOP-OPTS+))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'top) 'number))
       (setf top (slot-value obj 'top))
@@ -173,7 +118,7 @@ relayed-out."
   (with-slots ((w width)) obj
     (when (typep w 'keyword)
       (v:debug :layout "[width] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member w *AREA-WIDTH-OPTS*))
+      (assert (member w +AREA-WIDTH-OPTS+))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'width) 'number))
       (setf w (slot-value obj 'width))
@@ -200,4 +145,51 @@ relayed-out."
   (setf (top obj) y)
   (setf (width obj) w)
   (setf (height obj) h))
+
+;;;; functions ================================================================
+
+(defun area (object)
+  "Return left, top, width, and height as mutliple values."
+  
+  (assert (typep object 'area-mixin))
+  (values (left object) (top object) (width object) (height object)))
+
+(defun area-rb (object)
+  "Return left, top, right, and bottom as multiple values."
+  
+  (assert (typep object 'area-mixin))
+  (values (left object) (top object) (right object) (bottom object)))
+
+(defun find-parent-area (object)
+  "Find first parent of OBJECT derived from parent-mixin. Generates error on
+failure."
+  
+  (assert (typep object 'parent-mixin))
+  (let ((p (parent object)))
+    (loop
+      (when (typep p 'manager)
+        (error "found manager when looking for area-mixin"))
+      
+      (when (eql p nil)
+        (error "no parent when looking for area-mixin"))
+      
+      ;; If it has area
+      (if (typep p 'area-mixin)
+          (return p))
+
+      ;; Get next parent
+      (assert (typep p 'area-mixin))
+      (setf p (parent p)))))
+
+(defun reset-area (object)
+  "Return layout of object to original state, allowing it to be
+relayed-out."
+
+  (macrolet ((update-value (dest src)
+               `(when (slot-value object ,src)
+                  (setf (slot-value object ,dest) (slot-value object ,src)))))
+    (update-value 'width 'width-calc)
+    (update-value 'height 'height-calc)
+    (update-value 'left 'left-calc)
+    (update-value 'top 'top-calc)))
 
