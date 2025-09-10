@@ -50,6 +50,17 @@
 (defconstant +W8T+ +W5T+ "Standard window 8 top")
 (defconstant +W8W+ +WW+ "Standard window 8 width")
 
+;; Full window size
+(defconstant +F-WH+ (+ +WH+ +WWS+ +WH+) "Full window height")
+(defconstant +F-WHS+ +WHS+ "Full window vertical spacing")
+(defconstant +F-WW+ (+ +WW+ +WWS+ +WW+ +WWS+ +WW+ +WWS+ +WW+) "Full window width")
+(defconstant +F-WWS+ +WWS+ "Full window horizontal spacing")
+
+(defconstant +F-W1H+ +F-WH+ "Full window 1 height")
+(defconstant +F-W1L+ +F-WWS+ "Full window 1 left")
+(defconstant +F-W1T+ +F-WHS+ "Full window 1 top")
+(defconstant +F-W1W+ +F-WW+ "Full window 1 width")
+
 ;; Tall window sizes
 ;; Size +WW+, (+ +WH+ +WHS+ +WH+)
 ;; Spacing 25,25
@@ -160,18 +171,40 @@ sized according to type and window number."
              (,local-number-string))
          (setq ,local-number-string (format nil "~1d" ,local-number))
          (ccase ,local-win-type
+           (:full
+            (assert (= ,local-number 1))
+            (,generator +F-W1L+ (- +F-W1T+ 10) +F-W1W+ 10 nil t))
+           (:full-vertical
+            (assert (= ,local-number 1))
+            (,generator (- +F-W1L+ 10) +F-W1T+ 10 +F-W1H+ t t))
            (:standard
             (assert (<= ,local-number 8))
             (,generator (symbol-value (a:symbolicate "+W" ,local-number-string "L+"))
                         (- (symbol-value (a:symbolicate "+W" ,local-number-string "T+")) 10)
                         (symbol-value (a:symbolicate "+W" ,local-number-string "W+"))
                         10))
+           (:standard-vertical
+            (assert (<= ,local-number 2))
+            (if (= ,local-number 2)
+                (setq ,local-number-string "5"))
+            (,generator (- (symbol-value (a:symbolicate "+W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "H+"))
+                        t))
            (:tall
             (assert (<= ,local-number 4))
             (,generator (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+"))
                         (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+")) 10)
                         (symbol-value (a:symbolicate "+T-W" ,local-number-string "W+"))
                         10))
+           (:tall-vertical
+            (assert (<= ,local-number 1))
+            (,generator (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+"))
+                        10
+                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "H+"))
+                        t t))
            (:wide
             (assert (<= ,local-number 4))
             (,generator (symbol-value (a:symbolicate "+W-W" ,local-number-string "L+"))
@@ -184,23 +217,13 @@ sized according to type and window number."
                         (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+")) 10)
                         (symbol-value (a:symbolicate "+WT-W" ,local-number-string "W+"))
                         10))
-           (:standard-vertical
-            (assert (<= ,local-number 2))
-            (if (= ,local-number 2)
-                (setq ,local-number-string "5"))
-            (,generator (- (symbol-value (a:symbolicate "+W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "T+"))
-                        10
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "H+"))
-                        t))
-           (:tall-vertical
+           (:wide-tall-vertical
             (assert (<= ,local-number 1))
-            (,generator (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+"))
+            (,generator (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+")) 10)
+                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+"))
                         10
-                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "H+"))
-                        t t)            
-            )
+                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "H+"))
+                        t t))
            (:wide-vertical
             (if (= ,local-number 2)
                 (setq ,local-number-string "3"))
@@ -209,14 +232,7 @@ sized according to type and window number."
                         (symbol-value (a:symbolicate "+W-W" ,local-number-string "T+"))
                         10
                         (symbol-value (a:symbolicate "+W-W" ,local-number-string "H+"))
-                        t))
-           (:wide-tall-vertical
-            (assert (<= ,local-number 1))
-            (,generator (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+"))
-                        10
-                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "H+"))
-                        t t)))))))
+                        t)))))))
 
 ;; TODO: Figure out how to deduplicate the defwindow's.  I've tried symbol-macrolet
 ;;       and couldn't get it to work.
@@ -227,6 +243,13 @@ sized according to type and window number."
         (local-number (format nil "~1d" number)))
     `(let ((,local-win-type ,win-type))
        (ecase ,local-win-type
+         (:full
+          (symbol-macrolet ((prefix "+F-W"))
+            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
+                (symbol-value (a:symbolicate prefix ,local-number "T+"))
+              (symbol-value (a:symbolicate prefix ,local-number "W+"))
+              (symbol-value (a:symbolicate prefix ,local-number "H+"))
+              ,@rest)))
          (:standard
           (symbol-macrolet ((prefix "+W"))
             (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
@@ -326,6 +349,19 @@ regardless of result."))
         (assert (not (eql iw2 nil)))
 
         (values iw1 iw2)))))
+
+(defun tests-rulers-create-full (data &key (r1 '(:full 1 rh1))
+                                        (rv1 '(:full-vertical 1 rv1)))
+  (let (rulers)
+    (mapc #'(lambda (arg)
+              (when arg
+                (let ((a1 (first arg))
+                      (a2 (second arg))
+                      (a3 (third arg)))
+                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (push (slot-value data a3) rulers))))
+          (list rv1 r1))
+    (values-list rulers)))
 
 (defun tests-rulers-create-standard (data &key
                                             (r1 '(:standard 1 rh1))

@@ -15,46 +15,47 @@
         data
 
       ;; Test 1
-      (setf w1 (deftests-window :standard 1))
+      ;; (setf w1 (deftests-window :standard 1))
+      (setf w1 (deftests-window :full 1))
       ;; (setf w1 (deftests-window :tall 1))
       ;; (setf w1 (deftests-window :wide 1))
       ;; (setf w1 (deftests-window :wide-tall 1))
       (push w1 widgets)
       
       ;; Test 2
-      (setf w2 (deftests-window :standard 2))
+      ;; (setf w2 (deftests-window :standard 2))
       ;; (setf w2 (deftests-window :tall 2))
       ;; (setf w2 (deftests-window :wide 2))
       ;; (setf w2 (deftests-window :wide-tall 2))
-      (push w2 widgets)
+      ;; (push w2 widgets)
       
       ;; Test 3
-      (setf w3 (deftests-window :standard 3))
+      ;; (setf w3 (deftests-window :standard 3))
       ;; (setf w3 (deftests-window :tall 3))
       ;; (setf w3 (deftests-window :wide 3))
-      (push w3 widgets)
+      ;; (push w3 widgets)
       
       ;; Test 4
-      (setf w4 (deftests-window :standard 4))
+      ;; (setf w4 (deftests-window :standard 4))
       ;; (setf w4 (deftests-window :tall 4))
       ;; (setf w4 (deftests-window :wide 4))
-      (push w4 widgets)
+      ;; (push w4 widgets)
       
       ;; Test 5
-      (setf w5 (deftests-window :standard 5))
-      (push w5 widgets)
+      ;; (setf w5 (deftests-window :standard 5))
+      ;; (push w5 widgets)
       
       ;; Test 6
-      (setf w6 (deftests-window :standard 6))
-      (push w6 widgets)
+      ;; (setf w6 (deftests-window :standard 6))
+      ;; (push w6 widgets)
       
       ;; Test 7
-      (setf w7 (deftests-window :standard 7))
-      (push w7 widgets)
+      ;; (setf w7 (deftests-window :standard 7))
+      ;; (push w7 widgets)
       
       ;; Test 8
-      (setf w8 (deftests-window :standard 8))
-      (push w8 widgets)
+      ;; (setf w8 (deftests-window :standard 8))
+      ;; (push w8 widgets)
       
       ;; Instructions
       (mapc #'(lambda (o) (push o widgets))
@@ -70,7 +71,8 @@
                                         "<8>"))))
 
       ;; Rulers
-      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
+      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-full data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-tall data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide-tall data)))
