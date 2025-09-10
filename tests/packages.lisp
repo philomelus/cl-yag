@@ -1,11 +1,11 @@
 (in-package :asdf-user)
 (defpackage :cl-yag-tests
-  (:use #:cl #:cl-yag)
+  (:use #:cl #:cl-yag #:fiveam)
   (:local-nicknames
    (#:a #:alexandria)
    (#:mop #:closer-mop)
    (#:v #:org.shirakumo.verbose))
-  
+    
   (:export #:box-tests-main
            #:column-layout-tests-main
            #:grid-layout-tests-main

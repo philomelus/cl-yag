@@ -10,19 +10,24 @@
   
   :depends-on ("cl-yag"
                "closer-mop"
-               ;;:fiveam
+               "fiveam"
                "verbose")
 
   :components ((:module "tests"
                 :components ((:file "packages")
-                             (:file "api")
-                             (:file "cl-yag-tests" :depends-on ("api"))
-                             (:file "box-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "column-layout-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "grid-layout-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "grid-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "layout-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "prototype" :depends-on ("api" "cl-yag-tests"))
-                             (:file "ruler-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "text-tests" :depends-on ("api" "cl-yag-tests"))
-                             (:file "window-tests" :depends-on ("api" "cl-yag-tests"))))))
+                             
+                             (:module "ui"
+                              :components ((:file "api")
+                                           (:file "tests-main" :depends-on ("api"))
+                                           (:file "box-tests" :depends-on ("api" "tests-main"))
+                                           (:file "column-layout-tests" :depends-on ("api" "tests-main"))
+                                           (:file "grid-layout-tests" :depends-on ("api" "tests-main"))
+                                           (:file "grid-tests" :depends-on ("api" "tests-main"))
+                                           (:file "layout-tests" :depends-on ("api" "tests-main"))
+                                           (:file "prototype" :depends-on ("api" "tests-main"))
+                                           (:file "ruler-tests" :depends-on ("api" "tests-main"))
+                                           (:file "text-tests" :depends-on ("api" "tests-main"))
+                                           (:file "window-tests" :depends-on ("api" "tests-main"))))
+                             
+                             (:module "auto"
+                              :components ((:file "grid-layout")))))))

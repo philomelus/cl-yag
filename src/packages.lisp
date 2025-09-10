@@ -82,20 +82,14 @@
            #:defcolumn-layout
            
            ;; grid-layout
-           #:cell-height
-           #:cell-size
-           #:cell-width
-           #:column-height
-           #:column-size
-           #:column-width
            #:columns
            #:defgrid-layout
            #:grid-layout
            #:grid-layout-cell
+           #:grid-layout-cell-set
            #:grid-layout-child
-           #:row-height
-           #:row-size
-           #:row-width
+           #:grid-layout-column-cells-set
+           #:grid-layout-row-cells-set
            #:rows
            
            ;; ========== Mixins ==========

@@ -28,6 +28,7 @@
                                                                   nil nil nil nil nil nil nil
                                                                   nil nil nil nil nil nil nil
                                                                   t1-3 nil nil nil nil nil t1-4)))
+      (cell-width 50 0 0 gl1)
       
       ;;(setf gl1 (defgrid-layout :columns 2 :rows 2))
       (setf w1 (deftests-window :full 1 :content (list gl1)))

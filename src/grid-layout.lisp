@@ -2,6 +2,11 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
+(declaim (inline grid-layout-cell
+                 grid-layout-child
+                 grid-layout-column-cells
+                 grid-layout-row-cells))
+
 ;;;; column-layout ============================================================
 
 (defclass grid-layout (layout-base
@@ -182,100 +187,29 @@ recalculates the sizes of the children that are affected by it."
 
 ;;;; functions ================================================================
 
-(declaim (ftype (function ((or integer float) integer integer grid-layout &key (:recalc boolean)) null) cell-height))
-(defun cell-height (height column row object &key (recalc t))
-  "Set the height of a specific cell within grid-layout."
-
-  (let ((cell (grid-layout-cell column row object)))
-    (with-slots ((h hwight)) cell
-      (when (/= h height)
-        (setf h height)
-        (with-slots ((ca child-areas)) object
-          (when (and recalc ca)
-            (setf ca nil)
-            (calc-layout-child-areas object)))))))
-
-(declaim (ftype (function ((or integer float) (or integer float) integer integer grid-layout &key (:recalc boolean)) null) cell-size))
-(defun cell-size (width height column row object &key (recalc t))
-  "Set the width and height of a specific cell within grid-layot."
-
-  (let ((cell (grid-layout-cell column row object))
-        (updated nil))
-    (with-slots ((h height) (w width)) cell
-      (when (/= w width)
-        (setf w width updated t))
-      (when (/= h height)
-        (setf h height updated t)))
-    (when (and recalc updated (slot-value object 'child-areas))
-      (setf (slot-value object 'child-areas) nil)
-      (calc-layout-child-areas object))))
-
-(declaim (ftype (function ((or integer float) integer integer grid-layout &key (:recalc boolean)) null) cell-width))
-(defun cell-width (width column row object &key (recalc t))
-  "Set the width of a specific cell within grid-layout."
-  
-  (let ((cell (grid-layout-cell column row object)))
-    (with-slots ((w width)) cell
-      (when (/= w width)
-        (setf w width)
-        (with-slots ((ca child-areas)) object
-          (when (and recalc ca)
-            (setf ca nil)
-            (calc-layout-child-areas object)))))))
-
-(declaim (ftype (function ((or integer float) integer grid-layout &key (:recalc boolean)) null) column-height))
-(defun column-height (height column object &key (recalc t))
-  "Set height for entire column within grid-layout."
-
-  (update-column column object #'(lambda (cell)
-                                   (with-slots ((h height)) cell
-                                     (if (/= h height)
-                                         (progn
-                                           (setf h height)
-                                           t)
-                                         nil)))
-                 :recalc recalc)
-  nil)
-
-(declaim (ftype (function ((or integer float keyword) (or integer float keyword) integer grid-layout &key (:recalc boolean)) null) column-size))
-(defun column-size (width height column object &key (recalc t))
-  "Set the width and height of an entire column within grid-layout."
-  (update-column column object #'(lambda (cell)
-                                   (let ((updated nil))
-                                     (with-slots ((h height) (w width)) cell
-                                       (when (/= w width)
-                                         (setf w width updated t))
-                                       (when (/= h height)
-                                         (setf h height updated t)))
-                                     updated))
-                 :recalc recalc)
-  nil)
-
-(declaim (ftype (function ((or integer float) integer grid-layout &key (:recalc boolean)) null) column-width))
-(defun column-width (width column object &key (recalc t))
-  "Set width of an entire column within grid-layout."
-  (update-column column object #'(lambda (cell)
-                                   (with-slots ((w width)) cell
-                                     (if (/= w width)
-                                         (progn
-                                           (setf w width)
-                                           t)
-                                         nil)))
-                 :recalc recalc)
-  nil)
-
+(declaim (ftype (function (integer integer grid-layout) layout-cell) grid-layout-cell))
 (defun grid-layout-cell (column row object)
   "Return LAYOUT-CELL for child of GRID-LAYOUT at COLUMN,ROW"
   
   (with-slots (columns cells) object
     (nth (+ (* row columns) column) cells)))
 
+(declaim (ftype (function (integer integer grid-layout) t) grid-layout-child))
 (defun grid-layout-child (column row object)
   "Return child object of GRID-LAYOUT at COLUMN,ROW"
 
   (with-slots (columns content) object
     (nth (+ (* row columns) column) content)))
 
+(declaim (ftype (function (integer grid-layout) list) grid-layout-column-cells))
+(defun grid-layout-column-cells (column object)
+  "Return all LAYOUT-CELL's for a column withn GRID-LAYOUT."
+
+  (with-local-slots (rows) object
+    (loop :for v :from 0 :below rows
+          :collect (grid-layout-cell column v object))))
+
+(declaim (ftype (function (grid-layout) null) grid-layout-reset-cells))
 (defun grid-layout-reset-cells (object)
   "Update CELLS of GRID-LAYOUT according to current COLUMNS and ROWS."
   
@@ -304,75 +238,174 @@ recalculates the sizes of the children that are affected by it."
                   (push (make-instance 'layout-cell :parent object) cells))))
           
           ;; Rest current cells
-          (mapc #'layout-cell-reset cells)))))
-
-(declaim (ftype (function ((or integer float) integer grid-layout &key (:recalc boolean)) null) row-height))
-(defun row-height (height row object &key (recalc t))
-  "Set the height of entire row within grid-layout."
-  
-  (update-row row object #'(lambda (cell)
-                             (with-slots ((h height)) cell
-                               (if (/= h height)
-                                   (progn
-                                     (setf h height)
-                                     t)
-                                   nil)))
-              :recalc recalc)
+          (mapc #'layout-cell-reset cells))))
   nil)
 
-(declaim (ftype (function ((or integer float keyword) (or integer float keyword) integer grid-layout &key (:recalc boolean)) null) row-size))
-(defun row-size (width height row object &key (recalc t))
-  "Set the width and height of entire row within grid-layout."
+(declaim (ftype (function (integer grid-layout) list) grid-layout-row-cells))
+(defun grid-layout-row-cells (row object)
+  "Return all LAYOUT-CELL's for a row within GRID-LAYOUT."
 
-  (update-row row object #'(lambda (cell)
-                             (let ((updated nil))
-                               (with-slots ((h height) (w width)) cell
-                                 (when (/= w width)
-                                   (setf w width updated t))
-                                 (when (/= h height)
-                                   (setf h height updated t)))
-                               updated))
-              :recalc recalc)
-  nil)
-
-(declaim (ftype (function ((or integer float keyword) integer grid-layout &key (:recalc boolean)) null) row-width))
-(defun row-width (width row object &key (recalc t))
-  "Set the width of entire row within grid-layout."
-  
-  (update-row row object #'(lambda (cell)
-                             (let ((updated nil))
-                               (when (/= (slot-value cell 'width) width)
-                                 (setf (slot-value cell 'width) width)
-                                 (setq updated t))
-                               updated))
-              :recalc recalc))
-
-(declaim (ftype (function (integer grid-layout (function (layout-cell) boolean) &key (:recalc boolean)) null) update-column))
-(defun update-column (column object func &key recalc)
-  (with-local-slots (rows) object
-    ;; Make list of affected cells
-    (let* ((cells (loop :for v :from 0 :below rows
-                        :collect (grid-layout-cell column v object)))
-           ;; Update them if needed
-           (updated (or (values-list (mapcar func cells)))))
-      ;; Force relayout if anything changed, was requested, and layout
-      ;; had already been done
-      (when (and recalc updated (slot-value object 'child-areas))
-        (setf (slot-value object 'child-areas) nil)
-        (calc-layout-child-areas object))))
-  nil)
-
-(declaim (ftype (function (integer grid-layout (function (layout-cell) boolean) &key (:recalc boolean)) null) update-row))
-(defun update-row (row object func &key recalc)
   (with-local-slots (columns) object
-    ;; Make list of affected cells
-    (let* ((cells (loop :for h :from 0 :below columns
-                        :collect (grid-layout-cell h row object)))
-           ;; Update them if needed
-           (updated (or (values-list (mapcar func cells)))))
-      ;; Force relayout if anything changed, was requested, and layout
-      ;; had already been done
-      (when (and recalc updated (slot-value object 'child-areas))
-        (setf (slot-value object 'child-areas) nil)
-        (calc-layout-child-areas object))))
+    (loop :for h :from 0 :below columns
+          :collect (grid-layout-cell h row object))))
+
+(declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-column-cells-set))
+(defun grid-layout-column-cells-set (value field-or-fields column object &key recalc)
+  "Update the slot(s) named in field-or-fields to value for all LAYOUT-CELL's in the
+specified row within the GRID-LAYOUT in object."
+
+  (let ((cells (grid-layout-column-cells column object)))
+    (if recalc
+        (let ((updated nil))
+          (mapc #'(lambda (cell)
+                    (if (atom field-or-fields)
+                        (unless (equal (slot-value cell field-or-fields) value)
+                          (setf (slot-value cell field-or-fields) value
+                                updated t))
+                        (mapc #'(lambda (field)
+                                  (unless (eql (slot-value cell field) value)
+                                    (setf (slot-value cell field) value
+                                          updated t)))
+                              field-or-fields)))
+                cells)
+          (when (and updated (slot-value object 'child-areas))
+            (setf (slot-value object 'child-areas) nil)
+            (calc-layout-child-areas object)))
+        
+        ;; Update the field(s)
+        (mapc #'(lambda (cell)
+                  ;; field or list of fields?
+                  (if (atom field-or-fields)
+                      ;; If the field is different
+                      (unless (equal (slot-value cell field-or-fields) value)
+                        (setf (slot-value cell field-or-fields) value))
+                      ;; Update all the fields
+                      (mapc #'(lambda (field)
+                                ;; If the field is different
+                                (unless (equal (slot-value cell field) value)
+                                  (setf (slot-value cell field) value)))
+                            field-or-fields)))
+              cells)))
   nil)
+
+(declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-row-cells-set))
+(defun grid-layout-row-cells-set (value field-or-fields row object &key recalc)
+  "Update the slots named in field-or-fields to value for all LAYOUT-CELL's in the
+specified column within the GRID-LAYOUT in object."
+  
+  (let ((cells (grid-layout-row-cells row object)))
+    (if recalc
+        (let ((updated nil))
+          (if (atom field-or-fields)
+              (mapc #'(lambda (cell)
+                        (unless (equal (slot-value cell field-or-fields) value)
+                          (setf (slot-value cell field-or-fields) value
+                                updated t)))
+                    cells)
+              (mapc #'(lambda (cell)
+                        (mapc #'(lambda (field)
+                                  (unless (equal (slot-value cell field) value)
+                                    (setf (slot-value cell field) value
+                                          updated t)))
+                              field-or-fields))
+                    cells))
+          (when (and updated (slot-value object 'child-areas))
+            (setf (slot-value object 'child-areas) nil)
+            (calc-layout-child-areas object)))
+        (if (atom field-or-fields)
+            (mapc #'(lambda (cell)
+                      (unless (equal (slot-value cell field-or-fields) value)
+                        (setf (slot-value cell field-or-fields) value)))
+                  cells)
+            (mapc #'(lambda (cell)
+                      (mapc #'(lambda (field)
+                                (unless (equal (slot-value cell field) value)
+                                  (setf (slot-value cell field) value)))
+                            field-or-fields))
+                  cells))))
+  nil)
+
+(declaim (ftype (function (T (or symbol list) integer integer grid-layout &key (:recalc boolean)) null) grid-layout-cell-set))
+(defun grid-layout-cell-set (value field-or-fields column row object &key recalc)
+  "Update the slots named in field-or-fields to value for the LAYOUT-CELL at
+column,row within the GRID-LAYOUT in object."
+  (if recalc
+      (let ((cell (grid-layout-cell column row object))
+            (updated nil))
+        (if (atom field-or-fields)
+            (unless (equal (slot-value cell field-or-fields) value)
+              (setf (slot-value cell field-or-fields) value
+                    updated t))
+            (mapc #'(lambda (field)
+                      (unless (equal (slot-value cell field) value)
+                        (setf (slot-value cell field) value
+                              updated t)))
+                  field-or-fields))
+        (when (and updated (slot-value object 'child-areas))
+          (setf (slot-value object 'child-areas) nil)
+          (calc-layout-child-areas object)))
+      (if (atom field-or-fields)
+          (setf (slot-value (grid-layout-cell column row object) field-or-fields) value)
+          (let ((cell (grid-layout-cell column row object))) 
+            (mapc #'(lambda (field)
+                      (unless (equal (slot-value cell field) value)
+                        (setf (slot-value cell field) value)))
+                  field-or-fields))))
+  nil)
+
+;; (defmethod (setf border-h) (value (object layout-cell))
+;;   )
+
+;; (defmethod (setf border-v) (value (object layout-cell))
+;;   )
+
+;; (defmethod (setf border) (value (object layout-cell))
+;;   )
+
+;; (defmethod (setf spacing-h) (value (object layout-cell))
+;;   )
+
+;; (defmethod (setf spacing-v) (value (object layout-cell))
+;;   )
+
+;; (defmethod (setf spacing) (value (object layout-cell))
+;;   )
+
+;; column-cells
+;; row-cells
+
+;; cell-
+;; column-
+;; row-
+
+;; (location left/top)
+;; (size width/height)
+
+;; left
+;; top
+;; width
+;; height
+;; border-left
+;; border-right
+;; border-top
+;; border-bottom
+;; border-v
+;; border-h
+;; border
+;; h-align
+;; padding
+;; padding-h
+;; padding-v
+;; padding-left
+;; padding-right
+;; padding-top
+;; padding-bottom
+;; spacing-top
+;; spacing-bottom
+;; spacing-left
+;; spacing-right
+;; spacing
+;; spacing-v
+;; spacing-h
+;; v-align
+
