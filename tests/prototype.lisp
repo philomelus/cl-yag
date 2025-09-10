@@ -15,8 +15,8 @@
         data
 
       ;; Test 1
-      ;; (setf w1 (deftests-window :standard 1))
-      (setf w1 (deftests-window :full 1))
+      (setf w1 (deftests-window :standard 1))
+      ;; (setf w1 (deftests-window :full 1))
       ;; (setf w1 (deftests-window :tall 1))
       ;; (setf w1 (deftests-window :wide 1))
       ;; (setf w1 (deftests-window :wide-tall 1))
@@ -71,8 +71,8 @@
                                         "<8>"))))
 
       ;; Rulers
-      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
-      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-full data)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
+      ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-full data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-tall data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data)))
       ;; (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide-tall data)))
