@@ -5,14 +5,21 @@
 ;;;; functions ================================================================
 
 (defun area (object)
+  "Return left, top, width, and height as mutliple values."
+  
   (assert (typep object 'area-mixin))
   (values (left object) (top object) (width object) (height object)))
 
 (defun area-rb (object)
+  "Return left, top, right, and bottom as multiple values."
+  
   (assert (typep object 'area-mixin))
   (values (left object) (top object) (right object) (bottom object)))
 
 (defun find-parent-area-mixin (object)
+  "Find first parent of OBJECT derived from parent-mixin. Generates error on
+failure."
+  
   (assert (typep object 'parent-mixin))
   (let ((p (parent object)))
     (loop
@@ -29,6 +36,18 @@
       ;; Get next parent
       (assert (typep p 'area-mixin))
       (setf p (parent p)))))
+
+(defun reset-area (object)
+  "Return layout of object to original state, allowing it to be
+relayed-out."
+
+  (macrolet ((update-value (dest src)
+               `(when (slot-value object ,src)
+                  (setf (slot-value object ,dest) (slot-value object ,src)))))
+    (update-value 'width 'width-calc)
+    (update-value 'height 'height-calc)
+    (update-value 'left 'left-calc)
+    (update-value 'top 'top-calc)))
 
 ;;;; area-mixin ===============================================================
 

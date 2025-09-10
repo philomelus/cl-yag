@@ -22,8 +22,7 @@ If object is an atom, and is a symbol, returns value of symbol.
 If object is list, and first item in list is object, returns it.
 If object is list, and first tiem is symbol, returns value of it."
   
-  (let ((lobject (gensym))
-        (cobject (gensym)))
+  (a:with-gensyms (lobject cobject)
     `(let ((,lobject ,object))
        (if (consp ,lobject)
            (let ((,cobject (first ,lobject)))
@@ -120,9 +119,7 @@ If object is list, and first tiem is symbol, returns value of it."
   "Return value of slot within object. If the value is nil, locate theme for
 object and return the slot value from it.  Field should be an accessor."
   
-  (let ((instance (gensym))
-        (value (gensym))
-        (theme (gensym)))
+  (a:with-gensyms (instance value theme)
     `(let* ((,instance ,obj)
             (,value (,field ,instance)))
        (when (eql ,value nil)
@@ -135,8 +132,7 @@ object and return the slot value from it.  Field should be an accessor."
   "Return value of slot within object.  If the value is nil, return slot value
 from theme. Field should be an accessor."
   
-  (let ((instance (gensym))
-        (value (gensym)))
+  (a:with-gensyms (instance value)
     `(let* ((,instance ,obj)
             (,value (,field ,instance)))
        (when (eql ,value nil)
@@ -147,10 +143,7 @@ from theme. Field should be an accessor."
 
 (defmacro with-area-border ((left top right bottom) object &body body)
   "Provide left, top, right, and bottom coordinates of object, removing border space."
-  (let ((bl (gensym))
-        (bt (gensym))
-        (br (gensym))
-        (bb (gensym)))
+  (a:with-gensyms (bl bt br bb)
     `(let ((,left (left ,object))
            (,top (top ,object))
            (,right (right ,object))
@@ -240,8 +233,7 @@ updated (changes are local only)."
   "Create local instances of theme related slots from object.  If the object's
 slot value is nil, locate the active theme for object and get the value from it."
   
-  (let ((instance (gensym))
-        (theme (gensym)))
+  (a:with-gensyms (instance theme)
     `(let ((,instance ,object))
        (let (,@(mapcar #'(lambda (f)
                            `(,(first f) (,(second f) ,instance)))
@@ -263,8 +255,7 @@ slot value is nil, locate the active theme for object and get the value from it.
   "Create local instances of theme related slots from object.  If the object's
 slot value is nil, use the slot from the theme."
   
-  (let ((instance (gensym))
-        (theme-obj (gensym)))
+  (a:with-gensyms (instance theme-obj)
     `(let ((,instance ,object))
        (let (,@(mapcar #'(lambda (f)
                            (if (atom f)
@@ -290,3 +281,21 @@ slot value is nil, use the slot from the theme."
                            `(assert (not (eql ,(first f) nil)))))
                    fields)
          ,@body))))
+
+(defmacro with-parent-area (name object &body body)
+  "Create binding NAME for first parent of OBJECT that is derived from
+area-mixin."
+  
+  (a:with-gensyms (instance)
+    `(let* ((,instance ,object)
+            (,name (find-parent-area-or-layout ,instance)))
+       ,@body)))
+
+(defmacro with-parent-content (name object &body body)
+  "Create binding NAME for first parent of OBJECT that is derived from
+content-mixin."
+  
+  (a:with-gensyms (instance)
+    `(let* ((,instance ,object)
+            (,name (find-parent-content object)))
+       ,@body)))

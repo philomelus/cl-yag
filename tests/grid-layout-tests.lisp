@@ -24,10 +24,13 @@
 
       ;; Test 1
       (setf t1-1 (deftext :title "Grid 1 1"))
-      (setf t1-2 (deftext :title "Grid 2 1"))
-      (setf t1-3 (deftext :title "Grid 1 2"))
-      (setf t1-4 (deftext :title "Grid 2 2"))
-      (setf gl1 (defgrid-layout :columns 2 :rows 2 :content (list t1-1 t1-2 t1-3 t1-4)))
+      (setf t1-2 (deftext :title "Grid 7 1"))
+      (setf t1-3 (deftext :title "Grid 1 4"))
+      (setf t1-4 (deftext :title "Grid 7 4"))
+      (setf gl1 (defgrid-layout :columns 7 :rows 4 :content (list t1-1 nil nil nil nil nil t1-2
+                                                                  nil nil nil nil nil nil nil
+                                                                  nil nil nil nil nil nil nil
+                                                                  t1-3 nil nil nil nil nil t1-4)))
       ;;(setf gl1 (defgrid-layout :columns 2 :rows 2))
       (setf w1 (deftests-window :wide-tall 1 :content (list gl1)))
       (push w1 widgets)
@@ -53,11 +56,11 @@
                                     (list "<1>"
                                           "<2>"
                                           "<3>"
-                                          "<4> - alternates theme-flat/theme-3d")
+                                          "<4>")
                                     (list "<5>"
                                           "<6>"
                                           "window interior red/default - <7>"
-                                          "<8>"))))
+                                          "alternates theme-flat/theme-3d - <8>"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide-tall data)))
@@ -66,19 +69,21 @@
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *grid-layout-data*)))
-  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
-  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
+  (let ((args (list (list 'eql data))))
+    (cleanup-method tests-command-7 args)
+    (cleanup-method tests-command-8 args))
   nil)
 
 (defmethod tests-ready ((grid-layout-data (eql *grid-layout-data*)))
-  (defmethod tests-command-4 ((data (eql grid-layout-data)))
-    (tests-toggle-theme data)
-    nil)
-  
   (defmethod tests-command-7 ((data (eql grid-layout-data)))
     (with-slots (w1 w2) data
       (tests-toggle-interior-color data (list w1 w2)))
     nil)
+  
+  (defmethod tests-command-8 ((data (eql grid-layout-data)))
+    (tests-toggle-theme data)
+    nil)
+  
   nil)
 
 (defun grid-layout-tests-main ()

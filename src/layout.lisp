@@ -57,6 +57,18 @@
         (on-paint co))))
   (my-next-method))
 
+;;;; layout-call ==============================================================
+
+(defclass layout-cell (area-mixin
+                       border-mixin
+                       h-align-mixin
+                       padding-mixin
+                       parent-mixin     ; Owning layout
+                       spacing-mixin
+                       v-align-mixin)
+  ())
+
+
 ;;;; functions ================================================================
 
 (defun area-allocated (object)
@@ -207,8 +219,27 @@ Generates error when no parent has content-mixin as a superclass."
         (error "no more parents, object not owned by content??? ~a" (print-raw-object object)))
       (setq parobj (parent parobj)))))
 
+(defun layout-cell-reset (object)
+  "Return LAYOUT-CELL slots to default state."
+  
+  (with-slots (left top width height
+               border-left border-right border-top border-bottom
+               h-align
+               padding-left padding-right padding-top padding-bottom
+               parent
+               spacing-left spacing-right spacing-top spacing-bottom
+               v-align)
+      object
+    (assert (eq parent object))
+    (setf left :auto top :auto width :auto height :auto)
+    (setf border-left nil border-right nil border-top nil border-bottom nil)
+    (setf h-align :none)
+    (setf padding-left 0 padding-right 0 padding-top 0 padding-bottom 0)
+    (setf spacing-left 0 spacing-right 0 spacing-top 0 spacing-bottom 0)
+    (setf v-align :none)))
+
 (defmethod validate-layout-base-options (object)
-  "Validate options for slots in LAYOUT-BASE.  Raises an error when invalid
+  "Validate options for slots in LAYOUT-BASE. Raises an error when invalid
 settings are detected."
   
   ;; Validate layout options
