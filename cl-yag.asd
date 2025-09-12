@@ -60,8 +60,9 @@
 
                              ;; Layouts
                              (:file "layout")
-                             (:file "column-layout" :depends-on ("layout"))
-                             (:file "grid-layout" :depends-on ("layout"))
+                             (:file "column-layout")
+                             (:file "grid-layout")
+                             (:file "row-layout")
 
                              ;; Interactive objects
                              (:file "box")

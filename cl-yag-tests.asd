@@ -25,6 +25,7 @@
                                            (:file "grid-tests" :depends-on ("api" "tests-main"))
                                            (:file "layout-tests" :depends-on ("api" "tests-main"))
                                            (:file "prototype" :depends-on ("api" "tests-main"))
+                                           (:file "row-layout-tests" :depends-on ("api" "tests-main"))
                                            (:file "ruler-tests" :depends-on ("api" "tests-main"))
                                            (:file "text-tests" :depends-on ("api" "tests-main"))
                                            (:file "window-tests" :depends-on ("api" "tests-main"))))
