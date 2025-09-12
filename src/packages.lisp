@@ -88,9 +88,13 @@
            #:grid-layout-cell
            #:grid-layout-cell-set
            #:grid-layout-child
+           #:grid-layout-column
            #:grid-layout-column-cells-set
+           #:grid-layout-row
            #:grid-layout-row-cells-set
+           #:height-type
            #:rows
+           #:width-type
            
            ;; ========== Mixins ==========
            ;; active

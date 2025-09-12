@@ -212,6 +212,28 @@ updated (changes are local only)."
                        slots))
          ,@body))))
 
+(defmacro with-local-slots-update ((&rest slots) instance &body body)
+  "Like with slots, but slots are cached locally until BODY exits, at which point
+the slots are updated from local cache. The point of this is that there are
+many times when one needs to perform a significant amount of manipulation of
+the slot value before the final new value is known. In those cases, there is
+no reason to perform slot access overhead over and over; Perform the
+manipulations on a local dynamic variable, then update the slot when complete,
+saving all the slot access overhead."
+
+  (let ((in (gensym)))
+    `(let ((,in ,instance))
+       (let (,@(mapcar #'(lambda (obj)
+                           (if (consp obj)
+                               `(,(first obj) (slot-value ,in ',(second obj)))
+                               `(,obj (slot-value ,in ',obj))))
+                       slots))
+         (unwind-protect (progn ,@body)
+           (progn
+             (setf ,@(mapc #'(lambda (obj)
+                               `(slot-value ,in ',(second obj)) `,(first obj))
+                           slots))))))))
+
 (defmacro with-theme ((&rest fields) theme-object &body body)
   "Create local instances of theme slots."
   (let ((instance (gensym)))
