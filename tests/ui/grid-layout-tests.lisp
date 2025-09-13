@@ -39,6 +39,8 @@
       (setf (height (grid-layout-row 4 gl1)) 25)
       (grid-layout-column-cells-set (defborder :thickness 5) 'border-right 0 gl1 :recalc nil)
       (grid-layout-column-cells-set (defborder :thickness 5) 'border-left 6 gl1 :recalc nil)
+      (grid-layout-row-cells-set (defborder :thickness 5) 'border-bottom 0 gl1 :recalc nil)
+      (grid-layout-row-cells-set (defborder :thickness 5) 'border-top 4 gl1 :recalc nil)
       
       ;;(setf gl1 (defgrid-layout :columns 2 :rows 2))
       (setf w1 (deftests-window :full 1 :content (list gl1)))
@@ -48,8 +50,8 @@
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1>"
-                                          "<2>"
+                                    (list "<1> top/middle/bottom"
+                                          "<2> left/center/right"
                                           "<3>"
                                           "<4>")
                                     (list "<5>"
@@ -65,11 +67,37 @@
 
 (defmethod tests-destroy ((data (eql *grid-layout-data*)))
   (let ((args (list (list 'eql data))))
+    (cleanup-method tests-command-1 args)
+    (cleanup-method tests-command-2 args)
     (cleanup-method tests-command-7 args)
     (cleanup-method tests-command-8 args))
   nil)
 
 (defmethod tests-ready ((grid-layout-data (eql *grid-layout-data*)))
+  (defmethod tests-command-1 ((data (eql grid-layout-data)))
+    (with-slots (t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) data
+      (mapc #'(lambda (obj)
+                (case (v-align obj)
+                  (:top
+                   (setf (v-align obj) :middle))
+                  (:middle
+                   (setf (v-align obj) :bottom))
+                  (:bottom
+                   (setf (v-align obj) :top))))
+            (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9))))
+
+  (defmethod tests-command-2 ((data (eql grid-layout-data)))
+    (with-slots (t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) data
+      (mapc #'(lambda (obj)
+                (case (h-align obj)
+                  (:left
+                   (setf (h-align obj) :center))
+                  (:center
+                   (setf (h-align obj) :right))
+                  (:right
+                   (setf (h-align obj) :left))))
+            (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9))))
+  
   (defmethod tests-command-7 ((data (eql grid-layout-data)))
     (with-slots (w1) data
       (tests-toggle-interior-color data (list w1)))

@@ -81,7 +81,7 @@
       (assert (equal value :auto))
       (when (not (slot-value object 'extra))
         (setf (slot-value object 'extra) t)
-        (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL")))
+        (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
     (progn
       (assert (typep value (values 'integer 'float)))
       ;; Set to absolute or percent?
@@ -92,14 +92,14 @@
             ;; Enable extra?
             (when (not (slot-value object 'extra))
               (setf (slot-value object 'extra) t)
-              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL")))
+              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
           (progn
             (setf (slot-value object 'height-type) :absolute)
             (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to ABSOLUTE")
             ;; Disable extra?
             (when (slot-value object 'extra)
               (setf (slot-value object 'extra) nil)
-              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T"))))))
+              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL"))))))
   (my-next-method))
 
 ;;; grid-layout -----------------------------------------------------
@@ -218,36 +218,63 @@ Note that children may use different sizes themselves, this is just the
 area allocated to them, whether they choose to use it or not."
   (declare (type grid-layout object))
   
-  (flet ((calc-col-width (width width-type avail-width total-width max-width col cols)
-           (if (typep width 'keyword)
-               (progn
-                 (assert (equal width :auto))
-                 (max (truncate (/ avail-width (- cols col)))
-                      max-width))
-               (progn
-                 (case width-type
-                   (:absolute
-                    width)
-                   (:percent
-                    (assert (<= width 1))
-                    (* avail-width width))
-                   (:percent-all
-                    (assert (<= width 1))
-                    (* total-width width))))))
+  (flet ((calc-col-width (data avail-width total-width max-width col cols)
+           (with-slots (width width-type) data
+             (if (typep width 'keyword)
+                 (progn
+                   (assert (equal width :auto))
+                   (max (truncate (/ avail-width (- cols col)))
+                        max-width))
+                 (progn
+                   (case width-type
+                     (:absolute
+                      width)
+                     (:percent
+                      (assert (<= width 1))
+                      (* avail-width width))
+                     (:percent-all
+                      (assert (<= width 1))
+                      (* total-width width)))))))
          
-         (calc-row-height (height height-type avail-height total-height max-height row rows)
-           (if (typep height 'keyword)
-               (progn
-                 (assert (equal height :auto))
-                 (max (truncate (/ avail-height (- rows row))) max-height))
-               (progn
-                 (case height-type
-                   (:absolute
-                    height)
-                   (:percent
-                    (* avail-height height))
-                   (:percent-all
-                    (* total-height height)))))))
+         (calc-row-height (data avail-height total-height max-height row rows)
+           (with-slots (height height-type) data
+             (if (typep height 'keyword)
+                 (progn
+                   (assert (equal height :auto))
+                   (max (truncate (/ avail-height (- rows row))) max-height))
+                 (progn
+                   (case height-type
+                     (:absolute
+                      height)
+                     (:percent
+                      (* avail-height height))
+                     (:percent-all
+                      (* total-height height)))))))
+         
+         (distribute (fields allowed amount count)
+           (assert (= (length fields) count))
+           (assert (= (length allowed) count))
+           (let ((amount-to-distribute amount)
+                 (edge1 -1)
+                 (results fields))
+
+             (loop :while (> amount-to-distribute 0) :do
+               ;; Update offset
+               (incf edge1)
+               (when (> edge1 count)
+                 (setq edge1 0))
+
+               ;; Give one away
+               (loop :for edge1-offset :from edge1 :below count :do
+                 (when (aref allowed edge1-offset)
+                   (when (> edge1-offset edge1)
+                     (setq edge1 edge1-offset))
+                   (v:debug :layout "[C-A-C-A] {distribute} edge 1 gave to ~d for ~d"
+                            edge1-offset (aref results edge1-offset))
+                   (incf (aref results edge1-offset))
+                   (decf amount-to-distribute)
+                   (return))))
+             results)))
     
     (with-slots (child-area column-data row-data) object
       (with-local-slots (columns rows) object
@@ -265,271 +292,166 @@ area allocated to them, whether they choose to use it or not."
                 (available-height object-height)
                 (current-left object-left)
                 (current-top object-top)
-                (cols-max-width (make-array columns :element-type 'float :initial-element 0.0))
-                (rows-max-height (make-array rows :element-type 'float :initial-element 0.0))
-                (cols-avail-width (make-array columns :element-type 'float :initial-element 0.0))
-                (rows-avail-height (make-array rows :element-type 'float :initial-element 0.0)))
+                (col-widths (make-array columns :element-type 'float :initial-element 0.0))
+                (row-heights (make-array rows :element-type 'float :initial-element 0.0))
+                )
 
-            ;; For each row
-            (loop :for v :from 0 :below rows :do
-
-              (v:info :layout "[c-l-c-a] {g-l} starting row ~d" v)
+            ;; Determine the max width and height of rows
+            (loop :for row :from 0 :below rows :do
+              (v:debug :layout "[c-l-c-a] {g-l} starting row ~d" row)
               
               ;; Make row data available
               (with-slots ((row-height height) (row-height-type height-type)
                            (row-h-align h-align) (row-v-align v-align))
-                  (aref (slot-value object 'row-data) v)
+                  (aref (slot-value object 'row-data) row)
 
                 ;; Reset column data
                 (setq available-width object-width)
                 (setq current-left object-left)
 
                 ;; For each column
-                (loop :for h :from 0 :below columns :do
-
-                  (v:info :layout "[c-l-c-a] {g-l} starting column ~d" h)
+                (loop :for col :from 0 :below columns :do
+                  (v:debug :layout "[c-l-c-a] {g-l} starting column ~d" col)
                   
                   ;; Make column data available
                   (with-slots ((column-width width) (column-width-type width-type)
                                (column-h-align h-align) (column-v-align v-align)
                                (column-extra extra))
-                      (aref (slot-value object 'column-data) h)
-
+                      (aref (slot-value object 'column-data) col)
                     (v:debug :layout "[c-l-c-a] {g-l} column-data: width:~a width-type:~a extra:~a h-align:~a v-align:~a"
                              column-width column-width-type column-extra column-h-align column-v-align)
                       
-                    ;; Make internal child area available
-                    (with-slots ((child-area-left left) (child-area-top top)
-                                 (child-area-width width) (child-area-height height))
-                        (aref child-area (+ (* v columns) h))
-
-                      (v:debug :layout "[c-l-c-a] {g-l} child ~d,~d (~d) starting (~d ~d) @ (~d ~d)"
-                               h v (+ (* v columns) h) child-area-width child-area-height
-                               child-area-left child-area-top)
+                    ;; Calculate width and height
+                    (let ((width (calc-col-width (aref column-data col) available-width object-width
+                                                 (aref col-widths col) col columns))
+                          (height (calc-row-height (aref row-data row) available-height object-height
+                                                   (aref row-heights row) row rows)))
                       
                       ;; Calculate internal child area width
-                      (setf child-area-width (calc-col-width column-width column-width-type available-width
-                                                             object-width (aref cols-max-width h) h columns))
-                      (assert (>= child-area-width 0))
-                      (v:debug :layout "[c-l-c-a] {g-l} column ~d calculated width:~d" h child-area-width)
-
-                      ;; Update columns max width if needed
-                      (when (> child-area-width (aref cols-max-width h))
-                        (v:debug :layout "[c-l-c-a] {g-l} column ~d new max width:~d" h child-area-width)
-                        (setf (aref cols-max-width h) child-area-width)
-                        
-                        ;; Update column available width
-                        (assert (>= (- available-width child-area-width) (aref cols-avail-width h)))
-                        (v:debug :layout "[c-l-c-a] {g-l} column ~d available width:~d"
-                                 h (- available-width child-area-width))
-                        (setf (aref cols-avail-width h) (- available-width child-area-width)))
+                      (assert (>= width 0))
+                      (assert (>= height 0))
+                      (v:debug :layout "[c-l-c-a] {g-l} column ~d calculated width:~d height:" col width height)
                       
-                      ;; Calculate internal child area height
-                      (setf child-area-height (calc-row-height row-height row-height-type available-height
-                                                               object-height (aref rows-max-height v) v rows))
-                      (assert (>= child-area-height 0))
-                      (v:debug :layout "[c-l-c-a] {g-l} column ~d calculated height:~d" h child-area-height)
+                      ;; Update max column width if needed
+                      (when (> width (aref col-widths col))
+                        (v:debug :layout "[c-l-c-a] {g-l} column ~d new max width:~d" col width)
+                        (setf (aref col-widths col) width))
 
-                      ;; Update rows max height if needed
-                      (when (> child-area-height (aref rows-max-height v))
-                        (v:info :layout "[c-l-c-a] {g-l} row ~d new max height:~d" v child-area-height)
-                        (setf (aref rows-max-height v) child-area-height)
+                      ;; Update max row height if needed
+                      (when (> height (aref row-heights row))
+                        (v:info :layout "[c-l-c-a] {g-l} row ~d new max height:~d" row height)
+                        (setf (aref row-heights row) height))
 
-                        ;; Update row available height
-                        (assert (>= (- available-height child-area-height) (aref rows-avail-height v)))
-                        (v:info :layout "[c-l-c-a] {g-l} row ~d available height:~d"
-                                v (- available-height child-area-height))
-                        (setf (aref rows-avail-height v) (- available-height child-area-height)))
-                      
-                      ;; Calculate internal child area left
-                      (setf child-area-left current-left)
-                      (v:debug :layout "[c-l-c-a] {g-l} column ~d calculated left:~d" h child-area-left)
-                      
-                      ;; Calculate internal child area top
-                      (setf child-area-top current-top)
-                      (v:info :layout "[c-l-c-a] {g-l} column ~d calculated top:~d" h child-area-top)
-
-                      (v:info :layout "[c-l-c-a] {g-l} child ~d,~d (~d) calculated (~d ~d) @ (~d ~d)"
-                              h v (+ (* v columns) h) child-area-width child-area-height
-                              child-area-left child-area-top)
-
-                      ;; Update horizontal position in this row
-                      (decf available-width child-area-width)
-                      (incf current-left child-area-width))))
-
-                ;; Is there any left over horizontal?
-                (let ((row-width 0))
-                  (loop :for val-col :from 0 :below columns :do
-                    (incf row-width (width (aref child-area val-col))))
-
-                  ;; Yes, so distribute it evenly as possible
-                  (when (< row-width object-width)
-                    (v:debug :layout "[c-l-c-a] {g-l} row ~d has ~d left over" v (- object-width row-width))
-
-                    ;; Make sure there is at least on column that can accept extra
-                    (let ((has-extra nil))
-                      (loop :for col :from 0 :below columns :do
-                        (when (extra (aref column-data col))
-                          (setf has-extra t)
-                          (return)))
-                      (unless has-extra
-                        (error "not all width used, but no columns accept extra")))
-                    
-                    ;; Distribute extra from both sides until used up
-                    (let ((row-offset (* v columns))
-                          (amount-to-distribute (- object-width row-width))
-                          (middle-offset (round (/ columns 2)))
-                          (edge1 -1)
-                          (edge2 columns))
-
-                      (loop :while (> amount-to-distribute 0) :do
-                        ;; Update left edge
-                        (incf edge1)
-                        (when (> edge1 middle-offset)
-                          (setq edge1 0))
-
-                        ;; Update right edge
-                        (decf edge2)
-                        (when (< edge2 middle-offset)
-                          (setq edge2 (1- columns)))
-                       
-                        ;; Give one to a column on the left if possible
-                        (loop :for edge1-offset :from edge1 :below middle-offset :do
-                          (when (extra (aref column-data edge1-offset))
-                            (let ((col-offset (+ row-offset edge1-offset)))
-                              (v:debug :layout "[c-l-c-a] {g-l} column ~d adjusted ~d to ~d" edge1-offset
-                                       (width (aref child-area col-offset))
-                                       (1+ (width (aref child-area col-offset))))
-                              (incf (width (aref child-area col-offset)))
-                              (decf amount-to-distribute)
-                              (return))))
-                        
-                        ;; If still have some to give away
-                        (when (> amount-to-distribute 0)
-                          ;; Give one away to the column on the right
-                          (loop :for edge2-offset :from edge2 :downto middle-offset :do
-                            (when (extra (aref column-data edge2-offset))
-                              (let ((col-offset (+ row-offset edge2-offset)))
-                                (v:debug :layout "[c-l-c-a] {g-l} column ~d adjusted ~d to ~d" edge2-offset
-                                         (width (aref child-area col-offset))
-                                         (1+ (width (aref child-area col-offset))))                                
-                                (incf (width (aref child-area (+ row-offset edge2-offset))))
-                                (decf amount-to-distribute)
-                                (return))))))
-
-                      ;; Recalculate the lefts
-                      (let ((new-left object-left)
-                            (new-total 0))
-                        (loop :for col :from 0 :below columns :do
-                          (with-local-slots (left width) (aref child-area (+ row-offset col))
-                            (unless (= left new-left)
-                              (v:debug :layout "[c-l-c-a] {g-l} column ~d updated from ~d to ~d" col left new-left)
-                              (setf (left (aref child-area (+ row-offset col))) new-left))
-                            (incf new-left width)
-                            (incf new-total width)))
-                        (assert (= new-total object-width)))
-                      
-                      ;; Update max column widths and available
-                      (let ((avail-width object-width))
-                        (loop :for col :from 0 :below columns :do
-                          (with-slots (width) (aref child-area (+ row-offset col))
-                            (when (> width (aref cols-max-width col))
-                              (setf (aref cols-max-width col) width)
-                              (v:debug :layout "[c-l-c-a] {g-l} column ~d new max width:~d" col width)
-                              (when (< (aref cols-avail-width col) (- avail-width width))
-                                (setf (aref cols-avail-width col) (- avail-width width))
-                                (v:debug :layout "[c-l-c-a] {g-l} column ~d available width:~d"
-                                         col (aref cols-avail-width col))))
-                            (decf avail-width (width (aref child-area (+ row-offset col))))))))))
+                      ;; Update horizontal position
+                      (decf available-width width)
+                      (incf current-left width))))
 
                 ;; Update vertical position
-                (let ((this-row-height (aref rows-max-height v)))
+                (let ((this-row-height (aref row-heights row)))
                   (decf available-height this-row-height)
-                  (incf current-top this-row-height)))
-                  )
-
-            ;; Is there any left over vertical space?
+                  (incf current-top this-row-height))))
             
+            ;; Calculate total width used
+            (let ((row-width 0))
+              (loop :for col :from 0 :below columns :do
+                (incf row-width (aref col-widths col)))
 
-            ;; Sanity check: All columns on all rows should have same width,
-            ;; all rows should have same height
-            (let ((row-offset 0))
+              ;; Is it less than available?
+              (when (< row-width object-width)
+                (v:debug :layout "[c-l-c-a] {g-l} left over horizontal ~d" (- object-width row-width))
+
+                ;; Yes, make sure there is at least on column that can accept extra
+                (let ((has-extra nil))
+                  (loop :for col :from 0 :below columns :do
+                    (when (extra (aref column-data col))
+                      (setf has-extra t)
+                      (return)))
+                  (unless has-extra
+                    (error "not all width used, but no columns accept extra")))
+                    
+                ;; Distribute extra from both sides until used up
+                (let ((allowed-list (loop :for col :from 0 :below columns
+                                          :collect (extra (aref column-data col)))))
+                  (let ((allowed (make-array columns :initial-contents allowed-list)))
+                    (setf col-widths (distribute col-widths allowed (- object-width row-width) columns))))))
+            (v:info :layout "[C-L-C-A] {G-L} columns widths: ~a" col-widths)
+
+            ;; Calculate total height used
+            (let ((row-height 0))
               (loop :for row :from 0 :below rows :do
-                (setq row-offset (* row columns))
+                (incf row-height (aref row-heights row)))
+              
+              ;; Is there any left over vertical space?
+              (when (< row-height object-height)
+                (v:info :layout "[C-L-C-A] {G-L} left over vertical ~d" (- object-height row-height))
+
+                ;; Yes, make sure there is a least one row that accepts extra
+                (let ((has-extra nil))
+                  (loop :for row :from 0 :below rows :do
+                    (when (extra (aref row-data row))
+                      (setf has-extra t)
+                      (return)))
+                  (unless has-extra
+                    (error "not all height used, but no rows accept extra")))
+
+                ;; Distribute extra from both ends until used up
+                (let ((allowed-list (loop :for row :from 0 :below rows
+                                          :collect (extra (aref row-data row)))))
+                  (let ((allowed (make-array rows :initial-contents allowed-list)))
+                    (setf row-heights (distribute row-heights allowed (- object-height row-height) rows))))))
+            (v:info :layout "[C-L-C-A] {G-L} row heights: ~a" row-heights)
+            
+            (let ((col-avail-widths (make-array columns :element-type 'float :initial-element 0.0))
+                  (row-avail-heights (make-array rows :element-type 'float :initial-element 0.0))
+                  (avail-width object-width)
+                  (avail-height object-height)
+                  (row-width 0)
+                  (row-height 0))
+              ;; Predetermine available widths
+              (loop :for col :from 0 :below columns :do
+                (incf row-width (aref col-widths col))
+                (decf avail-width (aref col-widths col))
+                (setf (aref col-avail-widths col) avail-width))
+              ;; Predetermine available heights
+              (loop :for row :from 0 :below rows :do
+                (incf row-height (aref row-heights row))
+                (decf avail-height (aref row-heights row))
+                (setf (aref row-avail-heights row) avail-height))
+              
+              ;; Sanity check
+              (assert (= row-width object-width))
+              (assert (= row-height object-height))
+
+              ;; Pass 2, assign locations to all children
+              (loop :for row :from 0 :below rows :do
                 (loop :for col :from 0 :below columns :do
-                  (when (/= (aref cols-max-width col) (width (aref child-area (+ row-offset col))))
-                    (error "mismatched column width: ~d,~d (~d) expected ~d, got ~d"
-                           col row (+ row-offset col) (width (aref child-area (+ row-offset col)))
-                           (aref cols-max-width col)))
-                  (when (/= (aref rows-max-height row) (height (aref child-area (+ row-offset col))))
-                    (error "mismatched row height: ~d,~d (~d) expected ~d, got ~d"
-                           col row (+ row-offset col) (height (aref child-area (+ row-offset col)))
-                           (aref rows-max-height row))))))
-            )
-          )
-      
-        ;; ;; Determine base sizes and amount to distribute
-        ;; (with-local-accessors (left top width height) object
-        ;;   (let ((base-width (truncate (/ width columns)))
-        ;;         (width-adjust (truncate (mod width columns)))
-        ;;         (base-height (truncate (/ height rows)))
-        ;;         (height-adjust (truncate (mod height rows))))
-        ;;     (declare (type integer base-width width-adjust base-height height-adjust))
-        ;;     (assert (< width-adjust columns))
-        ;;     (assert (>= width-adjust 0))
-        ;;     (assert (< height-adjust rows))
-        ;;     (assert (>= height-adjust 0))
-          
-        ;;     ;; Set initial child areas
-        ;;     (loop :for v :from 0 :below rows :do
-        ;;       (loop :for h :from 0 :below columns :do
-        ;;         (let ((array-offset (+ (* v columns) h)))
-        ;;           (setf (aref child-area array-offset)
-        ;;                 (make-instance '%rect :left (+ left (* h base-width))
-        ;;                                       :top (+ top (* v base-height))
-        ;;                                       :width base-width
-        ;;                                       :height base-height)))))
-          
-        ;;     ;; Distribute extra horizontal space
-        ;;     ;; Odd to middlest column
-        ;;     ;; Then rest to first and last columns moving inside until all extra used up
-        ;;     (when (and (> width-adjust 0)
-        ;;                (oddp width-adjust))
-        ;;       (let ((col (truncate (/ columns 2))))
-        ;;         (loop :for v :from 0 :below rows :do
-        ;;           (incf (width (aref child-area (+ (* v columns) col)))))
-        ;;         (decf width-adjust)))
-        ;;     (assert (evenp width-adjust))
-        ;;     (when (> width-adjust 0)
-        ;;       (do ((first 0 (incf first))
-        ;;            (last (1- columns) (decf last)))
-        ;;           ((= width-adjust 0))
-        ;;         (loop :for v :from 0 :below rows :do
-        ;;           (let ((first-offset (+ (* v columns) first))
-        ;;                 (last-offset (+ (* v columns) last)))
-        ;;             (incf (width (aref child-area first-offset)))
-        ;;             (incf (width (aref child-area last-offset)))))
-        ;;         (decf width-adjust 2)))
-          
-        ;;     ;; Distribute extra vertical space
-        ;;     ;; Odd to middlest row
-        ;;     ;; Then rest to top and bottom rows moving inside until all extra used up
-        ;;     (when (and (> height-adjust 0)
-        ;;                (oddp height-adjust))
-        ;;       (let ((row-offset (* (truncate (/ rows 2)) columns)))
-        ;;         (loop :for h :from 0 :below columns :do
-        ;;           (incf (height (aref child-area (+ row-offset h)))))
-        ;;         (decf height-adjust)))
-        ;;     (assert (evenp height-adjust))
-        ;;     (when (> height-adjust 0)
-        ;;       (do ((first 0 (incf first))
-        ;;            (last (1- rows) (decf last)))
-        ;;           ((> height-adjust 0))
-        ;;         (loop :for h :from 0 :below columns :do
-        ;;           (incf (height (aref child-area (+ (* first columns) h))))
-        ;;           (incf (height (aref child-area (+ (* last columns) h)))))
-        ;;         (decf height-adjust 2)))))
+                  (with-slots (left top width height) (aref child-area (+ (* row columns) col))
+                    (setf width (aref col-widths col))
+                    (setf height (aref row-heights row))
+                    (if (> col 0)
+                        (setf left (+ (- object-width (aref col-avail-widths (1- col))) object-left))
+                        (setf left object-left))
+                    (if (> row 0)
+                        (setf top (+ (- object-height (aref row-avail-heights (1- row))) object-left))
+                        (setf top object-top))))))))
+
+        ;; Pass 3, let children adjust themselves
+        ;; (let (child)
+        ;;   (loop :for row :from 0 :below rows :do
+        ;;     (loop :for col :from 0 :below columns :do
+        ;;       (setq child (grid-layout-child col row object))
+        ;;       (unless (equal child nil)
+        ;;         (with-slots (left top width height) child
+        ;;           (when (typep width 'keyword)
+        ;;             (setf width (calc-width width (aref child-area (+ (* row columns) col)) child)))
+        ;;           (when (typep height 'keyword)
+        ;;             (setf height (calc-height height (aref child-area (+ (* row columns) col)) child)))
+        ;;           (when (typep left 'keyword)
+        ;;             (setf left (calc-left left (aref child-area (+ (* row columns) col)) child)))
+        ;;           (when (typep top 'keyword)
+        ;;             (setf top (calc-width top (aref child-area (+ (* row columns) col)) child))))))))
         )))
+
 
   ;; Log the children internal areas
   (with-slots (child-area) object
@@ -540,8 +462,7 @@ area allocated to them, whether they choose to use it or not."
             (v:info :layout "[c-l-c-a] {g-l} child ~d,~d (~d) internal area (~d ~d) @ (~d ~d)"
                     col row array-offset
                     (width (aref child-area array-offset)) (height (aref child-area array-offset))
-                    (left (aref child-area array-offset)) (top (aref child-area array-offset))))))))
-  )
+                    (left (aref child-area array-offset)) (top (aref child-area array-offset)))))))))
 
 (defmethod on-paint ((object grid-layout) &key &allow-other-keys)
   ;; Make sure we have layout complete

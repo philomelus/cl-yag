@@ -158,10 +158,11 @@ Returns nil if not found."
     (with-slots (content) object
       (dotimes (n (length (content object)))
         (let ((child (nth n content)))
-          (v:debug :layout "~achild ~d area (~d ~d) @ (~d ~d)~%" (concatenate 'string indent "  ") n
-                  (slot-value child 'width) (slot-value child 'height) (slot-value child 'left) (slot-value child 'top))
-          (when (typep child 'layout-base)
-            (dump-layout child (concatenate 'string indent "  "))))))))
+          (unless (equal child nil)
+            (v:info :layout "~achild ~d area (~d ~d) @ (~d ~d)~%" (concatenate 'string indent "  ") n
+                     (slot-value child 'width) (slot-value child 'height) (slot-value child 'left) (slot-value child 'top))
+            (when (typep child 'layout-base)
+              (dump-layout child (concatenate 'string indent "  ")))))))))
 
 (defun find-parent-area-or-layout (object &key (exclude nil excludep))
   "Locate first parent that either has area or is has layout-base as a superclass.
