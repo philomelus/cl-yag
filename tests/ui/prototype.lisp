@@ -81,8 +81,9 @@
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *prototype-data*)))
-  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
-  (remove-method #'tests-command-8 (find-method #'tests-command-8 () (list (list 'eql data))))
+  (let ((args `((eql ,data))))
+    (cleanup-method tests-command-7 args)
+    (cleanup-method tests-command-8 args))
   nil)
 
 (defmethod tests-ready ((prototype-data (eql *prototype-data*)))
