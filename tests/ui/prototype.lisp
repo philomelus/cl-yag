@@ -64,11 +64,11 @@
                                   (list "<1>"
                                         "<2>"
                                         "<3>"
-                                        "<4> - alternates theme-flat/theme-3d")
+                                        "<4>")
                                   (list "<5>"
                                         "<6>"
                                         "window interior red/default - <7>"
-                                        "<8>"))))
+                                        "theme-flat/theme-3d - <8>"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
@@ -81,18 +81,18 @@
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *prototype-data*)))
-  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
   (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
+  (remove-method #'tests-command-8 (find-method #'tests-command-8 () (list (list 'eql data))))
   nil)
 
 (defmethod tests-ready ((prototype-data (eql *prototype-data*)))
-  (defmethod tests-command-4 ((data (eql prototype-data)))
-    (tests-toggle-theme data)
-    nil)
-  
   (defmethod tests-command-7 ((data (eql prototype-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
       (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
+    nil)
+  
+  (defmethod tests-command-8 ((data (eql prototype-data)))
+    (tests-toggle-theme data)
     nil)
   nil)
 
