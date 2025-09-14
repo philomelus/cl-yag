@@ -155,7 +155,7 @@
 ;;; methods ---------------------------------------------------------
 
 (defmethod calc-area (child (parent grid-layout) &key)
-  (v:info :layout "[calc-area] {grid-layout} called with child ~a" (print-raw-object child))
+  (v:debug :layout "[calc-area] {grid-layout} called with child ~a" (print-raw-object child))
   
   ;; Calculate parent area if needed
   (calc-layout-area parent)
@@ -173,7 +173,7 @@
       
         (with-slots ((cl left) (ct top) (cw width) (ch height)) child
 
-          (v:info :layout "[calc-area] {grid-layout} child ~d calculating (~a ~a) @ (~a ~a) ~a"
+          (v:debug :layout "[calc-area] {grid-layout} child ~d calculating (~a ~a) @ (~a ~a) ~a"
                    cp cw ch cl ct (print-raw-object child))
 
           ;; Let object calculate its area, tracking who was calculated
@@ -201,14 +201,14 @@
                 (when (or (not (or clp ctp cwp chp)) ; not calculated?
                           (> (length options) 0))    ; has options?
                   (with-local-slots ((lcl left) (lct top) (lcw width) (lch height)) (aref child-area cp)
-                    (v:info :layout "[calc-area] {grid-layout} child ~d internal area (~d ~d) @ (~d ~d) ~a"
+                    (v:debug :layout "[calc-area] {grid-layout} child ~d internal area (~d ~d) @ (~d ~d) ~a"
                              cp lcw lch lcl lct (print-raw-object child)))
                   ;; Let update validate child
                   (break)
                   (update-layout-child-areas cp parent)))
 
               ;; Log updated/changed area
-              (v:info :layout "[calc-area] {grid-layout} child ~d area (~d ~d) @ (~d ~d) ~a"
+              (v:debug :layout "[calc-area] {grid-layout} child ~d area (~d ~d) @ (~d ~d) ~a"
                       cp cw ch cl ct (print-raw-object child))))))))
   (my-next-method))
 
@@ -339,7 +339,7 @@ area allocated to them, whether they choose to use it or not."
 
                       ;; Update max row height if needed
                       (when (> height (aref row-heights row))
-                        (v:info :layout "[c-l-c-a] {g-l} row ~d new max height:~d" row height)
+                        (v:debug :layout "[c-l-c-a] {g-l} row ~d new max height:~d" row height)
                         (setf (aref row-heights row) height))
 
                       ;; Update horizontal position
@@ -374,7 +374,7 @@ area allocated to them, whether they choose to use it or not."
                                           :collect (extra (aref column-data col)))))
                   (let ((allowed (make-array columns :initial-contents allowed-list)))
                     (setf col-widths (distribute col-widths allowed (- object-width row-width) columns))))))
-            (v:info :layout "[C-L-C-A] {G-L} columns widths: ~a" col-widths)
+            (v:debug :layout "[C-L-C-A] {G-L} columns widths: ~a" col-widths)
 
             ;; Calculate total height used
             (let ((row-height 0))
@@ -383,7 +383,7 @@ area allocated to them, whether they choose to use it or not."
               
               ;; Is there any left over vertical space?
               (when (< row-height object-height)
-                (v:info :layout "[C-L-C-A] {G-L} left over vertical ~d" (- object-height row-height))
+                (v:debug :layout "[C-L-C-A] {G-L} left over vertical ~d" (- object-height row-height))
 
                 ;; Yes, make sure there is a least one row that accepts extra
                 (let ((has-extra nil))
@@ -399,7 +399,7 @@ area allocated to them, whether they choose to use it or not."
                                           :collect (extra (aref row-data row)))))
                   (let ((allowed (make-array rows :initial-contents allowed-list)))
                     (setf row-heights (distribute row-heights allowed (- object-height row-height) rows))))))
-            (v:info :layout "[C-L-C-A] {G-L} row heights: ~a" row-heights)
+            (v:debug :layout "[C-L-C-A] {G-L} row heights: ~a" row-heights)
             
             (let ((col-avail-widths (make-array columns :element-type 'float :initial-element 0.0))
                   (row-avail-heights (make-array rows :element-type 'float :initial-element 0.0))
@@ -459,7 +459,7 @@ area allocated to them, whether they choose to use it or not."
       (loop :for row :from 0 :below rows :do
         (loop :for col :from 0 :below columns :do
           (let ((array-offset (+ (* row columns) col)))
-            (v:info :layout "[c-l-c-a] {g-l} child ~d,~d (~d) internal area (~d ~d) @ (~d ~d)"
+            (v:debug :layout "[c-l-c-a] {g-l} child ~d,~d (~d) internal area (~d ~d) @ (~d ~d)"
                     col row array-offset
                     (width (aref child-area array-offset)) (height (aref child-area array-offset))
                     (left (aref child-area array-offset)) (top (aref child-area array-offset)))))))))
@@ -467,7 +467,7 @@ area allocated to them, whether they choose to use it or not."
 (defmethod on-paint ((object grid-layout) &key &allow-other-keys)
   ;; Make sure we have layout complete
   (when (eql (slot-value object 'child-area) nil)
-    (v:info :layout "[on-paint] {grid-layut} Forcing layout ~a" (print-raw-object object))
+    (v:debug :layout "[on-paint] {grid-layut} Forcing layout ~a" (print-raw-object object))
     (calc-layout-area object)
     (calc-layout-child-areas object))
 
