@@ -105,9 +105,13 @@
 (defun color-r (color)
   (first (color2list color)))
 
-(defun print-color (color &optional (stream nil))
+(defun print-color (color &key (stream nil) (byte nil))
   (assert (not (eq nil color)))
-  (format stream "al:map-rgba-f ~d ~d ~d ~d" (color-r color) (color-g color) (color-b color) (color-a color)))
+  (if byte
+      (multiple-value-bind (r g b a) (unmap-rgba color)
+        (format stream "al:map-rgba ~d ~d ~d ~d" r g b a))
+      (multiple-value-bind (r g b a) (unmap-rgba-f color)
+       (format stream "al:map-rgba-f ~f ~f ~f ~f" r g b a))))
 
 ;;;; function wrappers ========================================================
 
@@ -173,8 +177,16 @@
             (cffi:mem-ref y :int)
             (cffi:mem-ref w :int)
             (cffi:mem-ref h :int))))
-    
+
 (defun unmap-rgba (c)
+  (cffi:with-foreign-objects ((r :uchar) (g :uchar) (b :uchar) (a :uchar))
+    (al:unmap-rgba c r g b a)
+    (values (cffi:mem-ref r :uchar)
+            (cffi:mem-ref g :uchar)
+            (cffi:mem-ref b :uchar)
+            (cffi:mem-ref a :uchar))))
+
+(defun unmap-rgba-f (c)
   (cffi:with-foreign-objects ((r :float) (g :float) (b :float) (a :float))
     (al:unmap-rgba-f c r g b a)
     (values (cffi:mem-ref r :float)

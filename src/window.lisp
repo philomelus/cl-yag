@@ -21,7 +21,8 @@
                   border-mixin
                   content-mixin
                   parent-mixin
-                  padding-mixin)
+                  padding-mixin
+                  spacing-mixin)
   ())
 
 (defmacro defwindow (l top w h &rest rest &key &allow-other-keys)
@@ -31,50 +32,47 @@
 
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
-    (when (on-char key mods child)
-      (return-from on-char t)))
+    (unless (eql child nil)
+      (when (on-char key mods child)
+        (return-from on-char t))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj window) &key)
   (dolist (child (content obj))
-    (if (on-mouse-down x y b child)
-        (return-from on-mouse-down t)))
+    (unless (eql child nil)
+      (if (on-mouse-down x y b child)
+          (return-from on-mouse-down t))))
   nil)
 
 (defmethod on-mouse-move (x y dx dy (obj window) &key)
   (dolist (child (content obj))
-    (if (on-mouse-move x y dx dy child)
-        (return t)))
+    (unless (eql child nil)
+      (if (on-mouse-move x y dx dy child)
+          (return t))))
   nil)
 
 (defmethod on-mouse-up (x y b (obj window) &key)
   (dolist (child (content obj))
-    (if (on-mouse-up x y b child)
-        (return t)))
+    (unless (eql child nil)
+      (if (on-mouse-up x y b child)
+          (return t))))
   nil)
 
 (defmethod on-paint ((obj window) &key)
-  (with-slots (content left top) obj
+  ;; Fill interior if desired
+  (with-object-or-theme ((ic interior-color)) obj
+    (with-area-and-spacing (le to ri bo) obj
+      (al:draw-filled-rectangle le to ri bo ic)))
     
-    ;; Fill interior if desired
-    (with-object-or-theme ((ic interior-color)) obj
-      (with-area-border (le to ri bo) obj
-        (al:draw-filled-rectangle le to ri bo ic)))
-    
-    ;; Draw border
-    (paint-border obj (find-theme obj))
-    
-    ;; Let children paint
+  ;; Draw border
+  (paint-border obj (find-theme obj))
+
+  ;; Paint children
+  (with-slots (content) obj
     (let ((children content))
       (dolist (c children)
-        (on-paint c))))
+        (unless (eql c nil)
+          (on-paint c)))))
 
   (my-next-method))
-
-(defmethod (setf theme) ((theme window-theme-mixin) (object window))
-  (with-slots ((i interior-color) (fc fore-color) (bc back-color))
-      theme
-    (setf (interior-color object) i)
-    (setf (back-color object) bc)
-    (setf (fore-color object) fc)))
 

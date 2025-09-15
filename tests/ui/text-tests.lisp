@@ -4,128 +4,184 @@
 
 (defstruct (text-tests-data (:include tests-data)
                             (:conc-name text-tests-))
-  a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12
-  b1 b2 b3
-  cl1 cl2 cl3 cl4 cl5
-  t1 t2 t3
-  w1 w2 w3 w4
+  a11 a12 a13 b1 cl1
+  a21 a22 a23 t2 cl2
+  a31 a32 a33 t3 cl31 cl32
+  a41 a42 a43 t4 b41 b42 cl4
+  t5 b5 cl5
+  a5
+  w1 w2 w3 w4 w5 w6
   )
 
 (defparameter *text-data* (make-text-tests-data))
 
 (defmethod tests-create ((data (eql *text-data*)))
   (let (widgets)
-    (with-slots (manager
-                 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12
-                 b1 b2 b3
-                 cl1 cl2 cl3 cl4 cl5
-                 t1 t2 t3
-                 w1 w2 w3 w4
-                 iw1 iw2)
+    (with-slots (manager w1 w2 w3 w4 w5 w6
+                 a11 a12 a13 b1 cl1
+                 a21 a22 a23 t2 cl2
+                 a31 a32 a33 t3 cl31 cl32
+                 a41 a42 a43 b41 b42 t4 cl4
+                 t5 b5 x1 cl5)
         data
 
       ;; Test 1
-      (setf a1 (defactive-text :title "T 1 / O 1" :h-align :center :v-align :middle))
-      (setf a2 (defactive-text :title "T 1 / O 2" :h-align :center :v-align :middle))
-      (setf a3 (defactive-text :title "T 1 / O 3" :h-align :center :v-align :middle))
-      (setf cl1 (defcolumn-layout :content (list a1 a2 a3)))
+      (setf a11 (defactive-text :title "T 1 / O 1" :h-align :center :v-align :middle))
+      (setf a12 (defactive-text :title "T 1 / O 2" :h-align :center :v-align :middle))
+      (setf a13 (defactive-text :title "T 1 / O 3" :h-align :center :v-align :middle))
+      (setf cl1 (defcolumn-layout :content (list a11 a12 a13)))
       (setf w1 (deftests-window :standard 1 :content (list cl1)))
       (push w1 widgets)
       
       ;; Test 2
-      (setf t1 (deftext :title "T 2 Title" :h-align :center :height :auto-min))
-      (setf a4 (defactive-text :title "T 2 / O 1" :h-align :center :v-align :middle))
-      (setf a5 (defactive-text :title "T 2 / O 2" :h-align :center :v-align :middle))
-      (setf a6 (defactive-text :title "T 2 / O 3" :h-align :center :v-align :middle))
-      (setf cl2 (defcolumn-layout :content (list (list t1 :min-height) a4 a5 a6)))
+      (setf t2 (deftext :title "T 2 Title" :h-align :center :height :auto-min))
+      (setf a21 (defactive-text :title "T 2 / O 1" :h-align :center :v-align :middle))
+      (setf a22 (defactive-text :title "T 2 / O 2" :h-align :center :v-align :middle))
+      (setf a23 (defactive-text :title "T 2 / O 3" :h-align :center :v-align :middle))
+      (setf cl2 (defcolumn-layout :content (list (list t2 :min-height) a21 a22 a23)))
       (setf w2 (deftests-window :standard 2 :content (list cl2)))
       (push w2 widgets)
       
       ;; Test 3
       (setf b1 (defborder :thickness 2))
-      (setf t2 (deftext :title "center/auto-min a really long title to see what happens" :h-align :center :height :auto-min
+      (setf t3 (deftext :title "center/auto-min a really long title to see what happens" :h-align :center :height :auto-min
                         :padding-bottom 5
                         :border-bottom b1))
-      (setf a7 (defactive-text :title "T 3 / O 1" :h-align :center :v-align :middle :height :auto-min
-                               :width (- +W3W+ 24)
-                               :left :center :top :middle
-                               :padding-top 10 :padding-bottom 10))
-      (setf a8 (defactive-text :title "T 3 / O 2" :h-align :center :v-align :middle :height :auto-min
-                               :width (- +W3W+ 24)
-                               :left :center :top :middle
-                               :padding-top 10 :padding-bottom 10))
-      (setf a9 (defactive-text :title "T 3 / O 3" :h-align :center :v-align :middle :height :auto-min
-                               :width (- +W3W+ 24)
-                               :left :center :top :middle
-                               :padding-top 10 :padding-bottom 10))
-      (setf cl3 (defcolumn-layout :content (list a7 a8 a9)))
-      (setf cl4 (defcolumn-layout :content (list (list t2 :min-height) cl3)))
-      (setf w3 (deftests-window :standard 3 :content (list cl4)))
+      (setf a31 (defactive-text :title "T 3 / O 1" :h-align :center :v-align :middle :height :auto-min
+                                :width (- +W3W+ 24)
+                                :left :center :top :middle
+                                :padding-top 10 :padding-bottom 10))
+      (setf a32 (defactive-text :title "T 3 / O 2" :h-align :center :v-align :middle :height :auto-min
+                                :width (- +W3W+ 24)
+                                :left :center :top :middle
+                                :padding-top 10 :padding-bottom 10))
+      (setf a33 (defactive-text :title "T 3 / O 3" :h-align :center :v-align :middle :height :auto-min
+                                :width (- +W3W+ 24)
+                                :left :center :top :middle
+                                :padding-top 10 :padding-bottom 10))
+      (setf cl31 (defcolumn-layout :content (list a31 a32 a33)))
+      (setf cl32 (defcolumn-layout :content (list (list t3 :min-height) cl31)))
+      (setf w3 (deftests-window :standard 3 :content (list cl32)))
       (push w3 widgets)
       
       ;; Test 4
-      (setf b2 (defborder :thickness 2))
-      (setf t3 (deftext :title "center/auto-min" :h-align :center :height :auto-min
+      (setf b41 (defborder :thickness 2))
+      (setf t4 (deftext :title "center/auto-min" :h-align :center :height :auto-min
                         :padding-bottom 5
-                        :border-bottom b2
+                        :border-bottom b41
                         :font (cl-yag:default-mono-font -20)))
-      (setf b3 (defborder :thickness 2))
-      (setf a10 (defactive-text :title "T 4 / O 1" :h-align :center :v-align :middle :height :auto-min
+      (setf b42 (defborder :thickness 2))
+      (setf a41 (defactive-text :title "T 4 / O 1" :h-align :center :v-align :middle :height :auto-min
                                 :width (- +W4W+ 24)
                                 :left :center :top :bottom
                                 :padding-top 10 :padding-bottom 10
-                                :border-left b3 :border-right b3 :border-top b3 :border-bottom b3
+                                :border-left b42 :border-right b42 :border-top b42 :border-bottom b42
                                 :hover-color (al:map-rgb-f 0 1 1)))
-      (setf a11 (defactive-text :title "T 4 / O 2" :h-align :center :v-align :middle :height :auto-min
+      (setf a42 (defactive-text :title "T 4 / O 2" :h-align :center :v-align :middle :height :auto-min
                                 :width (- +W4W+ 24)
                                 :left :center :top :middle
                                 :padding-top 10 :padding-bottom 10))
-      (setf a12 (defactive-text :title "T 4 / O 3" :h-align :center :v-align :middle :height :auto-min
+      (setf a43 (defactive-text :title "T 4 / O 3" :h-align :center :v-align :middle :height :auto-min
                                 :width (- +W4W+ 24)
                                 :left :center :top :top
                                 :padding-top 10 :padding-bottom 10))
-      (setf cl5 (defcolumn-layout :content (list (list t3 :min-height) a10 a11 a12)))
-      (setf w4 (deftests-window :standard 4 :content (list cl5)))
+      (setf cl4 (defcolumn-layout :content (list (list t4 :min-height) a41 a42 a43)))
+      (setf w4 (deftests-window :standard 4 :content (list cl4)))
       (push w4 widgets)
+
+      ;; Test 5
+      (setf b5 (defborder :thickness 5))
+      (setf t5 (deftext :title "Spacing/Padding Test" :h-align :center :v-align :middle))
+      (setf (border t5) b5)
+      ;; (setf (padding t5) 25)
+      ;; (setf (spacing t5) 25)
+      ;; (setf (padding-right t5) 25)
+      (setf (padding-left t5) 25)
+      ;; (setf (padding-top t5) 25)
+      ;; (setf (padding-bottom t5) 25)
+      ;; (setf (spacing-right t5) 25)
+      ;; (setf (padding-left t5) 25)
+      ;; (setf (spacing-top t5) 25)
+      ;; (setf (spacing-bottom t5) 25)
+      
+      (setf cl5 (defcolumn-layout :content `(,t5)))
+      (setf w5 (deftests-window :wide 3 :content `(,cl5)))
+      (push w5 widgets)
+
+      ;; Status on wide window 4
+      (setf w6 (deftests-window :wide 4))
+      (push w6 widgets)
       
       ;; Instructions
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1>"
-                                          "<2>"
-                                          "<3>"
-                                          "<4> - alternates theme-flat/theme-3d")
+                                    (list "<1> - Increase padding"
+                                          "<2> - Decrease padding"
+                                          "<3> - Increate spacing"
+                                          "<4> - Decrease spacing")
                                     (list "- <5>"
                                           "- <6>"
                                           "window interior red/default - <7>"
-                                          "- <8>"))))
+                                          "theme-flat / theme-3d - <8>"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard
                                                                   data :r5 nil :r6 nil :r7 nil :r8 nil :rv2 nil)))
+      (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data :r1 nil :r2 nil :r4 nil
+                                                                                                :r3 '(:wide 3 rh5))))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *text-data*)))
-  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
-  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
+  (let ((args `((eql ,data))))
+    (cleanup-method tests-command-1 args)
+    (cleanup-method tests-command-2 args)
+    (cleanup-method tests-command-3 args)
+    (cleanup-method tests-command-4 args)
+    (cleanup-method tests-command-7 args)
+    (cleanup-method tests-command-8 args)
+    (cleanup-method on-command (list (find-class 'active-text))))
   nil)
 
 (defmethod tests-ready ((text-data (eql *text-data*)))
-
   (defmethod on-command ((obj active-text) &key)
     (v:info :tests "Commanded ~a" (cl-yag::print-raw-object obj)))
+
+  (defmethod tests-command-1 ((data (eql text-data)))
+    )
+  
+  (defmethod tests-command-2 ((data (eql text-data)))
+    )
+  
+  (defmethod tests-command-3 ((data (eql text-data)))
+    (with-slots (t5) data
+      (unless (eql t5 nil)
+        (with-slots (spacing-left spacing-right spacing-top spacing-bottom) t5
+          (incf spacing-left)
+          (incf spacing-right)
+          (incf spacing-top)
+          (incf spacing-bottom)))))
   
   (defmethod tests-command-4 ((data (eql text-data)))
-    (tests-toggle-theme data)
-    nil)
+    (with-slots (t5) data
+      (unless (eql t5 nil)
+        (with-slots (spacing-left spacing-right spacing-top spacing-bottom) t5
+          (decf spacing-left)
+          (decf spacing-right)
+          (decf spacing-top)
+          (decf spacing-bottom)))))
   
   (defmethod tests-command-7 ((data (eql text-data)))
     (with-slots (w1 w2 w3 w4) data
       (tests-toggle-interior-color data (list w1 w2 w3 w4)))
     nil)
+
+  (defmethod tests-command-8 ((data (eql text-data)))
+    (tests-toggle-theme data)
+    nil)
+  
   nil)
 
 (defun text-tests-main ()

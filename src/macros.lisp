@@ -142,55 +142,65 @@ from theme. Field should be an accessor."
 ;;;; with-* ===================================================================
 
 (defmacro with-area-border ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, removing border space."
-  (a:with-gensyms (bl bt br bb)
-    `(let ((,left (left ,object))
-           (,top (top ,object))
-           (,right (right ,object))
-           (,bottom (bottom ,object))
-           (,bl (border-left ,object))
-           (,bt (border-top ,object))
-           (,br (border-right ,object))
-           (,bb (border-bottom ,object)))
-       (unless (eql ,bl nil)
-         (incf ,left (width ,bl)))
-       (unless (eql ,bt nil)
-         (incf ,top (width ,bt)))
-       (unless (eql ,br nil)
-         (decf ,right (width ,br)))
-       (unless (eql ,bb nil)
-         (decf ,bottom (width ,bb)))
-       ,@body)))
-
-(defmacro with-area-border-and-padding ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordinates of object, removing border and
- spacing of object."
+  "Provide left, top, right, and bottom coordinates of object, removing border
+and paddiing space."
   
-  `(with-area-border (,left ,top ,right ,bottom) object
-     (incf ,left (padding-left ,object))
-     (incf ,top (padding-top ,object))
-     (decf ,right (padding-right ,object))
-     (decf ,bottom (padding-bottom ,object))
-     ,@body))
-
-(defmacro with-area-padding ((left top right bottom) object &body body)
-  "Provide left, top, right, and bottom coordiates of object, removing padding
-space."
-  
-  (let ((instance (gensym)))
+  (a:with-gensyms (instance bl bt br bb)
     `(let ((,instance ,object))
-       (with-area-rb (,left ,top ,right ,bottom) ,instance
-         (incf ,left (padding-left ,instance))
-         (incf ,top (padding-top ,instance))
-         (decf ,right (padding-right ,instance))
-         (decf ,bottom (padding-bottom ,instance))
+      (let ((,left (left ,instance))
+            (,top (top ,instance))
+            (,right (right ,instance))
+            (,bottom (bottom ,instance))
+            (,bl (border-left ,instance))
+            (,bt (border-top ,instance))
+            (,br (border-right ,instance))
+            (,bb (border-bottom ,instance)))
+        (declare (dynamic-extent ,bl ,bt ,br ,bb))
+        (declare (ignorable ,left ,top ,right ,bottom))
+        (unless (eql ,bl nil)
+          (incf ,left (thickness ,bl)))
+        (unless (eql ,bt nil)
+          (incf ,top (thickness ,bt)))
+        (unless (eql ,br nil)
+          (decf ,right (thickness ,br)))
+        (unless (eql ,bb nil)
+          (decf ,bottom (thickness ,bb)))
+        ,@body))))
+
+(defmacro with-area-border-and-spacing ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom coordinates of object, removing border,
+padding, and spacing of object."
+  
+  (a:with-gensyms (instance)
+    `(let ((,instance ,object))
+      (with-area-border (,left ,top ,right ,bottom) ,instance
+       (incf ,left (padding-left ,instance))
+       (incf ,top (padding-top ,instance))
+       (decf ,right (padding-right ,instance))
+       (decf ,bottom (padding-bottom ,instance))
+       ,@body))))
+
+(defmacro with-area-and-spacing ((left top right bottom) object &body body)
+  "Provide left, top, right, and bottom from object area removing spacing."
+
+  (a:with-gensyms (instance)
+    `(let ((,instance ,object))
+       (let ((,left (left ,instance))
+             (,top (top ,instance))
+             (,right (right ,instance))
+             (,bottom (bottom ,instance)))
+         (declare (ignorable ,left ,top ,right ,bottom))
+         (incf ,left (spacing-left ,instance))
+         (incf ,top (spacing-top ,instance))
+         (decf ,right (spacing-right ,instance))
+         (decf ,bottom (spacing-bottom ,instance))
          ,@body))))
 
 (defmacro with-local-accessors ((&rest slots) instance &body body)
   "Like with-slots, but slots are cached in local variables and changes are not
 updated on setq/setf."
   
-  (let ((in (gensym)))
+  (a:with-gensyms (in)
     `(let ((,in ,instance))
        (let (,@(mapcar #'(lambda (obj)
                            (if (consp obj)
@@ -203,7 +213,7 @@ updated on setq/setf."
   "Like with-slots, but slots are cached in local variables and slots are not
 updated (changes are local only)."
 
-  (let ((in (gensym)))
+  (a:with-gensyms (in)
     `(let ((,in ,instance))
        (let (,@(mapcar #'(lambda (obj)
                            (if (consp obj)
@@ -212,6 +222,7 @@ updated (changes are local only)."
                        slots))
          ,@body))))
 
+;; BUGBUG: TODO: slots evaluated more than once
 (defmacro with-local-slots-update ((&rest slots) instance &body body)
   "Like with slots, but slots are cached locally until BODY exits, at which point
 the slots are updated from local cache. The point of this is that there are
@@ -234,8 +245,10 @@ saving all the slot access overhead."
                                `(slot-value ,in ',(second obj)) `,(first obj))
                            slots))))))))
 
+;; BUGBUG: TODO: fields evaluated more than once
 (defmacro with-theme ((&rest fields) theme-object &body body)
   "Create local instances of theme slots."
+  
   (let ((instance (gensym)))
     `(let ((,instance ,theme-object))
        (let (,@(mapcar #'(lambda (f)
@@ -273,6 +286,7 @@ slot value is nil, locate the active theme for object and get the value from it.
                    fields)
          ,@body))))
 
+;; BUGBUG: TODO: fields evaluated more than once
 (defmacro with-object-and-theme ((&rest fields) object theme &body body)
   "Create local instances of theme related slots from object.  If the object's
 slot value is nil, use the slot from the theme."

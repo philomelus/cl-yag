@@ -19,8 +19,9 @@
                      align-mixin
                      area-mixin
                      border-mixin
-                     padding-mixin      ; between title and edge
+                     padding-mixin      ; between title and border
                      parent-mixin
+                     spacing-mixin      ; between border and edge
                      title-mixin)
   ())
 
@@ -42,6 +43,26 @@
   `(make-instance 'text ,@rest))
 
 ;;; methods ---------------------------------------------------------
+
+(defmethod calc-border-let (side (area %rect) (object text))
+  (case side
+    (:bottom)
+    (:left)
+    (:right)
+    (:top)
+    (otherwise
+     (error "expected :LEFT, :TOP, :RIGHT, or :BOTTOM, got: ~a" side)))
+  (error "not implemented"))
+
+(defmethod calc-border-top (side (area %rect) (object text))
+  (case side
+    (:bottom)
+    (:left)
+    (:right)
+    (:top)
+    (otherwise
+     (error "expected :LEFT, :TOP, :RIGHT, or :BOTTOM, got: ~a" side)))
+  (error "not implemented"))
 
 (defmethod calc-height (type (area %rect) (object text))
   (v:debug :layout "[calc-height] {text} area: (~d ~d) @ (~d ~d) ~a"
@@ -84,16 +105,35 @@
       (case (h-align obj)
         ((:none :left)
          (setq x (left obj))
+         (incf x (padding-left obj))
+         (incf x (spacing-left obj))
+         (with-slots (border-left) obj
+           (unless (eql border-left nil)
+             (incf x (thickness border-left))))
          (setq f +ALIGN-LEFT+)
          (v:debug :paint "[on-paint] {text} aligning text left:~d ~a" x (print-raw-object obj)))
         (:center
-         (setq x (+ (left obj) (/ (width obj) 2)))
+         (with-slots (border-left border-right
+                      padding-left padding-right
+                      spacing-left spacing-right)
+             obj
+           (let ((calc-width (width obj)))
+             (decf calc-width (+ padding-left padding-right spacing-left spacing-right))
+             (unless (eql border-left nil)
+               (decf calc-width (thickness border-left)))
+             (unless (eql border-right nil)
+               (decf calc-width (thickness border-right)))
+             (setq x (+ (left obj) (/ calc-width 2)))))
          (setq f +ALIGN-CENTER+)
          (v:debug :paint "[on-paint] {text} aligning text center:~d ~a" x (print-raw-object obj)))
         (:right
          (let ((area (area-allocated obj)))
            (setq x (right area))
            (decf x (padding-right obj))
+           (decf x (spacing-right obj))
+           (with-slots (border-right) obj
+             (unless (eql border-right nil)
+               (decf x (thickness border-right))))
            (setq f +ALIGN-RIGHT+)
            (v:debug :paint "[on-paint] {text} aligning text right:~d ~a" x (print-raw-object obj)))))
       (with-local-slots ((l left) (t_ top) (w width) (h height)) obj
@@ -101,13 +141,6 @@
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
             (al:draw-text fnt fc x (text-calc-title-top obj) f (title obj)))))))
   (my-next-method))
-
-(defmethod (setf theme) ((theme text-theme-mixin) (object text))
-  (with-local-accessors ((ic interior-color) (fc fore-color) (bc back-color))
-      theme
-    (setf (interior-color object) ic)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
 
 ;;;; active-text ==============================================================
 
@@ -253,18 +286,6 @@
             (al:draw-rectangle left top right bottom ch 1))))))
   (my-next-method))
 
-(defmethod (setf theme) ((theme active-text-theme-mixin) (object active-text))
-  (with-local-accessors ((dc down-color) (hc hover-color)
-                         (ic interior-color) (uc up-color)
-                         (fc fore-color) (bc back-color))
-                        theme
-    (setf (down-color object) dc)
-    (setf (hover-color object) hc)
-    (setf (interior-color object) ic)
-    (setf (up-color object) uc)
-    (setf (fore-color object) fc)
-    (setf (back-color object) bc)))
-
 ;;;; functions ================================================================
 
 (declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-height))
@@ -278,8 +299,6 @@
          (assert (and (not (eql fnt nil))
                       (not (cffi:null-pointer-p fnt))))
          (let ((fh (al:get-font-line-height fnt)))
-           (incf fh (padding-top object))
-           (incf fh (padding-bottom object))
            (setq rv (min fh (height area)))))))
     rv))
 
@@ -368,8 +387,6 @@
 
       (:auto-min
        (let ((tw (al:get-text-width (theme-field font object) (title object))))
-         (incf tw (padding-left object))
-         (incf tw (padding-right object))
          (setq rv (min tw (width area))))))
     rv))
 

@@ -2,15 +2,6 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;; Theme stuff that can't be in main theme file because of dependancies
-
-;;;; global object theme handlers =============================================
-;; These should set theme colors the same way the global themes are set for
-;; consistantly.  If something looks wrong, fix both.
-
-;; TODO: Find a way to express the connections from themes to objects in
-;;       a way to allow it to be specified once.
-
 ;;;; theme-3d-all =============================================================
 
 (defclass theme-3d-all (theme-3d
@@ -42,77 +33,6 @@
   `(make-instance 'theme-flat-all ,@rest))
 
 ;;;; global themes ============================================================
-
-;; These should initialize their fields the same way the above (setf theme)
-;; functions do.  TODO: Make it so the code exists once!
-
-;;; flat ------------------------------------------------------------
-
-;; Adjustments for global themes
-
-(defmacro deftheme-flat-all-obj (frame interior
-                                 &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0))
-                                 &body body)
-  (let ((object (gensym)))
-    `(funcall (lambda (f i fc bc)
-                (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc :frame-color f :interior-color i)))
-
-                  ;; active-text-theme-mixin
-                  (setf (font ,object) (default-font))
-                  (setf (down-color ,object) f)
-                  (setf (hover-color ,object) f)
-                  (setf (interior-color ,object) i)
-                  (setf (up-color ,object) i)
-                  ;; border-3d-theme-mixin is not valid from a flat theme
-                  ;; border-flat-theme-mixin
-                  (setf (color ,object) f)
-                  ;; box-flat-theme-mixin covered by theme-flat
-                  ;; grid-theme-mixin
-                  (setf (major-color-h ,object) f)
-                  (setf (major-color-v ,object) f)
-                  (setf (minor-color-h ,object) f)
-                  (setf (minor-color-v ,object) f)
-                  ;; ruler-theme-mixin
-                  (setf (division-color ,object) f)
-                  (setf (line-color ,object) f)
-                  ;; text-theme-mixin covered by active-text-theme-mixin
-                  ;; window-theme-mixin covered by theme-flat
-
-                  ;; Custom initialization code
-                  (let ((object ,object))
-                    ,@body
-                    (setf ,object object))
-                  
-                  ;; Make sure all slots get set
-                  ;; (dolist (slot (class-slots (find-class 'theme-flat-all)))
-                  ;;   (when (eql (slot-value ,object (slot-definition-name slot)) nil)
-                  ;;     (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
-                  ,object))
-              ,frame ,interior ,fore ,back)))
-
-(defun theme-flat-aqua ()
-  (deftheme-flat-all-obj (al:map-rgb 0 191 191) (al:map-rgb 0 255 255)))
-
-(defun theme-flat-blue ()
-  (deftheme-flat-all-obj (al:map-rgb 0 0 191) (al:map-rgb 0 0 255)))
-
-(defun theme-flat-gray ()
-  (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)
-    ;; Override the up color
-    (setf (up-color object) (fore-color object))
-    ))
-
-(defun theme-flat-green ()
-  (deftheme-flat-all-obj (al:map-rgb 0 191 0) (al:map-rgb 0 255 0)))
-
-(defun theme-flat-purple ()
-  (deftheme-flat-all-obj (al:map-rgb 191 0 191) (al:map-rgb 255 0 255)))
-
-(defun theme-flat-red ()
-  (deftheme-flat-all-obj (al:map-rgb 191 0 0) (al:map-rgb 255 0 0)))
-
-(defun theme-flat-yellow ()
-  (deftheme-flat-all-obj (al:map-rgb 191 191 0) (al:map-rgb 255 255 0)))
 
 ;;; 3d --------------------------------------------------------------
 
@@ -183,6 +103,72 @@
 
 (defun theme-3d-yellow ()
   (deftheme-3d-obj (al:map-rgb 255 255 0) (al:map-rgb 191 191 0) (al:map-rgb 255 255 127) (al:map-rgb 127 127 0) (al:map-rgb 255 255 191)))
+
+;;; flat ------------------------------------------------------------
+
+(defmacro deftheme-flat-all-obj (frame interior
+                                 &optional (fore '(al:map-rgb 255 255 255)) (back '(al:map-rgb-f 0.0 0.0 0.0))
+                                 &body body)
+  (let ((object (gensym)))
+    `(funcall (lambda (f i fc bc)
+                (let ((,object (make-instance 'theme-flat-all :fore-color fc :back-color bc :frame-color f :interior-color i)))
+
+                  ;; active-text-theme-mixin
+                  (setf (font ,object) (default-font))
+                  (setf (down-color ,object) f)
+                  (setf (hover-color ,object) f)
+                  (setf (interior-color ,object) i)
+                  (setf (up-color ,object) i)
+                  ;; border-3d-theme-mixin is not valid from a flat theme
+                  ;; border-flat-theme-mixin
+                  (setf (color ,object) f)
+                  ;; box-flat-theme-mixin covered by theme-flat
+                  ;; grid-theme-mixin
+                  (setf (major-color-h ,object) f)
+                  (setf (major-color-v ,object) f)
+                  (setf (minor-color-h ,object) f)
+                  (setf (minor-color-v ,object) f)
+                  ;; ruler-theme-mixin
+                  (setf (division-color ,object) f)
+                  (setf (line-color ,object) f)
+                  ;; text-theme-mixin covered by active-text-theme-mixin
+                  ;; window-theme-mixin covered by theme-flat
+
+                  ;; Custom initialization code
+                  (let ((object ,object))
+                    ,@body
+                    (setf ,object object))
+                  
+                  ;; Make sure all slots get set
+                  ;; (dolist (slot (class-slots (find-class 'theme-flat-all)))
+                  ;;   (when (eql (slot-value ,object (slot-definition-name slot)) nil)
+                  ;;     (error "Missing theme-flat-all setting: ~a" (slot-definition-name slot))))
+                  ,object))
+              ,frame ,interior ,fore ,back)))
+
+(defun theme-flat-aqua ()
+  (deftheme-flat-all-obj (al:map-rgb 0 191 191) (al:map-rgb 0 255 255)))
+
+(defun theme-flat-blue ()
+  (deftheme-flat-all-obj (al:map-rgb 0 0 191) (al:map-rgb 0 0 255)))
+
+(defun theme-flat-gray ()
+  (deftheme-flat-all-obj (al:map-rgb-f 0.5 0.5 0.5) (al:map-rgb 212 208 200) (al:map-rgb-f 0.0 0.0 0.0) (al:map-rgb-f 1.0 1.0 1.0)
+    ;; Override the up color
+    (setf (up-color object) (fore-color object))
+    ))
+
+(defun theme-flat-green ()
+  (deftheme-flat-all-obj (al:map-rgb 0 191 0) (al:map-rgb 0 255 0)))
+
+(defun theme-flat-purple ()
+  (deftheme-flat-all-obj (al:map-rgb 191 0 191) (al:map-rgb 255 0 255)))
+
+(defun theme-flat-red ()
+  (deftheme-flat-all-obj (al:map-rgb 191 0 0) (al:map-rgb 255 0 0)))
+
+(defun theme-flat-yellow ()
+  (deftheme-flat-all-obj (al:map-rgb 191 191 0) (al:map-rgb 255 255 0)))
 
 ;;;------------------------------------------------------------------
 

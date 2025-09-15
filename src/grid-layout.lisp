@@ -2,13 +2,6 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-(declaim (inline grid-layout-cell
-                 grid-layout-child
-                 grid-layout-column
-                 grid-layout-column-cells
-                 grid-layout-row
-                 grid-layout-row-cells))
-
 ;;;; column-layout ============================================================
 
 ;;; grid-layout-cell ------------------------------------------------
@@ -153,64 +146,6 @@
   (grid-layout-reset-cells object))
 
 ;;; methods ---------------------------------------------------------
-
-(defmethod calc-area (child (parent grid-layout) &key)
-  (v:debug :layout "[calc-area] {grid-layout} called with child ~a" (print-raw-object child))
-  
-  ;; Calculate parent area if needed
-  (calc-layout-area parent)
-
-  ;; Calculate our children areas if needed
-  (when (eql (slot-value parent 'child-area) nil)
-    (calc-layout-child-areas parent))
-
-  (with-slots (child-area content) parent
-    ;; Locate child object position (this is key to rest)
-    (let ((cp (position child content :key #'(lambda (o) (foro o)))))
-      (assert (not (eql cp nil)))
-      (let* ((ca (aref child-area cp))
-             (oa (make-instance '%rect :left (left ca) :top (top ca) :width (width ca) :height (height ca))))
-      
-        (with-slots ((cl left) (ct top) (cw width) (ch height)) child
-
-          (v:debug :layout "[calc-area] {grid-layout} child ~d calculating (~a ~a) @ (~a ~a) ~a"
-                   cp cw ch cl ct (print-raw-object child))
-
-          ;; Let object calculate its area, tracking who was calculated
-          (macrolet ((do-calc (var func)
-                       ;; If keyword
-                       `(if (typep ,var 'keyword)
-                            ;; Call calculation function and save result
-                            (progn
-                              (setf ,var (,func ,var oa child))
-                              ;; Return that we calculated
-                              t)
-                            ;; Otherwise we did no calculation
-                            nil)))
-            (let ((clp (do-calc ch calc-height))
-                  (ctp (do-calc cw calc-width))
-                  (cwp (do-calc cl calc-left))
-                  (chp (do-calc ct calc-top)))
-
-              ;; When there are child options or any area fields were constant
-              ;; call update to make sure all is correct
-              (let ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
-                    options)
-                (when (consp co)
-                  (setq options (rest co)))
-                (when (or (not (or clp ctp cwp chp)) ; not calculated?
-                          (> (length options) 0))    ; has options?
-                  (with-local-slots ((lcl left) (lct top) (lcw width) (lch height)) (aref child-area cp)
-                    (v:debug :layout "[calc-area] {grid-layout} child ~d internal area (~d ~d) @ (~d ~d) ~a"
-                             cp lcw lch lcl lct (print-raw-object child)))
-                  ;; Let update validate child
-                  (break)
-                  (update-layout-child-areas cp parent)))
-
-              ;; Log updated/changed area
-              (v:debug :layout "[calc-area] {grid-layout} child ~d area (~d ~d) @ (~d ~d) ~a"
-                      cp cw ch cl ct (print-raw-object child))))))))
-  (my-next-method))
 
 (defmethod calc-layout-child-areas ((object grid-layout))
   "Calculate the over-all area of each child.
@@ -502,14 +437,14 @@ recalculates the sizes of the children that are affected by it."
 
 ;;;; functions ================================================================
 
-(declaim (ftype (function (integer integer grid-layout) %grid-layout-cell) grid-layout-cell))
+;; (declaim (ftype (function (integer integer grid-layout) %grid-layout-cell) grid-layout-cell))
 (defun grid-layout-cell (column row object)
   "Return %GRID-LAYOUT-CELL for child of GRID-LAYOUT at COLUMN,ROW"
   
   (with-slots (columns cell-data) object
     (nth (+ (* row columns) column) cell-data)))
 
-(declaim (ftype (function (T (or symbol list) integer integer grid-layout &key (:recalc boolean)) null) grid-layout-cell-set))
+;; (declaim (ftype (function (T (or symbol list) integer integer grid-layout &key (:recalc boolean)) null) grid-layout-cell-set))
 (defun grid-layout-cell-set (value field-or-fields column row object &key recalc)
   "Update the slots named in field-or-fields to value for the %GRID-LAYOUT-CELL at
 column,row within the GRID-LAYOUT in object."
@@ -537,20 +472,20 @@ column,row within the GRID-LAYOUT in object."
                   field-or-fields))))
   nil)
 
-(declaim (ftype (function (integer integer grid-layout) t) grid-layout-child))
+;; (declaim (ftype (function (integer integer grid-layout) t) grid-layout-child))
 (defun grid-layout-child (column row object)
   "Return child object of GRID-LAYOUT at COLUMN,ROW"
 
   (with-slots (columns content) object
     (nth (+ (* row columns) column) content)))
 
-(declaim (ftype (function (integer grid-layout) %grid-layout-column) grid-layout-column))
+;; (declaim (ftype (function (integer grid-layout) %grid-layout-column) grid-layout-column))
 (defun grid-layout-column (column object)
   "Return %GRID-LAYOUT-COLUMN for specified column of specified GRID-LAYOUT object."
   
   (aref (slot-value object 'column-data) column))
 
-(declaim (ftype (function (integer grid-layout) list) grid-layout-column-cells))
+;; (declaim (ftype (function (integer grid-layout) list) grid-layout-column-cells))
 (defun grid-layout-column-cells (column object)
   "Return all %GRID-LAYOUT-CELL's for a column withn GRID-LAYOUT."
 
@@ -558,7 +493,7 @@ column,row within the GRID-LAYOUT in object."
     (loop :for v :from 0 :below rows
           :collect (grid-layout-cell column v object))))
 
-(declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-column-cells-set))
+;; (declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-column-cells-set))
 (defun grid-layout-column-cells-set (value field-or-fields column object &key recalc)
   "Update the slot(s) named in field-or-fields to value for all
 %GRID-LAYOUT-CELL's in the specified row within the GRID-LAYOUT in object."
@@ -613,7 +548,7 @@ column,row within the GRID-LAYOUT in object."
     (setf spacing-left 0 spacing-right 0 spacing-top 0 spacing-bottom 0)
     (setf v-align :none)))
 
-(declaim (ftype (function (grid-layout) null) grid-layout-reset-cells))
+;; (declaim (ftype (function (grid-layout) null) grid-layout-reset-cells))
 (defun grid-layout-reset-cells (object)
   "Update CELLS of GRID-LAYOUT according to current COLUMNS and ROWS."
 
@@ -684,12 +619,12 @@ column,row within the GRID-LAYOUT in object."
     (setf h-align :center)
     (setf v-align :middle)))
 
-(declaim (ftype (function (integer grid-layout) %grid-layout-row) grid-layout-row))
+;; (declaim (ftype (function (integer grid-layout) %grid-layout-row) grid-layout-row))
 (defun grid-layout-row (row object)
   "Return %GRID-LAYOUT-ROW for specified row of specified GRID-LAYOUT object."
   (aref (slot-value object 'row-data) row))
 
-(declaim (ftype (function (integer grid-layout) list) grid-layout-row-cells))
+;; (declaim (ftype (function (integer grid-layout) list) grid-layout-row-cells))
 (defun grid-layout-row-cells (row object)
   "Return all %GRID-LAYOUT-CELL's for a row within GRID-LAYOUT."
 
@@ -697,7 +632,7 @@ column,row within the GRID-LAYOUT in object."
     (loop :for h :from 0 :below columns
           :collect (grid-layout-cell h row object))))
 
-(declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-row-cells-set))
+;; (declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-row-cells-set))
 (defun grid-layout-row-cells-set (value field-or-fields row object &key recalc)
   "Update the slots named in field-or-fields to value for all %GRID-LAYOUT-CELL's
 in the specified column within the GRID-LAYOUT in object."

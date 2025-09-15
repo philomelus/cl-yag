@@ -4,10 +4,12 @@
 
 ;;;; style-3d-mixin ===========================================================
 
+(deftype style-3d () '(member :default :inset :outset :flat))
+
 (defvar +STYLE-3D-MIXIN-OPTIONS+ '(:default :inset :outset :flat))
 
 (defclass style-3d-mixin ()
-  ((style :initarg :style :type keyword :initform :default :accessor style)))
+  ((style :initarg :style :type style-3d :initform :default :accessor style)))
 
 (defmethod initializa-instance :after ((object style-3d-mixin) &key)
   (with-slots (style) object

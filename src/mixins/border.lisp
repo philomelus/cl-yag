@@ -6,16 +6,18 @@
 
 (defmacro with-borders ((&rest vars) object &body body)
   (assert (= (length vars) 4))
-  `(let ((,(first vars) (border-left ,object))
-         (,(second vars) (border-right ,object))
-         (,(third vars) (border-top ,object))
-         (,(fourth vars) (border-bottom ,object)))
-     ,@body))
+  (a:with-gensyms (instance)
+    `(let ((,instance ,object))
+      (let ((,(first vars) (border-left ,instance))
+           (,(second vars) (border-right ,instance))
+           (,(third vars) (border-top ,instance))
+           (,(fourth vars) (border-bottom ,instance)))
+       ,@body))))
 
 ;;;; border-base ==============================================================
 
 (defclass border-theme-mixin ()
-  ())
+  ((thickness :initarg :thickness :accessor thickness)))
 
 (defclass border-3d-theme-mixin (color-3d-mixin
                                  style-3d-mixin)
@@ -26,7 +28,7 @@
   ())
 
 (defclass border (border-theme-mixin)
-  ((thickness :initarg :thickness :initform 1.0 :accessor thickness)))
+  ((thickness :initform 1.0)))
 
 (defmacro defborder (&rest rest &key &allow-other-keys)
   `(make-instance 'border ,@rest))

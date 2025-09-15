@@ -26,6 +26,58 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod calc-area (child (parent layout-base) &key)
+
+  (v:debug :layout "[calc-area] {layout-base} called with child ~a" (print-raw-object child))
+  
+  ;; Calculate parent area if needed
+  (calc-layout-area parent)
+
+  ;; Calculate our children areas if needed
+  (when (eql (slot-value parent 'child-area) nil)
+    (calc-layout-child-areas parent))
+
+  (with-slots (child-area content) parent
+    ;; Locate child object position (this is key to rest)
+    (let ((cp (position child content :key #'(lambda (o) (foro o)))))
+      (assert (not (eql cp nil)))
+      (let* ((ca (aref child-area cp))
+             (oa (make-instance '%rect :left (left ca) :top (top ca) :width (width ca) :height (height ca))))
+      
+        (with-slots ((cl left) (ct top) (cw width) (ch height)) child
+
+          (v:debug :layout "[calc-area] {layout-base} child ~d calculating (~a ~a) @ (~a ~a) ~a"
+                   cp cw ch cl ct (print-raw-object child))
+        
+          (macrolet ((do-calc (var func)
+                       `(if (typep ,var 'keyword)
+                            (progn
+                              (setf ,var (,func ,var oa child))
+                              t)
+                            nil)))
+            (let ((clp (do-calc ch calc-height))
+                  (ctp (do-calc cw calc-width))
+                  (cwp (do-calc cl calc-left))
+                  (chp (do-calc ct calc-top)))
+
+              ;; Call update when there are child options or any area field wasn't
+              ;; calculated
+              (let ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
+                    options)
+                (when (consp co)
+                  (setq options (rest co)))
+                (when (or (not (or clp ctp cwp chp))
+                          (> (length options) 0))
+                  (with-local-slots ((lcl left) (lct top) (lcw width) (lch height)) (aref child-area cp)
+                    (v:debug :layout "[calc-area] {layout-base} child ~d internal area (~d ~d) @ (~d ~d) ~a"
+                             cp lcw lch lcl lct (print-raw-object child)))
+                  (update-layout-child-areas cp parent)))
+
+              ;; Log updated/changed area
+              (v:debug :layout "[calc-area] {layout-base} child ~d area (~d ~d) @ (~d ~d) ~a"
+                       cp cw ch cl ct (print-raw-object child))))))))
+  (my-next-method))
+
 (defmethod on-char (key mods (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)

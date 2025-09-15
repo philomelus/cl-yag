@@ -13,7 +13,7 @@
 
   (let (objs)
     (with-slots (manager
-                 b1 b2 b3 b4 b5 b6 b7 b8
+                 b1 b2 b3 b4 b5 b6 b7
                  cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
                  w1 w2 w3 w4 w5 w6 w7 w8
                  )
@@ -89,14 +89,14 @@
       (mapc #'(lambda (o) (push o objs))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1> - alternates left/center/right"
-                                          "<2> - alternates top/middle/bottom"
-                                          "<3> - alterdate v-align top/middle/bottom"
-                                          "<4> - alternates theme-flat/theme-3d")
+                                    (list "<1> - :left/:center/:right"
+                                          "<2> - :top/:middle/:bottom"
+                                          "<3> - v-align :top/:middle/:bottom"
+                                          "<4> - :inset/:outset/:flat")
                                     (list "decrease border width - <5>"
                                           "increase border width - <6>"
                                           "window interior red/default - <7>"
-                                          "- <8>"))))
+                                          "theme-flat/theme-3d- <8>"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-standard data :r7 nil :r8 nil)))
@@ -114,6 +114,7 @@
     (cl-yag::cleanup-method tests-command-5 args)
     (cl-yag::cleanup-method tests-command-6 args)
     (cl-yag::cleanup-method tests-command-7 args)
+    (cl-yag::cleanup-method tests-command-8 args)
     (cl-yag::cleanup-method tests-command-update args)
     (cl-yag::cleanup-method tests-render args))
   nil)
@@ -185,14 +186,23 @@
             (:bottom
              (setf va :top))))))
     t)
-  
-  (defmethod tests-command-4 ((data (eql box-data)))
-    (tests-toggle-theme data)
-    nil)
 
+  (defmethod tests-command-4 ((data (eql box-data)))
+    (with-slots (manager theme2 b1 b2 b3 b4 b5 b6 b7) data
+      (when (equal (theme manager) theme2)
+        (with-slots (style) theme2
+          (case style
+            (:inset
+             (setf style :outset))
+            ((:outset :default)
+             (setf style :flat))
+            (:flat
+             (setf style :inset))))))
+    nil)
+  
   (defmethod tests-command-5 ((data (eql box-data)))
-    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
-      (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
+      (let ((objs (list b1 b2 b3 b4 b5 b6 b7)))
         (dolist (obj objs)
           (unless (eql obj nil)
             (with-accessors ((tn thickness)) obj
@@ -201,8 +211,8 @@
     nil)
 
   (defmethod tests-command-6 ((data (eql box-data)))
-    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
-      (let ((objs (list b1 b2 b3 b4 b5 b6 b7 b8)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
+      (let ((objs (list b1 b2 b3 b4 b5 b6 b7)))
         (dolist (obj objs)
           (unless (eql obj nil)
             (with-accessors ((tn thickness)) obj
@@ -214,8 +224,12 @@
       (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
     nil)
 
+  (defmethod tests-command-8 ((data (eql box-data)))
+    (tests-toggle-theme data)
+    nil)
+
   (defmethod tests-command-update ((data (eql box-data)))
-    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
+    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
       (dolist (obj (list b1 b2 b3 b5 b6 b7))
         (unless (eql obj nil)
           (with-accessors ((tp title-position) (va v-align)) obj
@@ -239,7 +253,7 @@
     nil)
 
   (defmethod tests-render ((data (eql box-data)))
-    (with-slots (manager b1 b2 b3 b4 b5 b6 b7 b8) data
+    (with-slots (manager b1 b2 b3 b4 b5 b6 b7) data
       (al:clear-to-color (al:map-rgb-f 0.25 0.25 0.25))  
       (paint manager))
     t)

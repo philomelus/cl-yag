@@ -95,6 +95,10 @@
            #:height-type
            #:rows
            #:width-type
+
+           ;; row-layout
+           #:row-layout
+           #:defrow-layout
            
            ;; ========== Mixins ==========
            ;; active
@@ -182,11 +186,6 @@
            ;; layout
            #:layout
            #:layout-mixin
-           
-           ;; location
-           #:location-mixin
-           #:location-x
-           #:location-y
            
            ;; manager
            #:manager

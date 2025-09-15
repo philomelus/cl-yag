@@ -5,6 +5,24 @@
 (declaim (inline paint-border-bottom-3d paint-border-left-3d paint-border-right-3d
                  paint-border-top-3d))
 
+;;;; macros ==================================================================
+
+(defmacro with-theme-3d-colors ((n d l vd vl) theme &body body)
+  (a:with-gensyms (instance)
+    `(let ((,instance ,theme))
+       (let ((,n (normal-color ,instance))
+             (,d (dark-color ,instance))
+             (,l (light-color ,instance))
+             (,vd (very-dark-color ,instance))
+             (,vl (very-light-color ,instance)))
+         (declare (ignorable ,n ,d ,l ,vd ,vl))
+         (assert (not (eql ,n nil)))
+         (assert (not (eql ,d nil)))
+         (assert (not (eql ,l nil)))
+         (assert (not (eql ,vd nil)))
+         (assert (not (eql ,vl nil)))
+         ,@body))))
+
 ;;;; forward declaration =====================================================
 
 (defvar *theme-default*)
@@ -75,114 +93,538 @@
 
 ;;;; common methods ===========================================================
 
-(macrolet ((paint-border-side-flat (theme &body body)
-             `(let ((color (color ,theme)))
-                (with-accessors ((tn thickness)) border
-                  (assert (> tn 0))
-                  (with-accessors ((left left) (top top) (width width) (height height)) object
-                    (let ((c color)
-                          (w tn)
-                          (w2 (truncate (/ tn 2))))
-                      (if (eql c nil)
-                          (setq c (frame-color theme)))
-                      ,@body))))))
-  
-  (defmethod paint-border-left ((border border) (object %rect) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((xx (+ left w2)))
-                              (assert (not (eql c nil)))
-                              (al:draw-line xx top xx (+ top height) c w))))
-  
-  (defmethod paint-border-left ((border border) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((xx (+ left w2)))
-                              (assert (not (eql c nil)))
-                              (al:draw-line xx top xx (+ top height) c w))))
-  
-  (defmethod paint-border-top ((border border) (object %rect) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((yy (+ top w2)))
-                              (al:draw-line left yy (+ left width) yy c w))))
-  
-  (defmethod paint-border-top ((border border) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((yy (+ top w2)))
-                              (al:draw-line left yy (+ left width) yy c w)))))
+(defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d))
+(with-theme-3d-colors (normal dark light very-dark very-light) theme
+    (with-local-slots (thickness) border
+      (with-area-and-spacing (asl ast asr asb) object
+        (assert (< asl asr))
+        (assert (< ast asb))
+        (v:debug :paint "[paint-border-bottom] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
+        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+          (declare (ignorable lto lti rbo rbi))
+          (let ((hw (/ thickness 2))
+                (b1 (- asb (/ thickness 4)))
+                (b2 (- asb (* thickness 0.75))))
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+              (v:debug :border "[paint-border-bottom] {theme-3d} outside (~f ~f) (~f ~f)" asl b1 asr b1)
+              (al:draw-line asl b1 asr b1 lto hw)
+              (v:debug :border "[paint-border-bottom] {theme-3d} inside (~f ~f) (~f ~f)" (+ asl hw) b2 (- asr hw) b2)
+              (al:draw-line (+ asl hw) b2 (- asr hw) b2 lti hw))))))))
 
-(macrolet ((paint-border-side-flat (theme &body body)
-             `(let ((color (color ,theme)))
-                (with-accessors ((tn thickness)) border
-                  (assert (> tn 0))
-                  (with-accessors ((left left) (top top) (width width) (height height)) object
-                    (let ((c color)
-                          (w tn)
-                          (w2 (truncate (/ tn 2)))
-                          (bow tn))
-                      (if (eql c nil)
-                          (setq c (frame-color theme)))
-                      ,@body))))))
-  
-  (defmethod paint-border-bottom ((border border) (object %rect) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((yy (+ (+ top (- height bow)) w2)))
-                              (al:draw-line left yy (+ left width) yy c w))))  
-  
-  (defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((yy (+ (+ top (- height bow)) w2)))
-                              (al:draw-line left yy (+ left width) yy c w))))
+(defmethod paint-border-bottom ((border border) object (theme theme-flat))
+  (let ((color (color theme)))
+    (with-accessors ((tn thickness)) border
+      (assert (> tn 0))
+      (with-area-and-spacing (asl ast asr asb) object
+        (let ((c color)
+              (w2 (/ tn 2)))
+          (if (eql c nil)
+              (setq c (frame-color theme)))
+          (let ((yy (+ asb (- tn) w2)))
+            (al:draw-line asl yy asr yy c tn)))))))
 
-  (defmethod paint-border-right ((border border) (object %rect) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((xx (+ (+ left (- width bow)) w2)))
-                              (al:draw-line xx top xx (+ top height) c w))))
-  
-  (defmethod paint-border-right ((border border) (object area-mixin) (theme theme-flat))
-    (paint-border-side-flat theme
-                            (let ((xx (+ (+ left (- width bow)) w2)))
-                              (al:draw-line xx top xx (+ top height) c w)))))
+(defmethod paint-border-left ((border border) object (theme theme-3d))
+  (with-theme-3d-colors (normal dark light very-dark very-light) theme
+    (with-local-slots (thickness) border
+      (with-area-and-spacing (asl ast asr asb) object
+        (assert (< asl asr))
+        (assert (< ast asb))
+        (v:debug :border "[paint-border-left] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
+        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+          (declare (ignorable lto lti rbo rbi))
+          (let ((hw (/ thickness 2))
+                (l1 (+ asl (/ thickness 4)))
+                (l2 (+ asl (* thickness 0.75))))
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+              (v:debug :border "[paint-border-left] {theme-3d} outside (~f ~f) (~f ~f)" l1 (+ ast hw) l1 (- asb hw))
+              (al:draw-line l1 (+ ast hw) l1 (- asb hw) lto hw)
+              (v:debug :border "[paint-border-left] {theme-3d} inside (~f ~f) (~f ~f)" l2 (+ ast thickness) l2 (- asb thickness))
+              (al:draw-line l2 (+ ast thickness) l2 (- asb thickness) lti hw))))))))
 
-(macrolet ((with-theme-3d-colors
-               ((n d l vd vl) theme &body body)
-             (let ((theme-var (gensym)))
-               `(let ((,theme-var ,theme))
-                  (let ((,n (normal-color ,theme-var))
-                        (,d (dark-color ,theme-var))
-                        (,l (light-color ,theme-var))
-                        (,vd (very-dark-color ,theme-var))
-                        (,vl (very-light-color ,theme-var)))
-                    (assert (not (eql ,n nil)))
-                    (assert (not (eql ,d nil)))
-                    (assert (not (eql ,l nil)))
-                    (assert (not (eql ,vd nil)))
-                    (assert (not (eql ,vl nil)))
-                    ,@body)))))
+(defmethod paint-border-left ((border border) object (theme theme-flat))
+  (let ((color (color theme)))
+    (with-accessors ((tn thickness)) border
+      (assert (> tn 0))
+      (with-area-and-spacing (asl ast asr asb) object
+        (let ((c color)
+              (w tn)
+              (w2 (/ tn 2)))
+          (if (eql c nil)
+              (setq c (frame-color theme)))
+          (let ((xx (+ asl w2)))
+            (assert (not (eql c nil)))
+            (al:draw-line xx ast xx asb c w)))))))
 
-  (defmethod paint-border-left ((border border) object (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) theme
-      (with-accessors ((left left) (top top) (width width) (height height)) object
-        (with-local-slots (thickness) border
-          (paint-border-left-3d n d l vd vl left top width height thickness (border-style theme))))))
-  
-  (defmethod paint-border-top ((border border) object (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) theme
-      (with-accessors ((left left) (top top) (width width) (height height)) object
-        (with-local-slots (thickness) border
-          (paint-border-top-3d n d l vd vl left top width height thickness (border-style theme))))))
+(defmethod paint-border-right ((border border) object (theme theme-3d))
+  (with-theme-3d-colors (normal dark light very-dark very-light) theme
+    (with-local-slots (thickness) border
+      (with-area-and-spacing (asl ast asr asb) object
+        (assert (< asl asr))
+        (assert (< ast asb))
+        (v:debug :border "[paint-border-right] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
+        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+          (declare (ignorable lto lti rbo rbi))
+          (let ((hw (/ thickness 2))
+                (r1 (- asr (/ thickness 4)))
+                (r2 (- asr (* thickness 0.75))))
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+              (v:debug :border "[paint-border-right] {theme-3d} outside (~f ~f) (~f ~f)" r1 ast r1 (- asb hw))
+              (al:draw-line r1 ast r1 (- asb hw) rbo hw)
+              (v:debug :border "[paint-border-right] {theme-3d} inside (~f ~f) (~f ~f)" r2 (+ ast hw) r2 (- asb hw))
+              (al:draw-line r2 (+ ast hw) r2 (- asb hw) rbi hw))))))))
 
-  (defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) theme
-      (with-accessors ((left left) (top top) (width width) (height height)) object
-        (with-local-slots (thickness) border
-          (paint-border-bottom-3d n d l vd vl left top width height thickness (border-style theme))))))
-  
-  (defmethod paint-border-right ((border border) object (theme theme-3d))
-    (with-theme-3d-colors (n d l vd vl) theme
-      (with-accessors ((left left) (top top) (width width) (height height)) object
-        (with-slots (thickness) border
-          (paint-border-right-3d n d l vd vl left top width height thickness (border-style theme)))))))
+(defmethod paint-border-right ((border border) object (theme theme-flat))
+  (let ((color (color theme)))
+    (with-accessors ((tn thickness)) border
+      (assert (> tn 0))
+      (with-area-and-spacing (asl ast asr asb) object
+        (let ((c color)
+              (w2 (/ tn 2)))
+          (if (eql c nil)
+              (setq c (frame-color theme)))
+          (let ((xx (+ asr (- tn) w2)))
+            (al:draw-line xx ast xx asb c tn)))))))
+
+(defmethod paint-border-top ((border border) object (theme theme-3d))
+(with-theme-3d-colors (normal dark light very-dark very-light) theme
+  (with-slots (thickness) border
+    (with-area-and-spacing (asl ast asr asb) object
+      (assert (< asl asr))
+      (assert (< ast asb))
+      (v:debug :border "[paint-border-top] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
+      (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+        (declare (ignorable lto lti rbo rbi))
+        (let ((hw (/ thickness 2))
+              (t1 (+ ast (/ thickness 4)))
+              (t2 (+ ast (* thickness 0.75))))
+          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+            (v:debug :border "[paint-border-top] {theme-3d} outside (~f ~f) (~f ~f)" asl t1 (- asr hw) t1)
+            (al:draw-line asl t1 (- asr hw) t1 rbo hw)
+            (v:debug :border "[paint-border-top] {theme-3d} inside (~f ~f) (~f ~f)" (+ asl hw) t2 (- asr thickness) t2)
+            (al:draw-line (+ asl hw) t2 (- asr thickness) t2 rbi hw))))))))
+
+(defmethod paint-border-top ((border border) object (theme theme-flat))
+  (let ((color (color theme)))
+    (with-accessors ((tn thickness)) border
+      (assert (> tn 0))
+      (with-area-and-spacing (asl ast asr asb) object
+        (let ((c color)
+              (w2 (/ tn 2)))
+          (if (eql c nil)
+              (setq c (frame-color theme)))
+          (let ((yy (+ ast w2)))
+            (al:draw-line asl yy asr yy c tn)))))))
+
+(defmethod paint-box ((object box) (theme theme-3d))
+  (when (filled object)
+    (paint-box-interior object theme))
+  (paint-box-frame object theme)
+  (unless (= (length (title object)) 0)
+    (paint-box-title object theme)))
+
+(defmethod paint-box ((object box) (theme theme-flat))
+  (when (filled object)
+    (paint-box-interior object theme))
+  (paint-box-frame object theme)
+  (unless (= (length (title object)) 0)
+    (paint-box-title object theme)))
+
+(defmethod paint-box-frame ((object box) (theme theme-3d))
+  ;; (unless (equal object (cl-yag-tests::box-tests-b7 cl-yag-tests::*box-data*))
+  ;;   (return-from paint-box-frame))
+  (with-theme-3d-colors (normal dark light very-dark very-light) theme
+    (with-theme (font style) theme
+      (with-local-accessors ((object-left left) (object-top top) thickness)
+                            object
+
+        ;; (let ((frame-color (al:map-rgb-f 0 1 0))
+        ;;       (object-right (right object))
+        ;;       (object-bottom (bottom object))
+        ;;       (tn2 (/ thickness 2))
+        ;;       v)
+        ;;   (let ((x1 (+ object-left tn2))
+        ;;         (y1 (+ object-top tn2))
+        ;;         (x2 (- object-right tn2))
+        ;;         (y2 (- object-bottom tn2)))
+        ;;     (let ((x1x1 (- x1 tn2))
+        ;;           (x1x2 (+ x1 tn2))
+        ;;           (y1y1 (- y1 tn2))
+        ;;           (y1y2 (+ y1 tn2))
+        ;;           (x2x1 (- x2 tn2))
+        ;;           (x2x2 (+ x2 tn2))
+        ;;           (y2y1 (- y2 tn2))
+        ;;           (y2y2 (+ y2 tn2)))
+
+        ;;       ;; Upper left corner
+        ;;       (push (list x1x1 y1y1 frame-color) v)
+        ;;       (push (list x1x2 y1y2 frame-color) v)
+
+        ;;       ;; To the right upper corner
+        ;;       (push (list x2x2 y1y1 frame-color) v)
+        ;;       (push (list x2x1 y1y2 frame-color) v)
+                         
+        ;;       ;; To right lower corner
+        ;;       (push (list x2x2 y2y2 frame-color) v)
+        ;;       (push (list x2x1 y2y1 frame-color) v)
+
+        ;;       ;; To left lower corner
+        ;;       (push (list x1x1 y2y2 frame-color) v)
+        ;;       (push (list x1x2 y2y1 frame-color) v)
+
+        ;;       ;; To left upper corner
+        ;;       (push (list x1x1 y1y1 frame-color) v)
+        ;;       (push (list x1x2 y1y2 frame-color) v)))
+        ;;   (draw-prim v :triangle-strip))
+        (let ((quarter-thick (/ thickness 4))
+              (object-right (right object))
+              (object-bottom (bottom object)))
+          (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+            ;; (v:info :box "[paint-box-frame] {theme-3d} (1) lto:~a" (print-color lto))
+            ;; (v:info :box "[paint-box-frame] {theme-3d} (2) lti:~a" (print-color lti))
+            ;; (v:info :box "[paint-box-frame] {theme-3d} (3) rbo:~a" (print-color rbo))
+            ;; (v:info :box "[paint-box-frame] {theme-3d} (4) rbi:~a" (print-color rbi))
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+              (draw-side :left (- object-left quarter-thick) (- object-top quarter-thick) (- object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lto :others '(:top :right :bottom))
+              (draw-side :left (+ object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lti :others '(:top :right :bottom) :inside t)
+              (draw-side :top (- object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (- object-bottom quarter-thick) (/ thickness 2) lto :others '(:left :right :bottom))
+              (draw-side :top (- object-left quarter-thick) (+ object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lti :others '(:left :right :bottom) :inside t)
+              (draw-side :right (+ object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbo :others '(:left :top :bottom))
+              (draw-side :right (- object-left quarter-thick) (- object-top quarter-thick) (- object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbi :others '(:left :top :bottom) :inside t)
+              (draw-side :bottom (- object-left quarter-thick) (+ object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbo :others '(:left :top :right))
+              (draw-side :bottom (- object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (- object-bottom quarter-thick) (/ thickness 2) rbi :others '(:left :top :right) :inside t)
+              )))
+        ))))
+
+(defmethod paint-box-frame ((object box) (theme theme-flat))
+  (with-object-and-theme (font) object theme
+    (with-theme (frame-color) theme
+      (with-local-accessors ((ol left) (ot top) (ow width) (oh height)
+                             title thickness title-position v-align)
+                            object
+        (let ((or (+ ol ow))
+              (ob (+ ot oh))
+              (title-height (al:get-font-line-height font)) ; title height
+              (title-width (al:get-text-width font title))  ; title width
+              (tn2 (/ thickness 2))                         ; half thickness
+              cb ct)
+          (setq ct
+                (if (or (= (length title) 0) (eql title-position nil))
+                    ot
+                    (case title-position
+                      ((:center-bottom :left-bottom :right-bottom) ot)
+                      ((:center-middle :left-middle :right-middle) ot)
+                      ((:center-top :left-top :right-top)
+                       (case v-align
+                         (:bottom
+                          ot)
+                         (:middle
+                          (+ ot (/ (+ thickness title-height) 2)))
+                         (:top
+                          (+ ot (/ thickness 2) title-height)))))))
+          
+          (setq cb
+                (if (or (= (length title) 0) (eql title-position nil))
+                    ob
+                    (case title-position
+                      ((:center-bottom :left-bottom :right-bottom)
+                       (case v-align
+                         (:bottom
+                          (- ob title-height thickness))
+                         (:middle
+                          (- ob (/ thickness 2) (/ title-height 2)))
+                         (:top
+                          ob)))
+                      ((:center-middle :left-middle :right-middle) ob)
+                      ((:center-top :left-top :right-top) ob))))
+          
+          ;; Draw frame
+          (when (/= thickness 0)
+            (if (eql v-align ':middle)
+                (case title-position
+                  ((:center-top :left-top :right-top)
+                   (let (v)
+                     (let ((x1 (+ ol tn2))
+                           (y1 (+ ct tn2))
+                           (x2 (- or tn2))
+                           (y2 (- cb tn2)))
+                       (let ((x1x1 (- x1 tn2))
+                             (x1x2 (+ x1 tn2))
+                             (y1y1 (- y1 tn2))
+                             (y1y2 (+ y1 tn2))
+                             (x2x1 (- x2 tn2))
+                             (x2x2 (+ x2 tn2))
+                             (y2y1 (- y2 tn2))
+                             (y2y2 (+ y2 tn2))
+                             x1x3 x1x4)
+                         (case title-position
+                           (:center-top
+                            (let ((amt (/ (- (- x2x1 x1x2) title-width thickness thickness) 2)))
+                              (setq x1x3 (+ x1x2 amt))
+                              (setq x1x4 (- x2x1 amt)))) ;!!!validated!!!
+                           (:left-top
+                            (setq x1x3 (+ x1x2 thickness ))
+                            (setq x1x4 (+ x1x2 thickness title-width thickness))) ;!!!validated!!!
+                           (:right-top
+                            (setq x1x3 (- x2x1 thickness title-width thickness))
+                            (setq x1x4 (- x2x1 thickness)))) ;!!!validated!!!
+
+                         ;; After text
+                         (push (list x1x4 y1y1 frame-color) v)
+                         (push (list x1x4 y1y2 frame-color) v)
+
+                         ;; To the right upper corner
+                         (push (list x2x2 y1y1 frame-color) v)
+                         (push (list x2x1 y1y2 frame-color) v)
+                         
+                         ;; To right lower corner
+                         (push (list x2x2 y2y2 frame-color) v)
+                         (push (list x2x1 y2y1 frame-color) v)
+
+                         ;; To left lower corner
+                         (push (list x1x1 y2y2 frame-color) v)
+                         (push (list x1x2 y2y1 frame-color) v)
+
+                         ;; To left upper corner
+                         (push (list x1x1 y1y1 frame-color) v)
+                         (push (list x1x2 y1y2 frame-color) v)
+
+                         ;; Left upper corner to before text
+                         (push (list x1x3 y1y1 frame-color) v)
+                         (push (list x1x3 y1y2 frame-color) v)))
+                     (draw-prim v :triangle-strip)))
+                  
+                  ((:center-middle :left-middle :right-middle)
+                   (al:draw-rectangle (+ ol tn2) (+ ct tn2) (- or tn2) (- cb tn2) frame-color thickness))
+                  
+                  ((:center-bottom :left-bottom :right-bottom)
+                   (let (v)
+                     (let ((x1 (+ ol tn2))
+                           (y1 (+ ct tn2))
+                           (x2 (- or tn2))
+                           (y2 (- cb tn2)))
+                       (let ((x1x1 (- x1 tn2))
+                             (x1x2 (+ x1 tn2))
+                             (y1y1 (- y1 tn2))
+                             (y1y2 (+ y1 tn2))
+                             (x2x1 (- x2 tn2))
+                             (x2x2 (+ x2 tn2))
+                             (y2y1 (- y2 tn2))
+                             (y2y2 (+ y2 tn2))
+                             x2x3 x2x4)
+                         (case title-position
+                           (:center-bottom
+                            (let ((amt (/ (- (- x2x1 x1x2) title-width thickness thickness) 2)))
+                              (setq x2x3 (- x2x1 amt))
+                              (setq x2x4 (+ x1x2 amt))))
+                           (:left-bottom
+                            (setq x2x3 (+ x1x2 thickness title-width thickness))
+                            (setq x2x4 (+ x1x2 thickness)))
+                           (:right-bottom
+                            (setq x2x3 (- x2x1 thickness))
+                            (setq x2x4 (- x2x1 thickness title-width thickness))))
+
+                         ;; Lower left after text
+                         (push (list x2x4 y2y2 frame-color) v)
+                         (push (list x2x4 y2y1 frame-color) v)
+                         
+                         ;; To left lower corner
+                         (push (list x1x1 y2y2 frame-color) v)
+                         (push (list x1x2 y2y1 frame-color) v)
+
+                         ;; To left upper corner
+                         (push (list x1x1 y1y1 frame-color) v)
+                         (push (list x1x2 y1y2 frame-color) v)
+
+                         ;; To right upper corner
+                         (push (list x2x2 y1y1 frame-color) v)
+                         (push (list x2x1 y1y2 frame-color) v)
+                         
+                         ;; To right lower corner
+                         (push (list x2x2 y2y2 frame-color) v)
+                         (push (list x2x1 y2y1 frame-color) v)
+                         
+                         ;; To right lower before text
+                         (push (list x2x3 y2y2 frame-color) v)
+                         (push (list x2x3 y2y1 frame-color) v)))
+                     (draw-prim v :triangle-strip))))
+
+                ;; Else draw normal rectangle
+                (al:draw-rectangle (+ ol tn2) (+ ct tn2) (- or tn2) (- cb tn2) frame-color thickness))))))))
+
+(defmethod paint-box-interior ((object box) (theme theme-3d))
+  )
+
+(defmethod paint-box-interior ((object box) (theme theme-flat))
+  (with-local-accessors ((ol left) (ot top) (ow width) (oh height) (tn thickness)) object
+    (let ((or (+ ol ow))
+          (ob (+ ot oh)))
+      (with-theme ((ic interior-color)) theme
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+          (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ot tn)) (1+ (- or tn)) (1+ (- ob tn)) ic))))))
+
+(defmethod paint-box-title ((object box) (theme theme-3d))
+  )
+
+(defmethod paint-box-title ((object box) (theme theme-flat))
+  (with-object-and-theme (fore-color font) object theme
+    (with-local-accessors (title title-position v-align thickness
+                           (ol left) (ot top) (ow width) (oh height))
+                          object
+      (let ((title-height (al:get-font-line-height font))
+            (title-width (al:get-text-width font title)))
+        (let ((calc-left)
+              (calc-top)
+              (flags +ALIGN-CENTER+))
+          
+          (setq calc-left
+                (case title-position
+                  ((:center-bottom :center-middle :center-top)
+                   (ecase v-align
+                     (:bottom
+                      (+ ol (/ ow 2)))
+                     (:middle
+                      (+ ol (/ ow 2)))
+                     (:top
+                      (+ ol (/ ow 2)))))
+                  (:left-bottom
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness (/ thickness 2) (/ (+ thickness title-width thickness) 2)))
+                     (:top
+                      (+ ol thickness))))
+                  (:left-middle
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness))
+                     (:top
+                      (+ ol thickness))))
+                  (:left-top
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness (/ thickness 2) (/ (+ thickness title-width thickness) 2)))
+                     (:top
+                      (+ ol thickness))))
+                  (:right-bottom
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness (/ thickness 2) (/ (+ title-width thickness thickness) 2)))
+                     (:top
+                      (- (+ ol ow) thickness))))
+                  (:right-middle
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness))
+                     (:top
+                      (- (+ ol ow) thickness))))
+                  (:right-top
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness (/ thickness 2) (/ (+ title-width thickness thickness) 2)))
+                     (:top
+                      (- (+ ol ow) thickness))))))
+          (assert (not (eql calc-left nil)))
+
+          (setq calc-top
+                (case title-position
+                  ((:center-bottom :left-bottom :right-bottom)
+                   (if (eql v-align nil)
+                       ot
+                       (case v-align
+                         (:bottom
+                          (- (+ ot oh) thickness title-height))
+                         (:middle
+                          (- (+ ot oh) thickness title-height))
+                         (:top
+                          (- (+ ot oh) thickness title-height)))))
+                  ((:center-middle :left-middle :right-middle)
+                   (if (eql v-align nil)
+                       (- (+ ot (/ oh 2)))
+                       (case v-align
+                         (:bottom
+                          (+ (- (+ ot (/ oh 2) (/ title-height 2)) title-height) (/ title-height 2)))
+                         (:middle
+                          (- (+ ot (/ oh 2) (/ title-height 2)) title-height))
+                         (:top
+                          (- (+ ot (/ oh 2) (/ title-height 2)) title-height (/ title-height 2))))))
+                  ((:center-top :left-top :right-top)
+                   (if (eql v-align nil)
+                       ot
+                       (case v-align
+                         (:bottom
+                          (+ ot thickness))
+                         (:middle
+                          (+ ot (/ thickness 2)))
+                         (:top
+                          ot))))))
+          (assert (not (eql calc-top nil)))
+          
+          (case title-position
+            (:left-bottom
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-LEFT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-LEFT+))))
+            (:left-middle
+             (setq flags +ALIGN-LEFT+))
+            (:left-top
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-LEFT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-LEFT+))))
+            (:right-bottom
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-RIGHT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-RIGHT+))))
+            (:right-middle
+             (setq flags +ALIGN-RIGHT+))
+            (:right-top
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-RIGHT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-RIGHT+)))))
+          
+          ;; Draw the text
+          (with-clipping (ol ot ow oh)
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+              (al:draw-text font fore-color calc-left calc-top flags title)
+              ))
+          )))))
 
 ;;;; functions ================================================================
+
+(defun theme-3d-style-colors (theme)
+  "Return 3d drawing colors from 3d drawing style (left-top-outside
+left-top-inside right-bottom-outside right-bottom-inside)."
+  
+  (with-theme-3d-colors (normal dark light very-dark very-light) theme
+    (case (style theme)
+      (:inset
+       (values very-dark dark light very-light))
+      ((:outset :default)
+       (values light very-light very-dark dark))
+      (:flat
+       (values very-dark dark very-dark dark)))))
 
 (defun find-theme (o)
   ;; Does object have theme?
@@ -241,71 +683,3 @@
             (v:debug :theme "find-theme: no theme, no parent, use default.")
             (return-from find-theme *theme-default*))))))
 
-(defun paint-border-bottom-3d (normal dark light very-dark very-light
-                               left top width height thickness style)
-  (declare (ignorable normal dark light very-dark very-light left top width height thickness style))
-  
-  (let (c1 c2)
-    (case style
-      (:inset (setf c1 very-light c2 normal))
-      ((:outset :default) (setf c1 very-dark c2 dark))
-      (:flat (setf c1 very-dark c2 dark)))
-    (let ((b (+ top height))
-          (r (+ left width))
-          (hw (/ thickness 2)))
-      (let ((b1 (- b (/ thickness 4)))
-            (b2 (- b (* thickness 0.75))))
-        (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-          (al:draw-line left b1 r b1 c1 hw)
-          (al:draw-line (+ left hw) b2 (- r hw) b2 c2 hw))))))
-
-(defun paint-border-left-3d (normal dark light very-dark very-light
-                             left top width height thickness style)
-  (declare (ignorable normal dark light very-dark very-light left top width height thickness style))
-  (let (c1 c2)
-    (case style
-      (:inset (setf c1 very-dark c2 dark))
-      ((:outset :default) (setf c1 normal c2 very-light))
-      (:flat (setf c1 very-dark c2 dark)))
-    (let ((b (+ top height))
-          (hw (/ thickness 2)))
-      (let ((l1 (+ left (/ thickness 4)))
-            (l2 (+ left (* thickness 0.75))))
-        (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-          (al:draw-line l1 (+ top hw) l1 (- b hw) c1 hw)
-          (al:draw-line l2 (+ top thickness) l2 (- b thickness) c2 hw))))))
-
-(defun paint-border-right-3d (normal dark light very-dark very-light
-                              left top width height thickness style)
-  (declare (ignorable normal dark light very-dark very-light left top width height thickness style))
-  
-  (let (c1 c2)
-    (case style
-      (:inset (setf c1 very-light c2 normal))
-      ((:outset :default) (setf c1 very-dark c2 dark))
-      (:flat (setf c1 very-dark c2 dark)))
-    (let ((r (+ left width))
-          (b (+ top height))
-          (hw (/ thickness 2)))
-      (let ((r1 (- r (/ thickness 4)))
-            (r2 (- r (* thickness 0.75))))
-        (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-          (al:draw-line r1 top r1 (- b hw) c1 hw)
-          (al:draw-line r2 (+ top hw) r2 (- b hw) c2 hw))))))
-
-(defun paint-border-top-3d (normal dark light very-dark very-light
-                            left top width height thickness style)
-  (declare (ignorable normal dark light very-dark very-light left top width height thickness style))
-  
-  (let (c1 c2)
-    (case style
-      (:inset (setf c1 very-dark c2 dark))
-      ((:outset :default) (setf c1 normal c2 very-light))
-      (:flat (setf c1 very-dark c2 dark)))
-    (let ((r (+ left width))
-          (hw (/ thickness 2)))
-      (let ((t1 (+ top (/ thickness 4)))
-            (t2 (+ top (* thickness 0.75))))
-        (with-blender (+OP-ADD+ +BLEND-SRC-COLOR+ +BLEND-SRC-COLOR+)
-          (al:draw-line left t1 (- r hw) t1 c1 hw)
-          (al:draw-line (+ left hw) t2 (- r thickness) t2 c2 hw))))))

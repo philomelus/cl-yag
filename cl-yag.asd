@@ -25,6 +25,8 @@
                              
                              (:file "utils")
 
+                             (:file "forwards") ; ftypes for functions that are needed before the code can be loaded
+                             
                              ;; Ease of use ...
                              (:file "allegro")
 
@@ -40,7 +42,6 @@
                              (:file "mixins/enable")
                              (:file "mixins/font")
                              (:file "mixins/layout")
-                             (:file "mixins/location")
                              (:file "mixins/manager")
                              (:file "mixins/padding")
                              (:file "mixins/parent")

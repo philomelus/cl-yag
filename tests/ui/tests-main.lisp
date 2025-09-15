@@ -80,6 +80,7 @@ Default event processing watches for :display-close event as well."
   (cl-yag::must-init (al:init-primitives-addon) "primitives addon")
   (al:set-new-display-option :sample-buffers 1 :suggest)
   (al:set-new-display-option :samples 0 :require)
+  (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
 
   ;;                                     25     250    475    700   [925]   25     350    675   [810]
   (let ((screen (al:create-display (+ 25 +WW+ 25 +WW+ 25 +WW+ 25 +WW+ 25) (+ 25 +WH+ 25 +WH+ 25 110 25) ))

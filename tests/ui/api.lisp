@@ -234,6 +234,43 @@ sized according to type and window number."
                         (symbol-value (a:symbolicate "+W-W" ,local-number-string "H+"))
                         t)))))))
 
+(defmacro tests-window-constant (type window field)
+  (a:with-gensyms (ltype lwindow lfield number-string)
+    `(let ((,ltype ,type)
+           (,lwindow ,window)
+           (,lfield ,field))
+       (let ((,number-string (format nil "~1d" ,lwindow)))
+         (case ,ltype
+           (:full
+            (symbol-value (a:symbolicate "+F-W" ,number-string ,lfield "+")))
+           (:standard
+            (symbol-value (a:symbolicate "+W" ,number-string ,lfield "+")))
+           (:tall
+            (symbol-value (a:symbolicate "+T-W" ,number-string ,lfield "+")))
+           (:wide
+            (symbol-value (a:symbolicate "+W-W" ,number-string ,lfield "+")))
+           (:wide-tall
+            (symbol-value (a:symbolicate "+WT-W" ,number-string ,lfield "+"))))))))
+
+(defmacro deftests-status (window-type window rows per-row title row column)
+  (declare (ignorable window-type window rows per-row title row column))
+  (a:with-gensyms (lwin-type lwin lrows lper-row ltitle lrow lcol left top width height)
+    `(let ((,lwin-type ,window-type)
+           (,lwin ,window)
+           (,lrows ,rows)
+           (,lper-row ,per-row)
+           (,ltitle ,title)
+           (,lrow ,row)
+           (,lcol ,column)
+           (,height 24))
+       (let ((,width (/ (- (tests-window-constant ,lwin-type ,lwin #\W) 20) ,lper-row))
+             (,top (+ (- (+ (tests-window-constant ,lwin-type ,lwin #\T)
+                            (tests-window-constant ,lwin-type ,lwin #\H))
+                         (* ,lrows 25))
+                      (* (1- ,lrow) 25))))
+         (let ((,left (+ (tests-window-constant ,lwin-type ,lwin #\L) 10 (* (1- ,lcol) ,width))))
+           (deftext :title ,ltitle :left ,left :top ,top :width ,width :height ,height))))))
+
 ;; TODO: Figure out how to deduplicate the defwindow's.  I've tried symbol-macrolet
 ;;       and couldn't get it to work.
 (defmacro deftests-window (win-type number &rest rest &key &allow-other-keys)

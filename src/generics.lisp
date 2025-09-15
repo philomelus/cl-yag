@@ -8,10 +8,24 @@
 
 (defgeneric calc-area (object parent &key &allow-other-keys))
 
+(defgeneric calc-border-left (side area object)
+  (:documentation "Calculate the left position of border of object.
+
+side   = member (:left :right :top :bottom)
+area   = (left top width height) allocated to object within parent
+object = widget calculating left position for"))
+
+(defgeneric calc-border-top (side area object)
+  (:documentation "Calculate the top position of border of object.
+
+side   = member (:left :right :top :bottom)
+area   = (left top width height) allocated to object within parent
+object = widget calculating top position for"))
+
 (defgeneric calc-height (type area object)
   (:documentation "Calculate height of object.
 
-type = member (:auto :auto-max :auto-min)
+type = widget specific positioning option
 area = (left top width height) within parent
 object = object doing height calculation for"))
 
@@ -21,7 +35,7 @@ object = object doing height calculation for"))
 (defgeneric calc-left (type area object)
   (:documentation "Calculate the left position of object.
 
-type = member (:auto :auto-max :auto-min)
+type = widget specific positioning option
 area = (left top width height) within parent
 object = object doing left calculation for
 
@@ -31,7 +45,7 @@ already been calcuated and set to object."))
 (defgeneric calc-top (type area object)
   (:documentation "Calculate the top position of object.
 
-type = member (:auto :auto-max :auto-min)
+type = widget specific positioning option
 area = (left top width height) within parent
 object = object doing top calculation for
 
@@ -41,7 +55,7 @@ already been calcuated and set to object."))
 (defgeneric calc-width (type area object)
   (:documentation "Calculate width of object.
 
-type = member (:auto :auto-max :auto-min)
+type = widget specific positioning option
 area = (left top width height) within parent
 object = object doing width calculation for"))
 
@@ -96,6 +110,27 @@ object = object doing width calculation for"))
 (defgeneric paint-border-right (border object theme))
 (defgeneric paint-border-top (border object theme))
 
+(defgeneric paint-box (box theme)
+  (:documentation "Called to paint a box. Unless custom drawing is desired, just call
+PAINT-BOX-FRAME, PAINT-BOX-INTERIOR, and PAINT-BOX-TITLE.
+
+theme - Theme used for painting box."))
+
+(defgeneric paint-box-frame (box theme)
+  (:documentation "Called to paint the frame of a box.
+
+theme  - Theme used to paint box frame."))
+
+(defgeneric paint-box-interior (box theme)
+  (:documentation "Called to paint the interior of a box.
+
+theme - Theme used to paint box interior."))
+
+(defgeneric paint-box-title (box theme)
+  (:documentation "Called to paint the title of a box.
+
+theme - Theme used to paint box title."))
+
 (defgeneric print-mixin (object &optional stream))
 
 (defgeneric process-events (queue object &key &allow-other-keys))
@@ -103,6 +138,11 @@ object = object doing width calculation for"))
 (defgeneric right (object))
 
 (defgeneric unhandled-event (event object) (:method (e o)))
+
+;; (defgeneric update-area-cache (object)
+;;   (:documentation "Called to update the area cache of object. This is called for all derived
+;; types of area-cache's. Should return T/NIL for whether the cache update
+;; succeeded."))
 
 (defgeneric update-layout-child-areas (index object)
   (:documentation "After a child's area has been modified, call this to update the internal child
@@ -117,13 +157,15 @@ object = Object containing modified child"))
 
 (defgeneric (setf area) (x y w h object))
 
-(defgeneric (setf border) (border-object object))
+(defgeneric (setf border) (border-object object)
+  (:documentation "Sets BORDER-LEFT, BORDER-RIGHT, BORDER-TOP, and BORDER-BOTTOM of OBJECT to
+BORDER-OBJECT."))
 
-(defgeneric (setf border-h) (border-object object))
+(defgeneric (setf border-h) (border-object object)
+  (:documentation "Sets BORDER-LEFT and BORDER-RIGHT of OBJECT to BORDER-OBJECT."))
 
-(defgeneric (setf border-v) (border-object object))
-
-(defgeneric (setf location) (x y object))
+(defgeneric (setf border-v) (border-object object)
+  (:documentation "Sets BORDER-ROP and BORDER-BOTTOM of OBJECT to BORDER-OBJECT."))
 
 (defgeneric (setf padding) (value object))
 
@@ -137,8 +179,3 @@ object = Object containing modified child"))
 
 (defgeneric (setf spacing-v) (value object))
 
-(defgeneric (setf theme) (theme object)
-  (:method (theme object)
-    (v:warn :theme "no (setf theme) method for ~a" (print-raw-object object))
-    ;; Should never trigger
-    (my-next-method)))
