@@ -84,7 +84,8 @@ leaving the title blank at top, or NIL for bottom."
         (title-top nil)
         side-left side-top side-right side-bottom)
     (declare (ignorable side-bottom-extra side-left-extra
-                        side-right-extra side-top-extra))
+                        side-right-extra side-top-extra
+                        title-end title-top))
     (case side
       (:bottom
        (setq side-left (min left right)
@@ -166,13 +167,17 @@ leaving the title blank at top, or NIL for bottom."
         ;; (v:info :paint "[draw-side] painting (~f ~f) (~f ~f)" x1 y1 x2 y2)
         (let ()
 
-          ;; Start
-          (push (list x1 y1 color) v)
-          (push (list x2 y1 color) v)
+          (if (> title-start 0)
+              (progn
+                (error "not implemented"))
+              (progn
+                ;; Start
+                (push (list x1 y1 color) v)
+                (push (list x2 y1 color) v)
 
-          ;; End
-          (push (list x1 y2 color) v)
-          (push (list x2 y2 color) v)))
+                ;; End
+                (push (list x1 y2 color) v)
+                (push (list x2 y2 color) v)))))
       
       (draw-prim v :triangle-strip))))
 

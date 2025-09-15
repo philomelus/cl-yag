@@ -4,15 +4,15 @@
 
 ;;;; macros ===================================================================
 
-(defmacro with-borders ((&rest vars) object &body body)
-  (assert (= (length vars) 4))
+(defmacro with-borders ((left right top bottom) object &body body)
   (a:with-gensyms (instance)
     `(let ((,instance ,object))
-      (let ((,(first vars) (border-left ,instance))
-           (,(second vars) (border-right ,instance))
-           (,(third vars) (border-top ,instance))
-           (,(fourth vars) (border-bottom ,instance)))
-       ,@body))))
+       (let ((,left (border-left ,instance))
+             (,right (border-right ,instance))
+             (,top (border-top ,instance))
+             (,bottom (border-bottom ,instance)))
+         (declare (ignorable ,left ,right, top ,bottom))
+         ,@body))))
 
 ;;;; border-base ==============================================================
 

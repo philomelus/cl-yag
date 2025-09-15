@@ -101,14 +101,49 @@ object = object doing width calculation for"))
 (defgeneric paint (obj &key &allow-other-keys)
   (:method (obj &key)
     (on-paint obj)
-    ;; Should never trigger
     (my-next-method)))
 
-(defgeneric paint-border (object theme))
-(defgeneric paint-border-bottom (border object theme))
-(defgeneric paint-border-left (border object theme))
-(defgeneric paint-border-right (border object theme))
-(defgeneric paint-border-top (border object theme))
+(defgeneric paint-border (object theme)
+  (:documentation "Paint borders for object.
+
+Default implementation calls the paint-border-* generics with apropriate
+keywords."))
+
+(defgeneric paint-border-bottom (border object theme &key blend-left blend-right)
+  (:documentation "Paint bottom border.
+
+BLEND-LEFT is T when the left border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-RIGHT is T when the right border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-left (border object theme &key blend-top blend-bottom)
+  (:documentation "Paint left border.
+
+BLEND-TOP is T when the top border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-right (border object theme &key blend-top blend-bottom)
+  (:documentation "Paint right border.
+
+BLEND-TOP is T when the top border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-top (border object theme &key blend-left blend-right)
+  (:documentation "Paint top border.
+
+BLEND-LEFT is T when the left border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint the full side.
+
+BLEND-RIGHT is T when the right border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
 
 (defgeneric paint-box (box theme)
   (:documentation "Called to paint a box. Unless custom drawing is desired, just call

@@ -2,9 +2,6 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-(declaim (inline paint-border-bottom-3d paint-border-left-3d paint-border-right-3d
-                 paint-border-top-3d))
-
 ;;;; macros ==================================================================
 
 (defmacro with-theme-3d-colors ((n d l vd vl) theme &body body)
@@ -33,25 +30,19 @@
   ())
 
 (defmethod paint-border ((object area-mixin) (theme theme-base))
-  ;; Left side
-  (let ((b (border-left object)))
-    (unless (eql b nil)
-      (paint-border-left b object theme)))
-
-  ;; Top side
-  (let ((b (border-top object)))
-    (unless (eql b nil)
-      (paint-border-top b object theme)))
-
-  ;; Right side
-  (let ((b (border-right object)))
-    (unless (eql b nil)
-      (paint-border-right b object theme)))
-          
-  ;; Bottom side
-  (let ((b (border-bottom object)))
-    (unless (eql b nil)
-      (paint-border-bottom b object theme))))
+  (with-borders (bl br bt bb) object
+    (let ((blp (not (eql bl nil)))
+          (brp (not (eql br nil)))
+          (btp (not (eql bt nil)))
+          (bbp (not (eql bb nil))))
+      (when blp
+        (paint-border-left bl object theme :blend-top btp :blend-bottom bbp))
+      (when btp
+        (paint-border-top bt object theme :blend-left blp :blend-right brp))
+      (when brp
+        (paint-border-right br object theme :blend-top btp :blend-bottom bbp))
+      (when bbp
+        (paint-border-bottom bb object theme :blend-left blp :blend-right brp)))))
 
 ;;;; theme-flat ===============================================================
 
@@ -93,25 +84,32 @@
 
 ;;;; common methods ===========================================================
 
-(defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d))
-(with-theme-3d-colors (normal dark light very-dark very-light) theme
-    (with-local-slots (thickness) border
-      (with-area-and-spacing (asl ast asr asb) object
-        (assert (< asl asr))
-        (assert (< ast asb))
-        (v:debug :paint "[paint-border-bottom] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
-        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-          (declare (ignorable lto lti rbo rbi))
-          (let ((hw (/ thickness 2))
-                (b1 (- asb (/ thickness 4)))
-                (b2 (- asb (* thickness 0.75))))
-            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-              (v:debug :border "[paint-border-bottom] {theme-3d} outside (~f ~f) (~f ~f)" asl b1 asr b1)
-              (al:draw-line asl b1 asr b1 lto hw)
-              (v:debug :border "[paint-border-bottom] {theme-3d} inside (~f ~f) (~f ~f)" (+ asl hw) b2 (- asr hw) b2)
-              (al:draw-line (+ asl hw) b2 (- asr hw) b2 lti hw))))))))
+(defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d) &key blend-left blend-right)
+  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+    (declare (ignorable lto lti rbo rbi))
+    (with-area-and-spacing (object-left object-top object-right object-bottom) object
+      (assert (< object-left object-right))
+      (assert (< object-top object-bottom))
+      (let ((thickness (thickness border)))
+        (let ((1/4-thick (/ thickness 4))
+              (1/2-thick (/ thickness 2))
+              (others ()))
+          (when blend-left
+            (push :left others))
+          (when blend-right
+            (push :right others))
+          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
+            (draw-side :bottom
+                       (+ object-left 3/4-thick) (- object-top 1/4-thick)
+                       (- object-right 3/4-thick) (- object-bottom 1/4-thick)
+                       1/2-thick rbo :others others)
+            (draw-side :bottom
+                       (+ object-left 3/4-thick) (- object-top 3/4-thick)
+                       (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                       1/2-thick rbi :others others :inside t)))))))
 
-(defmethod paint-border-bottom ((border border) object (theme theme-flat))
+(defmethod paint-border-bottom ((border border) object (theme theme-flat) &key blend-left blend-right)
+  (declare (ignorable blend-left blend-right))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (assert (> tn 0))
@@ -123,25 +121,31 @@
           (let ((yy (+ asb (- tn) w2)))
             (al:draw-line asl yy asr yy c tn)))))))
 
-(defmethod paint-border-left ((border border) object (theme theme-3d))
-  (with-theme-3d-colors (normal dark light very-dark very-light) theme
-    (with-local-slots (thickness) border
-      (with-area-and-spacing (asl ast asr asb) object
-        (assert (< asl asr))
-        (assert (< ast asb))
-        (v:debug :border "[paint-border-left] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
-        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-          (declare (ignorable lto lti rbo rbi))
-          (let ((hw (/ thickness 2))
-                (l1 (+ asl (/ thickness 4)))
-                (l2 (+ asl (* thickness 0.75))))
-            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-              (v:debug :border "[paint-border-left] {theme-3d} outside (~f ~f) (~f ~f)" l1 (+ ast hw) l1 (- asb hw))
-              (al:draw-line l1 (+ ast hw) l1 (- asb hw) lto hw)
-              (v:debug :border "[paint-border-left] {theme-3d} inside (~f ~f) (~f ~f)" l2 (+ ast thickness) l2 (- asb thickness))
-              (al:draw-line l2 (+ ast thickness) l2 (- asb thickness) lti hw))))))))
+(defmethod paint-border-left ((border border) object (theme theme-3d) &key blend-top blend-bottom)
+  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+    (declare (ignorable lto lti rbo rbi))
+    (with-area-and-spacing (object-left object-top object-right object-bottom) object
+      (let ((thickness (thickness border)))
+        (let ((1/4-thick (/ thickness 4))
+              (1/2-thick (/ thickness 2))
+              (others ()))
+          (when blend-top
+            (push :top others))
+          (when blend-bottom
+            (push :bottom others))
+          (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
+            (draw-side :left
+                       (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                       (+ object-right 1/4-thick) (- object-bottom 1/4-thick) 
+                       1/2-thick lto :others others)
+            (draw-side :left
+                       (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                       (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
+                       1/2-thick lti :others others :inside t)
+            ))))))
 
-(defmethod paint-border-left ((border border) object (theme theme-flat))
+(defmethod paint-border-left ((border border) object (theme theme-flat) &key blend-top blend-bottom)
+  (declare (ignorable blend-top blend-bottom))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (assert (> tn 0))
@@ -155,25 +159,28 @@
             (assert (not (eql c nil)))
             (al:draw-line xx ast xx asb c w)))))))
 
-(defmethod paint-border-right ((border border) object (theme theme-3d))
-  (with-theme-3d-colors (normal dark light very-dark very-light) theme
-    (with-local-slots (thickness) border
-      (with-area-and-spacing (asl ast asr asb) object
-        (assert (< asl asr))
-        (assert (< ast asb))
-        (v:debug :border "[paint-border-right] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
-        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-          (declare (ignorable lto lti rbo rbi))
-          (let ((hw (/ thickness 2))
-                (r1 (- asr (/ thickness 4)))
-                (r2 (- asr (* thickness 0.75))))
-            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-              (v:debug :border "[paint-border-right] {theme-3d} outside (~f ~f) (~f ~f)" r1 ast r1 (- asb hw))
-              (al:draw-line r1 ast r1 (- asb hw) rbo hw)
-              (v:debug :border "[paint-border-right] {theme-3d} inside (~f ~f) (~f ~f)" r2 (+ ast hw) r2 (- asb hw))
-              (al:draw-line r2 (+ ast hw) r2 (- asb hw) rbi hw))))))))
+(defmethod paint-border-right ((border border) object (theme theme-3d) &key blend-top blend-bottom)
+  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+    (declare (ignorable lto lti rbo rbi))
+    (with-area-and-spacing (object-left object-top object-right object-bottom) object
+      (let ((thickness (thickness border)))
+        (let ((1/4-thick (/ thickness 4))
+              (1/2-thick (/ thickness 2))
+              (others ()))
+          (when blend-top
+            (push :top others))
+          (when blend-bottom
+            (push :bottom others))
+          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
+            (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
+                       (- object-right 1/4-thick) (- object-bottom 1/4-thick)
+                       1/2-thick rbo :others others)
+            (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
+                       (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                       1/2-thick rbi :others others :inside t)))))))
 
-(defmethod paint-border-right ((border border) object (theme theme-flat))
+(defmethod paint-border-right ((border border) object (theme theme-flat) &key blend-top blend-bottom)
+  (declare (ignorable blend-top blend-bottom))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (assert (> tn 0))
@@ -185,25 +192,28 @@
           (let ((xx (+ asr (- tn) w2)))
             (al:draw-line xx ast xx asb c tn)))))))
 
-(defmethod paint-border-top ((border border) object (theme theme-3d))
-(with-theme-3d-colors (normal dark light very-dark very-light) theme
-  (with-slots (thickness) border
-    (with-area-and-spacing (asl ast asr asb) object
-      (assert (< asl asr))
-      (assert (< ast asb))
-      (v:debug :border "[paint-border-top] {theme-3d} (~f ~f) (~f ~f)" asl ast asr asb)
-      (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-        (declare (ignorable lto lti rbo rbi))
-        (let ((hw (/ thickness 2))
-              (t1 (+ ast (/ thickness 4)))
-              (t2 (+ ast (* thickness 0.75))))
-          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-            (v:debug :border "[paint-border-top] {theme-3d} outside (~f ~f) (~f ~f)" asl t1 (- asr hw) t1)
-            (al:draw-line asl t1 (- asr hw) t1 rbo hw)
-            (v:debug :border "[paint-border-top] {theme-3d} inside (~f ~f) (~f ~f)" (+ asl hw) t2 (- asr thickness) t2)
-            (al:draw-line (+ asl hw) t2 (- asr thickness) t2 rbi hw))))))))
+(defmethod paint-border-top ((border border) object (theme theme-3d) &key blend-left blend-right)
+  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+    (declare (ignorable lto lti rbo rbi))
+    (with-area-and-spacing (object-left object-top object-right object-bottom) object
+      (let ((thickness (thickness border)))
+        (let ((1/4-thick (/ thickness 4))
+              (1/2-thick (/ thickness 2))
+              (others ()))
+          (when blend-left
+            (push :left others))
+          (when blend-right
+            (push :right others))
+          (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
+            (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                       object-right (+ object-bottom 1/4-thick)
+                       1/2-thick lto :others others)
+            (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                       (+ object-right 0) (+ object-bottom 3/4-thick)
+                       1/2-thick lti :others others :inside t)))))))
 
-(defmethod paint-border-top ((border border) object (theme theme-flat))
+(defmethod paint-border-top ((border border) object (theme theme-flat) &key blend-left blend-right)
+  (declare (ignorable blend-left blend-right))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (assert (> tn 0))
