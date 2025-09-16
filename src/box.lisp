@@ -165,14 +165,11 @@ leaving the title blank at top, or NIL for bottom."
                (setq side-right-extra (- width))
                (setq side-right-extra (- half-width)))))))
     
-    ;; (v:info :paint "[draw-side] side (~f ~f) (~f ~f)" side-left side-top side-right side-bottom)
-
     (let (v)
       (let ((x1 (- side-left half-width side-left-extra))
             (y1 (- side-top half-width side-top-extra))
             (x2 (+ side-right half-width side-right-extra))
             (y2 (+ side-bottom half-width side-bottom-extra)))
-        ;; (v:info :paint "[draw-side] painting (~f ~f) (~f ~f)" x1 y1 x2 y2)
         (let ()
 
           (if (and titlep (> title-start 0))

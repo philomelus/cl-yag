@@ -240,8 +240,6 @@
     (paint-box-title object theme)))
 
 (defmethod paint-box-frame ((object box) (theme theme-3d))
-  (unless (equal object (cl-yag-tests::box-tests-b7 cl-yag-tests::*box-data*))
-    (return-from paint-box-frame))
   (with-theme (font style) theme
     (with-local-accessors ((object-left left) (object-top top)
                            thickness title title-position v-align)
@@ -281,41 +279,44 @@
             ((:center-middle :left-middle :right-middle))
             ((:center-top :left-top :right-top))))
 
-        ;; Make space for title if needed
-        (when (eql v-align :middle)
-          (case title-position
-            (:center-top
-             (setf (third title-options) t)
-             (let ((amt (/ (- (- object-right object-left) (+ thickness title-width thickness)) 2)))
-               (setf (first title-options) (+ object-left 1/4-thick amt)
-                     (second title-options) (- (+ object-right 1/4-thick) amt))))
-          
-            (:left-top
-             (setf (third title-options) t)
-             (setf (first title-options) (+ object-left 1/4-thick thickness)
-                   (second title-options) (+ object-left 1/4-thick thickness title-width thickness)))
-          
-            (:right-top
-             (setf (third title-options) t)
-             (setf (first title-options) (- (+ object-right 1/4-thick) thickness title-width thickness)
-                   (second title-options) (- (+ object-right 1/4-thick) thickness)))
-
-            (:center-bottom
-             (let ((amt (/ (- (- object-right object-left) thickness title-width thickness) 2)))
-               (setf (first title-options) (- object-right amt))
-               (setf (second title-options) (+ object-left amt))))
-          
-            (:left-bottom
-             (setf (first title-options) (+ object-left thickness title-width thickness))
-             (setf (second title-options) (+ object-left thickness)))
-          
-            (:right-bottom
-             (setf (first title-options) (- object-right thickness))
-             (setf (second title-options) (- object-right thickness title-width thickness)))))
-
         ;; Draw the box frame
-        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
+        (let ((3/4-thick (+ 1/2-thick 1/4-thick))
+              (2-thick (* 2 thickness))
+              (3-thick (* 3 thickness)))
+          
+          ;; Make space for title if needed
+          (when (eql v-align :middle)
+            (case title-position
+              (:center-top
+               (setf (third title-options) t)
+               (let ((amt (/ (- (- object-right object-left) (+ 2-thick title-width)) 2)))
+                 (setf (first title-options) (+ object-left 1/4-thick amt)
+                       (second title-options) (- (+ object-right 1/4-thick) amt))))
+          
+              (:left-top
+               (setf (third title-options) t)
+               (setf (first title-options) (+ object-left 2-thick)
+                     (second title-options) (+ object-left 3-thick title-width)))
+          
+              (:right-top
+               (setf (third title-options) t)
+               (setf (first title-options) (- (+ object-right 1/4-thick) 3-thick title-width)
+                     (second title-options) (- (+ object-right 1/4-thick) 2-thick)))
+
+              (:center-bottom
+               (let ((amt (/ (- (- object-right object-left) 2-thick title-width) 2)))
+                 (setf (first title-options) (- object-right amt))
+                 (setf (second title-options) (+ object-left amt))))
+          
+              (:left-bottom
+               (setf (first title-options) (+ object-left 3-thick title-width))
+               (setf (second title-options) (+ object-left 2-thick)))
+          
+              (:right-bottom
+               (setf (first title-options) (- object-right 2-thick))
+               (setf (second title-options) (- object-right 3-thick title-width)))))
+
+          (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
             (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
               (draw-side :left (+ object-left 1/4-thick) (+ object-top 1/4-thick)
                          (+ object-right 1/4-thick) (- object-bottom 1/4-thick)
@@ -502,7 +503,12 @@
                 (al:draw-rectangle (+ ol tn2) (+ ct tn2) (- or tn2) (- cb tn2) frame-color thickness))))))))
 
 (defmethod paint-box-interior ((object box) (theme theme-3d))
-  )
+  (with-local-accessors ((ol left) (ot top) (ow width) (oh height) (tn thickness)) object
+    (let ((or (+ ol ow))
+          (ob (+ ot oh)))
+      (with-theme ((ic interior-color)) theme
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+          (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ot tn)) (1+ (- or tn)) (1+ (- ob tn)) ic))))))
 
 (defmethod paint-box-interior ((object box) (theme theme-flat))
   (with-local-accessors ((ol left) (ot top) (ow width) (oh height) (tn thickness)) object
@@ -513,7 +519,150 @@
           (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ot tn)) (1+ (- or tn)) (1+ (- ob tn)) ic))))))
 
 (defmethod paint-box-title ((object box) (theme theme-3d))
-  )
+  (with-object-and-theme (fore-color font) object theme
+    (with-local-accessors (title title-position v-align thickness
+                           (ol left) (ot top) (ow width) (oh height))
+                          object
+      (let ((title-height (al:get-font-line-height font))
+            (title-width (al:get-text-width font title)))
+        (let ((calc-left)
+              (calc-top)
+              (flags +ALIGN-CENTER+))
+          
+          (setq calc-left
+                (case title-position
+                  ((:center-bottom :center-middle :center-top)
+                   (ecase v-align
+                     (:bottom
+                      (+ ol (/ ow 2)))
+                     (:middle
+                      (+ ol (/ ow 2)))
+                     (:top
+                      (+ ol (/ ow 2)))))
+                  (:left-bottom
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness (/ thickness 2) (/ (+ thickness title-width thickness) 2)))
+                     (:top
+                      (+ ol thickness))))
+                  (:left-middle
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness))
+                     (:top
+                      (+ ol thickness))))
+                  (:left-top
+                   (ecase v-align
+                     (:bottom
+                      (+ ol thickness))
+                     (:middle
+                      (+ ol thickness (/ thickness 2) (/ (+ thickness title-width thickness) 2)))
+                     (:top
+                      (+ ol thickness))))
+                  (:right-bottom
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness (/ thickness 2) (/ (+ title-width thickness thickness) 2)))
+                     (:top
+                      (- (+ ol ow) thickness))))
+                  (:right-middle
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness))
+                     (:top
+                      (- (+ ol ow) thickness))))
+                  (:right-top
+                   (ecase v-align
+                     (:bottom
+                      (- (+ ol ow) thickness))
+                     (:middle
+                      (- (+ ol ow) thickness (/ thickness 2) (/ (+ title-width thickness thickness) 2)))
+                     (:top
+                      (- (+ ol ow) thickness))))))
+          (assert (not (eql calc-left nil)))
+
+          (setq calc-top
+                (case title-position
+                  ((:center-bottom :left-bottom :right-bottom)
+                   (if (eql v-align nil)
+                       ot
+                       (case v-align
+                         (:bottom
+                          (- (+ ot oh) thickness title-height))
+                         (:middle
+                          (- (+ ot oh) thickness title-height))
+                         (:top
+                          (- (+ ot oh) thickness title-height)))))
+                  ((:center-middle :left-middle :right-middle)
+                   (if (eql v-align nil)
+                       (- (+ ot (/ oh 2)))
+                       (case v-align
+                         (:bottom
+                          (+ (- (+ ot (/ oh 2) (/ title-height 2)) title-height) (/ title-height 2)))
+                         (:middle
+                          (- (+ ot (/ oh 2) (/ title-height 2)) title-height))
+                         (:top
+                          (- (+ ot (/ oh 2) (/ title-height 2)) title-height (/ title-height 2))))))
+                  ((:center-top :left-top :right-top)
+                   (if (eql v-align nil)
+                       ot
+                       (case v-align
+                         (:bottom
+                          (+ ot thickness))
+                         (:middle
+                          (+ ot (/ thickness 2)))
+                         (:top
+                          ot))))))
+          (assert (not (eql calc-top nil)))
+          
+          (case title-position
+            (:left-bottom
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-LEFT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-LEFT+))))
+            (:left-middle
+             (setq flags +ALIGN-LEFT+))
+            (:left-top
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-LEFT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-LEFT+))))
+            (:right-bottom
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-RIGHT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-RIGHT+))))
+            (:right-middle
+             (setq flags +ALIGN-RIGHT+))
+            (:right-top
+             (case v-align
+               (:bottom
+                (setq flags +ALIGN-RIGHT+))
+               (:middle)
+               (:top
+                (setq flags +ALIGN-RIGHT+)))))
+          
+          ;; Draw the text
+          (with-clipping (ol ot ow oh)
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+              (al:draw-text font fore-color calc-left calc-top flags title)
+              ))
+          )))))
 
 (defmethod paint-box-title ((object box) (theme theme-flat))
   (with-object-and-theme (fore-color font) object theme
