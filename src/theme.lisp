@@ -209,7 +209,7 @@
                        object-right (+ object-bottom 1/4-thick)
                        1/2-thick lto :others others)
             (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                       (+ object-right 0) (+ object-bottom 3/4-thick)
+                       object-right (+ object-bottom 3/4-thick)
                        1/2-thick lti :others others :inside t)))))))
 
 (defmethod paint-border-top ((border border) object (theme theme-flat) &key blend-left blend-right)
@@ -242,68 +242,45 @@
 (defmethod paint-box-frame ((object box) (theme theme-3d))
   ;; (unless (equal object (cl-yag-tests::box-tests-b7 cl-yag-tests::*box-data*))
   ;;   (return-from paint-box-frame))
-  (with-theme-3d-colors (normal dark light very-dark very-light) theme
-    (with-theme (font style) theme
-      (with-local-accessors ((object-left left) (object-top top) thickness)
-                            object
+  (with-theme (font style) theme
+    (with-local-accessors ((object-left left) (object-top top) thickness)
+                          object
 
-        ;; (let ((frame-color (al:map-rgb-f 0 1 0))
-        ;;       (object-right (right object))
-        ;;       (object-bottom (bottom object))
-        ;;       (tn2 (/ thickness 2))
-        ;;       v)
-        ;;   (let ((x1 (+ object-left tn2))
-        ;;         (y1 (+ object-top tn2))
-        ;;         (x2 (- object-right tn2))
-        ;;         (y2 (- object-bottom tn2)))
-        ;;     (let ((x1x1 (- x1 tn2))
-        ;;           (x1x2 (+ x1 tn2))
-        ;;           (y1y1 (- y1 tn2))
-        ;;           (y1y2 (+ y1 tn2))
-        ;;           (x2x1 (- x2 tn2))
-        ;;           (x2x2 (+ x2 tn2))
-        ;;           (y2y1 (- y2 tn2))
-        ;;           (y2y2 (+ y2 tn2)))
-
-        ;;       ;; Upper left corner
-        ;;       (push (list x1x1 y1y1 frame-color) v)
-        ;;       (push (list x1x2 y1y2 frame-color) v)
-
-        ;;       ;; To the right upper corner
-        ;;       (push (list x2x2 y1y1 frame-color) v)
-        ;;       (push (list x2x1 y1y2 frame-color) v)
-                         
-        ;;       ;; To right lower corner
-        ;;       (push (list x2x2 y2y2 frame-color) v)
-        ;;       (push (list x2x1 y2y1 frame-color) v)
-
-        ;;       ;; To left lower corner
-        ;;       (push (list x1x1 y2y2 frame-color) v)
-        ;;       (push (list x1x2 y2y1 frame-color) v)
-
-        ;;       ;; To left upper corner
-        ;;       (push (list x1x1 y1y1 frame-color) v)
-        ;;       (push (list x1x2 y1y2 frame-color) v)))
-        ;;   (draw-prim v :triangle-strip))
-        (let ((quarter-thick (/ thickness 4))
-              (object-right (right object))
-              (object-bottom (bottom object)))
-          (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-            ;; (v:info :box "[paint-box-frame] {theme-3d} (1) lto:~a" (print-color lto))
-            ;; (v:info :box "[paint-box-frame] {theme-3d} (2) lti:~a" (print-color lti))
-            ;; (v:info :box "[paint-box-frame] {theme-3d} (3) rbo:~a" (print-color rbo))
-            ;; (v:info :box "[paint-box-frame] {theme-3d} (4) rbi:~a" (print-color rbi))
-            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-              (draw-side :left (- object-left quarter-thick) (- object-top quarter-thick) (- object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lto :others '(:top :right :bottom))
-              (draw-side :left (+ object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lti :others '(:top :right :bottom) :inside t)
-              (draw-side :top (- object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (- object-bottom quarter-thick) (/ thickness 2) lto :others '(:left :right :bottom))
-              (draw-side :top (- object-left quarter-thick) (+ object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) lti :others '(:left :right :bottom) :inside t)
-              (draw-side :right (+ object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbo :others '(:left :top :bottom))
-              (draw-side :right (- object-left quarter-thick) (- object-top quarter-thick) (- object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbi :others '(:left :top :bottom) :inside t)
-              (draw-side :bottom (- object-left quarter-thick) (+ object-top quarter-thick) (+ object-right quarter-thick) (+ object-bottom quarter-thick) (/ thickness 2) rbo :others '(:left :top :right))
-              (draw-side :bottom (- object-left quarter-thick) (- object-top quarter-thick) (+ object-right quarter-thick) (- object-bottom quarter-thick) (/ thickness 2) rbi :others '(:left :top :right) :inside t)
-              )))
-        ))))
+      (let ((1/4-thick (/ thickness 4))
+            (1/2-thick (/ thickness 2))
+            (object-right (right object))
+            (object-bottom (bottom object)))
+        (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
+          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
+           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+             (draw-side :left (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                        (+ object-right 1/4-thick) (- object-bottom 1/4-thick)
+                        1/2-thick lto :others '(:top :right :bottom))
+             (draw-side :left (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                        (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
+                        1/2-thick lti :others '(:top :right :bottom) :inside t)
+             
+             (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                        object-right (+ object-bottom 1/4-thick)
+                        1/2-thick lto :others '(:left :right :bottom))
+             (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                        object-right (+ object-bottom 3/4-thick)
+                        1/2-thick lti :others '(:left :right :bottom) :inside t)
+             
+             (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
+                        (- object-right 1/4-thick) (- object-bottom 1/4-thick)
+                        1/2-thick rbo :others '(:left :top :bottom))
+             (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
+                        (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                        1/2-thick rbi :others '(:left :top :bottom) :inside t)
+             
+             (draw-side :bottom (+ object-left 3/4-thick) (- object-top 1/4-thick)
+                        (- object-right 3/4-thick) (- object-bottom 1/4-thick)
+                        1/2-thick rbo :others '(:left :top :right))
+             (draw-side :bottom (+ object-left 3/4-thick) (- object-top 3/4-thick)
+                        (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                        1/2-thick rbi :others '(:left :top :right) :inside t)
+             )))))))
 
 (defmethod paint-box-frame ((object box) (theme theme-flat))
   (with-object-and-theme (font) object theme
