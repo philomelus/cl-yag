@@ -61,7 +61,7 @@
 
 ;;; functions -------------------------------------------------------
 
-(defun draw-side (side left top right bottom width color &key (others nil) (inside nil) (title nil))
+(defun draw-side (side left top right bottom width color &key (others nil) (inside nil) (title nil titlep))
   "Draw a box side in 3d.
 
 OTHERS can provide a list of other sides that will also eventually be drawn,
@@ -92,12 +92,14 @@ leaving the title blank at top, or NIL for bottom."
              side-top (max top bottom)
              side-right (max left right)
              side-bottom (max top bottom))
+       
        ;; Leave space for title?
-       (unless (eql title nil)
+       (when titlep
          (unless (third title)
            (setq title-start (first title)
                  title-end (second title)
                  title-top (third title))))
+       
        ;; Other sides being drawn too?
        (unless (eql others nil)
          (when (member :left others)
@@ -108,11 +110,13 @@ leaving the title blank at top, or NIL for bottom."
            (if inside
                (setq side-right-extra (- width))
                (setq side-right-extra 0)))))
+      
       (:left
        (setq side-left (min left right)
              side-top (min top bottom)
              side-right (min left right)
              side-bottom (max top bottom))
+       
        ;; Other sides being drawn too?
        (unless (eql others nil)
          (when (member :top others)
@@ -123,6 +127,7 @@ leaving the title blank at top, or NIL for bottom."
            (if inside
                (setq side-bottom-extra 0)
                (setq side-bottom-extra 0)))))
+      
       (:right
        (setq side-left (max left right)
              side-top (min top bottom)
@@ -135,17 +140,20 @@ leaving the title blank at top, or NIL for bottom."
                (setq side-top-extra (- width))
                (setq side-top-extra 0))
            )))
+      
       (:top
        (setq side-left (min left right)
              side-top (min top bottom)
              side-right (max left right)
              side-bottom (min top bottom))
+       
        ;; Leave space for title?
-       (unless (eql title nil)
+       (when titlep
          (when (third title)
            (setq title-start (first title)
                  title-end (second title)
                  title-top (third title))))
+       
        ;; Other sides being drawn too?
        (unless (eql others nil)
          (when (member :left others)
@@ -167,9 +175,39 @@ leaving the title blank at top, or NIL for bottom."
         ;; (v:info :paint "[draw-side] painting (~f ~f) (~f ~f)" x1 y1 x2 y2)
         (let ()
 
-          (if (> title-start 0)
+          (if (and titlep (> title-start 0))
               (progn
-                (error "not implemented"))
+                (if (member side (list :top :bottom))
+                    (let ((start (min title-start title-end))
+                          (end (max title-start title-end)))
+                      ;; Start
+                      (push (list x1 y1 color) v)
+                      (push (list x1 y2 color) v)
+                      
+                      ;; Start of title
+                      (push (list start y1 color) v)
+                      (push (list start y2 color) v)
+                      (draw-prim v :triangle-strip)
+                      
+                      ;; End of title
+                      (setf v nil)
+                      (push (list end y1 color) v)
+                      (push (list end y2 color) v)
+                      
+                      ;; End
+                      (push (list x2 y1 color) v)
+                      (push (list x2 y2 color) v)
+                      (draw-prim v :triangle-strip))
+                    
+                    (progn
+                      ;; Start
+                      (push (list x1 y1 color) v)
+                      (push (list x2 y1 color) v)
+
+                      ;; End
+                      (push (list x1 y2 color) v)
+                      (push (list x2 y2 color) v))))
+              
               (progn
                 ;; Start
                 (push (list x1 y1 color) v)

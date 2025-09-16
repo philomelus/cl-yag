@@ -240,47 +240,110 @@
     (paint-box-title object theme)))
 
 (defmethod paint-box-frame ((object box) (theme theme-3d))
-  ;; (unless (equal object (cl-yag-tests::box-tests-b7 cl-yag-tests::*box-data*))
-  ;;   (return-from paint-box-frame))
+  (unless (equal object (cl-yag-tests::box-tests-b7 cl-yag-tests::*box-data*))
+    (return-from paint-box-frame))
   (with-theme (font style) theme
-    (with-local-accessors ((object-left left) (object-top top) thickness)
+    (with-local-accessors ((object-left left) (object-top top)
+                           thickness title title-position v-align)
                           object
 
       (let ((1/4-thick (/ thickness 4))
             (1/2-thick (/ thickness 2))
             (object-right (right object))
-            (object-bottom (bottom object)))
+            (object-bottom (bottom object))
+            (title-height (al:get-font-line-height font))
+            (title-width (al:get-text-width font title))
+            (title-options (list 0 0 nil)))
+
+        ;; Adjust top for title/no-title
+        (unless (or (= (length title) 0) (eql title-position nil))
+          (case title-position
+            ((:center-bottom :left-bottom :right-bottom))
+            ((:center-middle :left-middle :right-middle))
+            ((:center-top :left-top :right-top)
+             (case v-align
+               (:bottom)
+               (:middle
+                (incf object-top (/ (+ thickness title-height) 2)))
+               (:top
+                (incf object-top (+ 1/2-thick title-height)))))))
+
+        ;; Adjust bottom for title/no-title
+        (unless (or (= (length title) 0) (eql title-position nil))
+          (case title-position
+            ((:center-bottom :left-bottom :right-bottom)
+             (case v-align
+               (:bottom
+                (decf object-bottom (+ title-height thickness)))
+               (:middle
+                (decf object-bottom (+ 1/2-thick (/ title-height 2))))
+               (:top)))
+            ((:center-middle :left-middle :right-middle))
+            ((:center-top :left-top :right-top))))
+
+        ;; Make space for title if needed
+        (when (eql v-align :middle)
+          (case title-position
+            (:center-top
+             (setf (third title-options) t)
+             (let ((amt (/ (- (- object-right object-left) (+ thickness title-width thickness)) 2)))
+               (setf (first title-options) (+ object-left 1/4-thick amt)
+                     (second title-options) (- (+ object-right 1/4-thick) amt))))
+          
+            (:left-top
+             (setf (third title-options) t)
+             (setf (first title-options) (+ object-left 1/4-thick thickness)
+                   (second title-options) (+ object-left 1/4-thick thickness title-width thickness)))
+          
+            (:right-top
+             (setf (third title-options) t)
+             (setf (first title-options) (- (+ object-right 1/4-thick) thickness title-width thickness)
+                   (second title-options) (- (+ object-right 1/4-thick) thickness)))
+
+            (:center-bottom
+             (let ((amt (/ (- (- object-right object-left) thickness title-width thickness) 2)))
+               (setf (first title-options) (- object-right amt))
+               (setf (second title-options) (+ object-left amt))))
+          
+            (:left-bottom
+             (setf (first title-options) (+ object-left thickness title-width thickness))
+             (setf (second title-options) (+ object-left thickness)))
+          
+            (:right-bottom
+             (setf (first title-options) (- object-right thickness))
+             (setf (second title-options) (- object-right thickness title-width thickness)))))
+
+        ;; Draw the box frame
         (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
           (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
-           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-             (draw-side :left (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                        (+ object-right 1/4-thick) (- object-bottom 1/4-thick)
-                        1/2-thick lto :others '(:top :right :bottom))
-             (draw-side :left (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                        (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
-                        1/2-thick lti :others '(:top :right :bottom) :inside t)
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+              (draw-side :left (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                         (+ object-right 1/4-thick) (- object-bottom 1/4-thick)
+                         1/2-thick lto :others '(:top :right :bottom) :title title-options)
+              (draw-side :left (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                         (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
+                         1/2-thick lti :others '(:top :right :bottom) :inside t :title title-options)
              
-             (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                        object-right (+ object-bottom 1/4-thick)
-                        1/2-thick lto :others '(:left :right :bottom))
-             (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                        object-right (+ object-bottom 3/4-thick)
-                        1/2-thick lti :others '(:left :right :bottom) :inside t)
+              (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                         object-right (+ object-bottom 1/4-thick)
+                         1/2-thick lto :others '(:left :right :bottom) :title title-options)
+              (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                         object-right (+ object-bottom 3/4-thick)
+                         1/2-thick lti :others '(:left :right :bottom) :inside t :title title-options)
              
-             (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
-                        (- object-right 1/4-thick) (- object-bottom 1/4-thick)
-                        1/2-thick rbo :others '(:left :top :bottom))
-             (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
-                        (- object-right 3/4-thick) (- object-bottom 3/4-thick)
-                        1/2-thick rbi :others '(:left :top :bottom) :inside t)
+              (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
+                         (- object-right 1/4-thick) (- object-bottom 1/4-thick)
+                         1/2-thick rbo :others '(:left :top :bottom) :title title-options)
+              (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
+                         (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                         1/2-thick rbi :others '(:left :top :bottom) :inside t :title title-options)
              
-             (draw-side :bottom (+ object-left 3/4-thick) (- object-top 1/4-thick)
-                        (- object-right 3/4-thick) (- object-bottom 1/4-thick)
-                        1/2-thick rbo :others '(:left :top :right))
-             (draw-side :bottom (+ object-left 3/4-thick) (- object-top 3/4-thick)
-                        (- object-right 3/4-thick) (- object-bottom 3/4-thick)
-                        1/2-thick rbi :others '(:left :top :right) :inside t)
-             )))))))
+              (draw-side :bottom (+ object-left 3/4-thick) (- object-top 1/4-thick)
+                         (- object-right 3/4-thick) (- object-bottom 1/4-thick)
+                         1/2-thick rbo :others '(:left :top :right) :title title-options)
+              (draw-side :bottom (+ object-left 3/4-thick) (- object-top 3/4-thick)
+                         (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                         1/2-thick rbi :others '(:left :top :right) :inside t :title title-options))))))))
 
 (defmethod paint-box-frame ((object box) (theme theme-flat))
   (with-object-and-theme (font) object theme
@@ -347,13 +410,13 @@
                            (:center-top
                             (let ((amt (/ (- (- x2x1 x1x2) title-width thickness thickness) 2)))
                               (setq x1x3 (+ x1x2 amt))
-                              (setq x1x4 (- x2x1 amt)))) ;!!!validated!!!
+                              (setq x1x4 (- x2x1 amt))))
                            (:left-top
                             (setq x1x3 (+ x1x2 thickness ))
-                            (setq x1x4 (+ x1x2 thickness title-width thickness))) ;!!!validated!!!
+                            (setq x1x4 (+ x1x2 thickness title-width thickness)))
                            (:right-top
                             (setq x1x3 (- x2x1 thickness title-width thickness))
-                            (setq x1x4 (- x2x1 thickness)))) ;!!!validated!!!
+                            (setq x1x4 (- x2x1 thickness))))
 
                          ;; After text
                          (push (list x1x4 y1y1 frame-color) v)
