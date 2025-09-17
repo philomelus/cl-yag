@@ -112,14 +112,14 @@
   (declare (ignorable blend-left blend-right))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
-      (assert (> tn 0))
-      (with-area-and-spacing (asl ast asr asb) object
-        (let ((c color)
-              (w2 (/ tn 2)))
-          (if (eql c nil)
-              (setq c (frame-color theme)))
-          (let ((yy (+ asb (- tn) w2)))
-            (al:draw-line asl yy asr yy c tn)))))))
+      (when (> tn 0)
+       (with-area-and-spacing (asl ast asr asb) object
+         (let ((c color)
+               (w2 (/ tn 2)))
+           (if (eql c nil)
+               (setq c (frame-color theme)))
+           (let ((yy (+ asb (- tn) w2)))
+             (al:draw-line asl yy asr yy c tn))))))))
 
 (defmethod paint-border-left ((border border) object (theme theme-3d) &key blend-top blend-bottom)
   (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
@@ -148,16 +148,16 @@
   (declare (ignorable blend-top blend-bottom))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
-      (assert (> tn 0))
-      (with-area-and-spacing (asl ast asr asb) object
-        (let ((c color)
-              (w tn)
-              (w2 (/ tn 2)))
-          (if (eql c nil)
-              (setq c (frame-color theme)))
-          (let ((xx (+ asl w2)))
-            (assert (not (eql c nil)))
-            (al:draw-line xx ast xx asb c w)))))))
+      (when (> tn 0)
+       (with-area-and-spacing (asl ast asr asb) object
+         (let ((c color)
+               (w tn)
+               (w2 (/ tn 2)))
+           (if (eql c nil)
+               (setq c (frame-color theme)))
+           (let ((xx (+ asl w2)))
+             (assert (not (eql c nil)))
+             (al:draw-line xx ast xx asb c w))))))))
 
 (defmethod paint-border-right ((border border) object (theme theme-3d) &key blend-top blend-bottom)
   (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
@@ -183,14 +183,14 @@
   (declare (ignorable blend-top blend-bottom))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
-      (assert (> tn 0))
-      (with-area-and-spacing (asl ast asr asb) object
-        (let ((c color)
-              (w2 (/ tn 2)))
-          (if (eql c nil)
-              (setq c (frame-color theme)))
-          (let ((xx (+ asr (- tn) w2)))
-            (al:draw-line xx ast xx asb c tn)))))))
+      (when (> tn 0)
+        (with-area-and-spacing (asl ast asr asb) object
+          (let ((c color)
+                (w2 (/ tn 2)))
+            (if (eql c nil)
+                (setq c (frame-color theme)))
+            (let ((xx (+ asr (- tn) w2)))
+              (al:draw-line xx ast xx asb c tn))))))))
 
 (defmethod paint-border-top ((border border) object (theme theme-3d) &key blend-left blend-right)
   (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
@@ -216,14 +216,14 @@
   (declare (ignorable blend-left blend-right))
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
-      (assert (> tn 0))
-      (with-area-and-spacing (asl ast asr asb) object
-        (let ((c color)
-              (w2 (/ tn 2)))
-          (if (eql c nil)
-              (setq c (frame-color theme)))
-          (let ((yy (+ ast w2)))
-            (al:draw-line asl yy asr yy c tn)))))))
+      (when (> tn 0)
+       (with-area-and-spacing (asl ast asr asb) object
+         (let ((c color)
+               (w2 (/ tn 2)))
+           (if (eql c nil)
+               (setq c (frame-color theme)))
+           (let ((yy (+ ast w2)))
+             (al:draw-line asl yy asr yy c tn))))))))
 
 (defmethod paint-box ((object box) (theme theme-3d))
   (when (filled object)

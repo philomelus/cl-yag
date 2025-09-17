@@ -368,25 +368,7 @@ area allocated to them, whether they choose to use it or not."
                         (setf left object-left))
                     (if (> row 0)
                         (setf top (+ (- object-height (aref row-avail-heights (1- row))) object-left))
-                        (setf top object-top))))))))
-
-        ;; Pass 3, let children adjust themselves
-        ;; (let (child)
-        ;;   (loop :for row :from 0 :below rows :do
-        ;;     (loop :for col :from 0 :below columns :do
-        ;;       (setq child (grid-layout-child col row object))
-        ;;       (unless (equal child nil)
-        ;;         (with-slots (left top width height) child
-        ;;           (when (typep width 'keyword)
-        ;;             (setf width (calc-width width (aref child-area (+ (* row columns) col)) child)))
-        ;;           (when (typep height 'keyword)
-        ;;             (setf height (calc-height height (aref child-area (+ (* row columns) col)) child)))
-        ;;           (when (typep left 'keyword)
-        ;;             (setf left (calc-left left (aref child-area (+ (* row columns) col)) child)))
-        ;;           (when (typep top 'keyword)
-        ;;             (setf top (calc-width top (aref child-area (+ (* row columns) col)) child))))))))
-        )))
-
+                        (setf top object-top)))))))))))
 
   ;; Log the children internal areas
   (with-slots (child-area) object

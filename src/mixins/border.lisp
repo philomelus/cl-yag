@@ -41,15 +41,6 @@
    (border-top :initarg :border-top :initform nil :accessor border-top)
    (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
 
-(defmethod print-mixin ((o border-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-indent :current 0 s)
-  ;; (pprint-object-nil border-left o s)
-  ;; (pprint-object-nil border-right o s)
-  ;; (pprint-object-nil border-top o s)
-  ;; (pprint-object-nil border-bottom o s)
-  (my-next-method))
-
 (defmethod (setf border) ((value border) (object border-mixin))
   (setf (border-h object) value)
   (setf (border-v object) value)

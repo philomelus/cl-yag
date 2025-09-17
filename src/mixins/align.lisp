@@ -7,20 +7,10 @@
 (defclass align-mixin (h-align-mixin v-align-mixin)
   ())
 
-(defmethod print-mixin ((o align-mixin) &optional s)
-  (declare (ignore s))
-  ;; Base mixins get printed via call-next-method, so nothing to do here
-  (my-next-method))
-
 ;;;; h-align-mixin ============================================================
 
 (defclass h-align-mixin ()
   ((h-align :initarg :h-align :initform :none :type keyword :accessor h-align)))
-
-(defmethod print-mixin ((o h-align-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-field h-align o s)
-  (my-next-method))
 
 ;; Only allow valid keywords
 ;; #+safety
@@ -37,11 +27,6 @@
 
 (defclass v-align-mixin ()
   ((v-align :initarg :v-align :initform :none :type keyword :accessor v-align)))
-
-(defmethod print-mixin ((o v-align-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-field v-align o s)
-  (my-next-method))
 
 ;; Only allow valid keywords
 ;; #+safety

@@ -10,19 +10,18 @@
 
 (defclass layout-base (container-mixin
                        parent-mixin)
-  ((left :initform :auto :initarg nil)
-   (top :initform :auto :initarg nil)
-   (width :initform :auto :initarg nil)
-   (height :initform :auto :initarg nil)
+  ((height :initform :auto :initarg nil :documentation "HEIGHT coordinate of allocated area. Type shouldn't be changed after creation.")
+   (left :initform :auto :initarg nil :documentation "LEFT coordinate of allocated area. Type shouldn't be changed after creation.")
+   (top :initform :auto :initarg nil :documentation "TOP coordinate of allocated area. Type shouldn't be changed after creation.")
+   (width :initform :auto :initarg nil :documentation "WIDTH of allocated area. Type shouldn't be changed after creation.")
 
    ;; Internal
-   (child-area :initform nil)))
-
-(defmethod initialize-instance :after ((object layout-base) &key)
-  (validate-layout-base-options object))
-
-(defmethod (setf content) :after (value (object layout-base))
-  (validate-layout-base-options object))
+   (changing :initform nil :documentation "When T, causes LAYOUT-CHANGED calls to be ignored.")
+   (child-area :initform nil :documentation "Holds actual area allocated to each child, even if they don't use it.")
+   (height-calc :initform nil :documentation "Holds original HEIGHT slot value.  Used when relayout is required.")
+   (left-calc :initform nil :documentation "Holds original LEFT slot value.  Used when relayout is required.")
+   (top-calc :initform nil :documentation "Holds original TOP slot value.  Used when relayout is required.")
+   (width-calc :initform nil :documentation "Holds original WIDTH slot value.  Used when relayout is required.")))
 
 ;;; methods ---------------------------------------------------------
 
@@ -78,6 +77,21 @@
                        cp cw ch cl ct (print-raw-object child))))))))
   (my-next-method))
 
+(defmethod (setf content) :after (value (object layout-base))
+  (validate-layout-base-options object))
+
+(defmethod initialize-instance :after ((object layout-base) &key)
+  (validate-layout-base-options object)
+  (with-slots (left top width height) object
+    (flet ((is-keyword (field)
+             (if (typep field 'keyword)
+                 field
+                 nil)))
+      (setf (slot-value object 'left-calc) (is-keyword left))
+      (setf (slot-value object 'top-calc) (is-keyword top))
+      (setf (slot-value object 'width-calc) (is-keyword width))
+      (setf (slot-value object 'height-calc) (is-keyword height)))))
+
 (defmethod on-char (key mods (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)
@@ -125,6 +139,7 @@ Returns nil if not found."
 
 (defun calc-layout-area (object)
   "Calculate area of a layout itself."
+  
   ;; Start with existing area
   (with-local-slots ((ll left) (lt top) (lw width) (lh height)) object
 
@@ -161,32 +176,42 @@ Returns nil if not found."
           
           ;; If parent has borders
           (when (typep pam 'border-mixin)
-            ;; Adjust for border sizes
-            (let ((pam-bl (border-left pam))
-                  (pam-bt (border-top pam))
-                  (pam-br (border-right pam))
-                  (pam-bb (border-bottom pam)))
-              (unless (eql pam-bl nil)
-                (incf pal (width pam-bl))
-                (decf paw (width pam-bl)))
-              (unless (eql pam-bt nil)
-                (incf pat (width pam-bt))
-                (decf pah (width pam-bt)))
-              (unless (eql pam-br nil)
-                (decf paw (width pam-br)))
-              (unless (eql pam-bb nil)
-                (decf pah (width pam-bb)))))
+            
+            (with-borders (pam-bl pam-br pam-bt pam-bb) pam
+             (let ((pam-pl 0)
+                   (pam-pt 0)
+                   (pam-pr 0)
+                   (pam-pb 0))
 
-          ;; If parent has padding
-          (when (typep pam 'padding-mixin)
-            ;; Adjust for padding
-            (let ((pam-sl (padding-left pam))
-                  (pam-st (padding-top pam)))
+               ;; If parent has padding (only applies when there are borders)
+               (when (typep pam 'padding-mixin)
+                 (setq pam-pl (padding-left pam))
+                 (setq pam-pt (padding-top pam))
+                 (setq pam-pr (padding-right pam))
+                 (setq pam-pb (padding-bottom pam)))
+              
+               ;; Adjust for border sizes
+               (unless (eql pam-bl nil)
+                 (incf pal (+ (thickness pam-bl) pam-pl))
+                 (decf paw (+ (thickness pam-bl) pam-pl)))
+               (unless (eql pam-bt nil)
+                 (incf pat (+ (thickness pam-bt) pam-pt))
+                 (decf pah (+ (thickness pam-bt) pam-pt)))
+               (unless (eql pam-br nil)
+                 (decf paw (+ (thickness pam-br) pam-pr)))
+               (unless (eql pam-bb nil)
+                 (decf pah (+ (thickness pam-bb) pam-pb))))))
+
+          ;; If parent has spacing
+          (when (typep pam 'spacing-mixin)
+            ;; Adjust for spacing
+            (let ((pam-sl (spacing-left pam))
+                  (pam-st (spacing-top pam)))
               (incf pal pam-sl)
               (incf pat pam-st)
-              (decf paw (+ pam-sl (padding-right pam)))
-              (decf pah (+ pam-st (padding-bottom pam)))))
-
+              (decf paw (+ pam-sl (spacing-right pam)))
+              (decf pah (+ pam-st (spacing-bottom pam)))))
+          
           ;; Save our area where needed
           (when (member lh +AREA-HEIGHT-OPTS+)
             (setf (slot-value object 'height) pah))
@@ -201,8 +226,7 @@ Returns nil if not found."
                    paw pah pal pat (print-raw-object object))
           (v:debug :layout "[calc-layout-area] actual area: (~d ~d) @ (~d ~d) ~a"
                    (slot-value object 'width) (slot-value object 'height) (slot-value object 'left)
-                   (slot-value object 'top) (print-raw-object object) )
-          )))))
+                   (slot-value object 'top) (print-raw-object object)))))))
 
 (defun dump-layout (object &optional (indent ""))
   (when (not (eql object nil))
@@ -216,37 +240,30 @@ Returns nil if not found."
             (when (typep child 'layout-base)
               (dump-layout child (concatenate 'string indent "  ")))))))))
 
-(defun find-parent-area-or-layout (object &key (exclude nil excludep))
+(defun find-parent-area-or-layout (object)
   "Locate first parent that either has area or is has layout-base as a superclass.
 Generates error on failure."
   
   (assert (typep object 'parent-mixin))
-  (flet ((excluded (obj)
-           (when excludep
-             (dolist (exc exclude)
-               (when (typep obj exc)
-                 (return-from excluded t))))
-           nil))
-    (let ((p (parent object)))
-      (loop
-        (when (typep p 'manager)
-          (error "found manager when looking for area-mixin"))
+  (let ((p (parent object)))
+    (loop
+      (when (typep p 'manager)
+        (error "found manager when looking for area-mixin"))
       
-        (when (eql p nil)
-          (error "no parent when looking for area-mixin"))
+      (when (eql p nil)
+        (error "no parent when looking for area-mixin"))
 
-        (unless (excluded p)
-          ;; If its a layout
-          (if (typep p 'layout-base)
-              (return p))
+      ;; If its a layout
+      (if (typep p 'layout-base)
+          (return p))
       
-          ;; If it has area
-          (if (typep p 'area-mixin)
-              (return p)))
+      ;; If it has area
+      (if (typep p 'area-mixin)
+          (return p))
 
-        ;; Get next parent
-        (assert (typep p 'area-mixin))
-        (setf p (parent p))))))
+      ;; Get next parent
+      (assert (typep p 'area-mixin))
+      (setf p (parent p)))))
 
 ;; TODO: find-if works here ...
 (defun find-parent-content (object)
@@ -260,6 +277,19 @@ Generates error when no parent has content-mixin as a superclass."
       (unless (typep parobj 'parent-mixin)
         (error "no more parents, object not owned by content??? ~a" (print-raw-object object)))
       (setq parobj (parent parobj)))))
+
+(defun find-parent-layout (object)
+  "Ascend parents until a layout-base is found, then return it.  If none are found will return NIL."
+
+  (let ((mod (parent object)))
+    (loop
+      (when (eql mod nil)
+        (return-from find-parent-layout nil))
+      (when (typep mod 'layout-base)
+        (return-from find-parent-layout mod))
+      (if (typep mod 'parent-mixin)
+          (setf mod (parent mod))
+          (return-from find-parent-layout nil)))))
 
 (defmethod validate-layout-base-options (object)
   "Validate options for slots in LAYOUT-BASE. Raises an error when invalid
@@ -290,3 +320,51 @@ settings are detected."
                        (member :center options)
                        (member :rightr options))
               (error "LEFT, CENTER, and RIGHT are mutually exclusive"))))))))
+
+;;;; MACROS ===================================================================
+
+(defmacro with-changes (object &body body)
+  "Prevent LAYOUT-CHANGED calls while performing multiple slot updates that would
+normally cause LAYOUT-CHANGED to be called for each change. Generates a single
+LAYOUT-CHANGED after body (even if none had been)."
+  
+  (a:with-gensyms (parlo block instance child parent children layout)
+    `(let ((,instance ,object)
+           ,parent ,children)
+       (declare (ignorable ,parent ,children))
+       (block ,block
+         ;; Do we have a parent?
+         (when (typep ,instance 'parent-mixin)
+           ;; Yes, so see if we have a layout above us
+           (let ((,parlo (find-parent-layout ,instance)))
+             ;; Did we have a parent layout?
+             (unless (eql ,parlo nil)
+               ;; Yes.
+               (push ,parlo ,parent)
+               (return-from ,block))))
+         ;; Not a parent or no parent layout, do we have content?
+         (when (typep ,instance 'content-mixin)
+           ;; Yes, so find any immediate child layouts
+           (mapc #'(lambda (,child)
+                     (when (typep ,child 'layout-base)
+                       (push ,child ,children)))
+                 (content ,instance))
+           (return-from ,block)))
+       ;; Disable layout-changed
+       (mapc #'(lambda (,layout)
+                 (setf (slot-value ,layout 'changing) t))
+             (append ,parent ,children))
+       ,@body
+       ;; Parent or children?
+       (if (null ,parent)
+           ;; We are the parent, so re-enable layout-changed and generate once
+           ;; per child since we possibly absorbed many (or at least one?)
+           (mapc #'(lambda (,child)
+                     (setf (slot-value ,child 'changing) nil)
+                     (layout-changed ,child :parent t))
+                 ,children)
+           ;; Let our parent layout know we changed our layout
+           (progn
+             (setf (slot-value ,parent 'changing) nil)
+             (layout-changed ,parent :child t))))))
+

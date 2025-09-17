@@ -59,6 +59,17 @@ type = widget specific positioning option
 area = (left top width height) within parent
 object = object doing width calculation for"))
 
+(defgeneric layout-changed (layout &key parent child)
+  (:documentation "Called to notify a layout that either a parent's or a child's layout has
+changed. The layout will then take whatever action is needed to update its own
+and its children's layouts.
+
+When a parent is notifying its child layout, CHILD must be T, and NIL
+otherwise.
+
+When a child is notifying its parent layout, PARENT must be T, and NIL
+otherwise."))
+
 (defgeneric must-init (test desc))
 
 (defgeneric on-char (key mods object &key &allow-other-keys)
@@ -166,8 +177,6 @@ theme - Theme used to paint box interior."))
 
 theme - Theme used to paint box title."))
 
-(defgeneric print-mixin (object &optional stream))
-
 (defgeneric process-events (queue object &key &allow-other-keys))
 
 (defgeneric right (object))
@@ -213,4 +222,24 @@ BORDER-OBJECT."))
 (defgeneric (setf spacing-h) (value object))
 
 (defgeneric (setf spacing-v) (value object))
+
+;;;; MACROS ===================================================================
+
+(defmacro layout-change (object)
+  "Call LAYOUT-CHANGED for appropriate parent or children of OBJECT."
+  
+  (a:with-gensyms (parlo block instance child)
+    `(block ,block
+       (let ((,instance ,object))
+         (when (typep ,instance 'parent-mixin)
+           (let ((,parlo (find-parent-layout ,instance)))
+             (unless (eql ,parlo nil)
+               (layout-changed ,parlo :child t)
+               (return-from ,block))))
+         (when (typep ,instance 'content-mixin)
+           (mapc #'(lambda (,child)
+                     (when (typep ,child 'layout-base)
+                       (layout-changed ,child :parent t)))
+                 (content ,instance))
+           (return-from ,block))))))
 

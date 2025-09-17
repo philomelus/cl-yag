@@ -10,26 +10,45 @@
    (spacing-right :initarg :spacing-right :initform 0 :accessor spacing-right)
    (spacing-bottom :initarg :spacing-bottom :initform 0 :accessor spacing-bottom)))
 
-(defmethod print-mixin ((o spacing-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-field spacing-left o s :fmt "~a")
-  ;; (pprint-field spacing-top o s :fmt "~a")
-  ;; (pprint-field spacing-right o s :fmt "~a")
-  ;; (pprint-field spacing-bottom o s :fmt "~a")
-  (my-next-method))
-
 (defmethod (setf spacing) (value (object spacing-mixin))
-  (setf (spacing-h object) value)
-  (setf (spacing-v object) value)
+  (with-slots (spacing-left spacing-right spacing-top spacing-bottom) object
+    (setf spacing-left value)
+    (setf spacing-right value)
+    (setf spacing-top value)
+    (setf spacing-bottom value))
+  (layout-change object)
   (my-next-method))
 
 (defmethod (setf spacing-h) (value (object spacing-mixin))
-  (setf (spacing-left object) value)
-  (setf (spacing-right object) value)
+  (with-slots (spacing-left spacing-right) object
+    (setf spacing-left value)
+    (setf spacing-right value))
+  (layout-change object)
   (my-next-method))
 
 (defmethod (setf spacing-v) (value (object spacing-mixin))
-  (setf (spacing-top object) value)
-  (setf (spacing-bottom object) value)
+  (with-slots (spacing-top spacing-bottom) object
+    (setf spacing-top value)
+    (setf spacing-bottom value))
+  (layout-change object)
   (my-next-method))
+
+(macrolet ((changed-value (object field)
+             (a:with-gensyms (instance old)
+               `(let ((,instance ,object))
+                  (with-slots (,field) ,instance
+                    (let ((,old ,field))
+                      (call-next-method)
+                      (unless (equal ,old ,field)
+                        (layout-change ,instance))))))))
+
+  (defmethod (setf spacing-left) :around (value (object spacing-mixin))
+    (changed-value object spacing-left))
+  (defmethod (setf spacing-right) :around (value (object spacing-mixin))
+    (changed-value object spacing-right))
+  (defmethod (setf spacing-top) :around (value (object spacing-mixin))
+    (changed-value object spacing-top))
+  (defmethod (setf spacing-bottom) :around (value (object spacing-mixin))
+    (changed-value object spacing-bottom)))
+
 

@@ -8,11 +8,6 @@
                                  font-mixin)
   ())
 
-(defmethod print-mixin ((object text-base-theme-mixin) &optional stream)
-  (declare (ignore stream))
-  ;; Nothing to do, as base mixin will print fields
-  (my-next-method))
-
 ;; This exists purely to allow a common base for all text objects.  If that
 ;; changes, the other logic in this file may need revalidation.
 (defclass text-base (text-base-theme-mixin
@@ -33,11 +28,6 @@
 (defclass text (text-base
                 text-theme-mixin)
   ())
-
-(defmethod print-mixin ((object text-theme-mixin) &optional stream)
-  (declare (ignore stream))
-  ;; (pprint-color-nil interior-color object stream)
-  (my-next-method))
 
 (defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'text ,@rest))
@@ -150,13 +140,6 @@
   ((down-color :initarg :down-color :initform nil :accessor down-color)
    (hover-color :initarg :hover-color :initform (al:map-rgb-f 0.5 0.5 0.5) :accessor hover-color)
    (up-color :initarg :up-color :initform nil :accessor up-color)))
-
-(defmethod print-mixin ((object active-text-theme-mixin) &optional stream)
-  (declare (ignore stream))
-  ;; (pprint-color-nil down-color object stream)
-  ;; (pprint-color-nil hover-color object stream)
-  ;; (pprint-color-nil up-color object stream)
-  (my-next-method))
 
 ;;; active-text -----------------------------------------------------
 

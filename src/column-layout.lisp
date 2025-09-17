@@ -143,6 +143,7 @@ recalculates the sizes of the children that are affected by it."
           (v:debug :layout "[update-layout-child-areas] {column-layout} siblings available new height ~d" new-height)
           
           ;; Recalculate rest of the children
+          (assert (= (- (width (aref child-area index)) (width (foro (nth index (content object))))) 0))
           (let ((new-child-height (truncate (/ new-height affected)))
                 (height-to-spread (mod new-height affected)))
 

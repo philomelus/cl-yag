@@ -10,14 +10,6 @@
    (minor-color-h :initarg :minor-color-h :initform nil :accessor minor-color-h)
    (minor-color-v :initarg :minor-color-v :initform nil :accessor minor-color-v)))
 
-(defmethod print-mixin ((object grid-theme-mixin) &optional stream)
-  (declare (ignore stream))
-  ;; (pprint-color-nil major-color-h object stream)
-  ;; (pprint-color-nil major-color-v object stream)
-  ;; (pprint-color-nil minor-color-h object stream)
-  ;; (pprint-color-nil minor-color-v object stream)  
-  (my-next-method))
-
 ;;;; grid =====================================================================
 
 (defclass grid (grid-theme-mixin

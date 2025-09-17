@@ -10,14 +10,6 @@
    (padding-top :initarg :padding-top :initform 0 :accessor padding-top)
    (padding-bottom :initarg :padding-bottom :initform 0 :accessor padding-bottom)))
 
-(defmethod print-mixin ((o padding-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-field padding-left o s :fmt "~d")
-  ;; (pprint-field padding-top o s :fmt "~d")
-  ;; (pprint-field padding-right o s :fmt "~d")
-  ;; (pprint-field padding-bottom o s :fmt "~d")
-  (my-next-method))
-
 (defmethod (setf padding) (value (object padding-mixin))
   (setf (padding-h object) value)
   (setf (padding-v object) value)

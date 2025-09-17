@@ -75,6 +75,7 @@
            #:left
            #:top
            #:validate-layout-base-options
+           #:with-changes
            #:width
            
            ;; column-layout

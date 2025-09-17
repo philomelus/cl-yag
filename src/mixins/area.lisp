@@ -23,6 +23,7 @@
    (width :initarg :width :initform :auto :accessor width)
    (height :initarg :height :initform :auto :accessor height)
 
+   ;; Internal
    (left-calc :initform nil)
    (top-calc :initform nil)
    (width-calc :initform nil)

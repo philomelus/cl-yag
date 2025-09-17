@@ -9,11 +9,6 @@
 (defclass window-theme-mixin (back-fore-color-mixin)
   ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
 
-(defmethod print-mixin ((object window-theme-mixin) &optional stream)
-  (declare (ignore stream))
-  ;; (pprint-color-nil interior-color object stream)
-  (my-next-method))
-
 ;;; window ----------------------------------------------------------
 
 (defclass window (window-theme-mixin

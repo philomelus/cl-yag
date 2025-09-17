@@ -7,11 +7,6 @@
 (defclass parent-mixin ()
   ((parent :initarg :parent :initform nil :type t :accessor parent)))
 
-(defmethod print-mixin ((o parent-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-object-nil parent o s)
-  (my-next-method))
-
 ;;; methods ---------------------------------------------------------
 
 (defmethod (setf content) :after (value (object parent-mixin))

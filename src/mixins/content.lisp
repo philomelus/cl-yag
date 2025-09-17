@@ -8,11 +8,6 @@
 (defclass content-mixin ()
   ((content :initarg :content :initform (list) :type list :accessor content)))
 
-(defmethod print-mixin ((o content-mixin) &optional s)
-  (declare (ignore s))
-  ;; (pprint-object-nil content o s)
-  (my-next-method))
-
 (defmethod initialize-instance :after ((obj content-mixin) &key)
   ;; Let children know who their parent is
   (dolist (child (content obj))
