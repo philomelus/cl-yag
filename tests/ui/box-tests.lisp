@@ -262,7 +262,7 @@
   (tests-command-update box-data)
 
   ;; Change frame color
-  (setf (frame-color (tests-data-theme1 box-data)) (al:map-rgb-f 0.5 0.5 0.5))
+  (setf (frame-color (tests-theme1 box-data)) (al:map-rgb-f 0.5 0.5 0.5))
   nil)
 
 (defun box-tests-main ()

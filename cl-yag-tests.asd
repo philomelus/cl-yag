@@ -19,6 +19,7 @@
                              (:module "ui"
                               :components ((:file "api")
                                            (:file "tests-main" :depends-on ("api"))
+                                           (:file "api-tests" :depends-on ("api" "tests-main"))
                                            (:file "box-tests" :depends-on ("api" "tests-main"))
                                            (:file "column-layout-tests" :depends-on ("api" "tests-main"))
                                            (:file "grid-layout-tests" :depends-on ("api" "tests-main"))

@@ -48,17 +48,10 @@
 
 ;; structs ====================================================================
 
-(defstruct tests-data
-  manager event queue timer
-  iw1 iw2
-  icl1 icl2
-  it1 it2 it3 it4 it5 it6 it7 it8
-
-  rv1 rv2
-  rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8
-
-  theme1
-  theme2)
+(defstruct (tests-data (:include tests-theme-data)
+                       (:conc-name tests-))
+  
+  manager event queue timer)
 
 ;;;; functions ================================================================
 
@@ -82,17 +75,17 @@ Default event processing watches for :display-close event as well."
   (al:set-new-display-option :samples 0 :require)
   (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
 
-  ;;                                     25     250    475    700   [925]   25     350    675   [810]
-  (let ((screen (al:create-display (+ 25 +WW+ 25 +WW+ 25 +WW+ 25 +WW+ 25) (+ 25 +WH+ 25 +WH+ 25 110 25) ))
+  (let ((screen (al:create-display (+ +WHS+ +WW+ +WHS+ +WW+ +WHS+ +WW+ +WHS+ +WW+ +WHS+)
+                                   (+ +WWS+ +WH+ +WWS+ +WH+ +WWS+ +IH+ +WWS+)))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
         (event (cffi:foreign-alloc '(:union al:event))))
     
     (unwind-protect                     ; event
          (progn
-           (setf (tests-data-event data) event)
-           (setf (tests-data-queue data) queue)
-           (setf (tests-data-timer data) timer)
+           (setf (tests-event data) event)
+           (setf (tests-queue data) queue)
+           (setf (tests-timer data) timer)
            
            (al:register-event-source queue (al:get-keyboard-event-source))
            (al:register-event-source queue (al:get-display-event-source screen))
@@ -102,76 +95,76 @@ Default event processing watches for :display-close event as well."
            ;; Set up themes
            (let ((fnt (default-font -24)))
              (setf (font *theme-default*) fnt)
-             (setf (tests-data-theme1 data) (theme-flat-gray))
-             (setf (font (tests-data-theme1 data)) fnt)
-             (setf (tests-data-theme2 data) (theme-3d-gray))
-             (setf (font (tests-data-theme2 data)) fnt))
+             (setf (tests-theme1 data) (theme-flat-gray))
+             (setf (font (tests-theme1 data)) fnt)
+             (setf (tests-theme2 data) (theme-3d-gray))
+             (setf (font (tests-theme2 data)) fnt))
            
            ;; Let test set up window/objects
            (tests-create data)
 
            ;; Set initial theme
-           (setf (theme (tests-data-manager data)) (tests-data-theme1 data))
+           (setf (theme (tests-manager data)) (tests-theme1 data))
 
            ;; Final preparations
            (al:start-timer timer)
            (al:clear-keyboard-state screen)
            
-           (defmethod cl-yag::on-char ((key (eql :escape)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :escape)) mods (object (eql (tests-manager data))) &key)
              (setf (process object) nil)
              t)
 
-           (defmethod cl-yag::on-char ((key (eql :0)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :0)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-0 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :1)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :1)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-1 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :2)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :2)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-2 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :3)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :3)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-3 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :4)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :4)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-4 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :5)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :5)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-5 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :6)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :6)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-6 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :7)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :7)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-7 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :8)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :8)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-8 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-char ((key (eql :9)) mods (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-char ((key (eql :9)) mods (object (eql (tests-manager data))) &key)
              (if (tests-command-9 data)
                  (tests-command-update data))
              t)
            
-           (defmethod cl-yag::on-timer (timer count (object (eql (tests-data-manager data))) &key)
+           (defmethod cl-yag::on-timer (timer count (object (eql (tests-manager data))) &key)
              ;; Let test render.  If returns nil, perform default rendering
              (unless (tests-render data)
                (al:clear-to-color (al:map-rgb-f 0.25 0.25 0.25))  
@@ -184,7 +177,7 @@ Default event processing watches for :display-close event as well."
            (tests-ready data)
            
            ;; Handle events until process is nil
-           (process-events queue (tests-data-manager data))
+           (process-events queue (tests-manager data))
 
            ;; Remove methods
            (with-local-slots ((m manager)) data

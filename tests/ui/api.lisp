@@ -3,8 +3,6 @@
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
 ;; Standard window sizes
-;; Size 200,300
-;; Spacing 25,25
 (defconstant +WH+ 300 "Standard window height")
 (defconstant +WHS+ 25 "Standard window vertical spacing")
 (defconstant +WW+ 200 "Standard window width")
@@ -62,8 +60,6 @@
 (defconstant +F-W1W+ +F-WW+ "Full window 1 width")
 
 ;; Tall window sizes
-;; Size +WW+, (+ +WH+ +WHS+ +WH+)
-;; Spacing 25,25
 (defconstant +T-WH+ (+ +WH+ +WHS+ +WH+) "Tall window height")
 (defconstant +T-WHS+ +WHS+ "Tall window vertical spacing")
 (defconstant +T-WW+ +WW+ "Tall window width")
@@ -90,8 +86,6 @@
 (defconstant +T-W4W+ +T-WW+ "Tall window 4 width")
 
 ;; Wide window sizes
-;; Size (+ +WW+ +WWS+ +WW+),300
-;; Spacing 25,25
 (defconstant +W-WH+ +WH+ "Wide window height")
 (defconstant +W-WHS+ +WHS+ "Wide window vertical spacing")
 (defconstant +W-WW+ (+ +WW+ +WWS+ +WW+) "Wide window width")
@@ -118,8 +112,6 @@
 (defconstant +W-W4W+ +W-WW+ "Wide window 4 width")
 
 ;; Wide and Tall window sizes
-;; Size (+ +WW+ +WWS+ +WW+),(+ +WH+ +WHS+ +WH+)
-;; Spacing 25, 25
 (defconstant +WT-WH+ (+ +WH+ +WHS+ +WH+) "Wide and Tall window height")
 (defconstant +WT-WHS+ +WHS+ "Wide and Tall window vertical spacing")
 (defconstant +WT-WW+ (+ +WW+ +WWS+ +WW+) "Wide and Tall window width")
@@ -136,16 +128,55 @@
 (defconstant +WT-W2W+ +WT-WW+ "Wide and Tall window 2 width")
 
 ;; Standard instruction sizes
-;; TODO: Hard coded ... should be calculated
-(defconstant +I1H+ 115)
-(defconstant +I1L+ 25)
-(defconstant +I1T+ 675)
-(defconstant +I1W+ 400)
+(defconstant +IH+ 115)
+(defconstant +IHS+ +WHS+)
+(defconstant +IW+ 400)
+(defconstant +IWS+ +WWS+)
 
-(defconstant +I2H+ 115)
-(defconstant +I2L+ 500)
-(defconstant +I2T+ 675)
-(defconstant +I2W+ 400)
+(defconstant +I1H+ +IH+)
+(defconstant +I1L+ +IWS+)
+(defconstant +I1T+ (+ +WWS+ +WH+ +WWS+ +WH+ +WWS+))
+(defconstant +I1W+ +IW+)
+
+(defconstant +I2H+ +IH+)
+(defconstant +I2L+ (- (+ +W-W2L+ +W-W2W+) +IW+))
+(defconstant +I2T+ (+ +WWS+ +WH+ +WWS+ +WH+ +WWS+))
+(defconstant +I2W+ +IW+)
+
+;;;; MACROS ===================================================================
+
+(defmacro tests-window-constant (type window field)
+  "Returns the value of the window constant.
+
+type   = member (:standard :full :tall :wide :wide-tall
+window = window number.  Max windows per type:
+         :standard  4 (4x2)
+         :full      1 (1x1)
+         :tall      4 (4x1)
+         :wide      4 (2x2)
+         :wide-tall 2 (1x2)
+field  = character of desired field, as follows:
+         #\H = height
+         #\L = left
+         #\T = top
+         #\W = width"
+  
+  (a:with-gensyms (ltype lwindow lfield number-string)
+    `(let ((,ltype ,type)
+           (,lwindow ,window)
+           (,lfield ,field))
+       (let ((,number-string (format nil "~1d" ,lwindow)))
+         (case ,ltype
+           (:full
+            (symbol-value (a:symbolicate "+F-W" ,number-string ,lfield "+")))
+           (:standard
+            (symbol-value (a:symbolicate "+W" ,number-string ,lfield "+")))
+           (:tall
+            (symbol-value (a:symbolicate "+T-W" ,number-string ,lfield "+")))
+           (:wide
+            (symbol-value (a:symbolicate "+W-W" ,number-string ,lfield "+")))
+           (:wide-tall
+            (symbol-value (a:symbolicate "+WT-W" ,number-string ,lfield "+"))))))))
 
 (defmacro deftests-ruler (win-type number &rest rest &key &allow-other-keys)
   "Creates tests window ruler of type and number.  Automatically positioned and
@@ -179,8 +210,10 @@ sized according to type and window number."
             (,generator (- +F-W1L+ 10) +F-W1T+ 10 +F-W1H+ t t))
            (:standard
             (assert (<= ,local-number 8))
-            (,generator (symbol-value (a:symbolicate "+W" ,local-number-string "L+"))
+            (,generator ;;(tests-window-constant :standard ,local-number #\L)
+                        (symbol-value (a:symbolicate "+W" ,local-number-string "L+"))
                         (- (symbol-value (a:symbolicate "+W" ,local-number-string "T+")) 10)
+                        ;;(tests-window-constant :standard ,local-number #\W)
                         (symbol-value (a:symbolicate "+W" ,local-number-string "W+"))
                         10))
            (:standard-vertical
@@ -233,24 +266,6 @@ sized according to type and window number."
                         10
                         (symbol-value (a:symbolicate "+W-W" ,local-number-string "H+"))
                         t)))))))
-
-(defmacro tests-window-constant (type window field)
-  (a:with-gensyms (ltype lwindow lfield number-string)
-    `(let ((,ltype ,type)
-           (,lwindow ,window)
-           (,lfield ,field))
-       (let ((,number-string (format nil "~1d" ,lwindow)))
-         (case ,ltype
-           (:full
-            (symbol-value (a:symbolicate "+F-W" ,number-string ,lfield "+")))
-           (:standard
-            (symbol-value (a:symbolicate "+W" ,number-string ,lfield "+")))
-           (:tall
-            (symbol-value (a:symbolicate "+T-W" ,number-string ,lfield "+")))
-           (:wide
-            (symbol-value (a:symbolicate "+W-W" ,number-string ,lfield "+")))
-           (:wide-tall
-            (symbol-value (a:symbolicate "+WT-W" ,number-string ,lfield "+"))))))))
 
 (defmacro deftests-status (window-type window rows per-row title row column)
   (declare (ignorable window-type window rows per-row title row column))
@@ -339,6 +354,13 @@ sized according to type and window number."
 paint for manager object.  Display is flipped automatically after call
 regardless of result."))
 
+;;;; TESTS-INSTRUCTIONS =======================================================
+
+(defstruct (tests-instructions-data (:conc-name tests-instructions-))
+  iw1 iw2
+  icl1 icl2
+  it1 it2 it3 it4 it5 it6 it7 it8)
+
 (defun tests-instructions-create (data left &optional right)
   (macrolet ((make-inst (used field title is-left)
                (let ((u (gensym)))
@@ -386,6 +408,14 @@ regardless of result."))
         (assert (not (eql iw2 nil)))
 
         (values iw1 iw2)))))
+
+;;;; TESTS-RULERS =============================================================
+
+(defstruct (tests-rulers-data (:include tests-instructions-data)
+                              (:conc-name tests-rulers-))
+  
+  rv1 rv2
+  rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
 
 (defun tests-rulers-create-full (data &key (r1 '(:full 1 rh1))
                                         (rv1 '(:full-vertical 1 rv1)))
@@ -470,6 +500,20 @@ regardless of result."))
     (values-list rulers)))
 
 
+;;;; TESTS-THEME ==============================================================
+
+(defstruct (tests-theme-data (:include tests-rulers-data)
+                             (:conc-name tests-theme-))
+  theme1 theme2)
+
+(defun tests-toggle-theme (data)
+  (with-slots (manager theme1 theme2) data
+    (if (eql (theme manager) theme1)
+        (setf (theme manager) theme2)
+        (setf (theme manager) theme1))))
+
+;;;; TESTS MISC ===============================================================
+
 (defun tests-toggle-interior-color (data widgets)
   (with-slots (manager theme1) data
     (let ((ic1 (interior-color theme1))
@@ -481,10 +525,4 @@ regardless of result."))
                     (eql ic nil))
                 (setf (interior-color w) ic2)
                 (setf (interior-color w) ic1))))))))
-
-(defun tests-toggle-theme (data)
-  (with-slots (manager theme1 theme2) data
-    (if (eql (theme manager) theme1)
-        (setf (theme manager) theme2)
-        (setf (theme manager) theme1))))
 
