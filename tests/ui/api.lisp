@@ -178,11 +178,11 @@ field  = character of desired field, as follows:
            (:wide-tall
             (symbol-value (a:symbolicate "+WT-W" ,number-string ,lfield "+"))))))))
 
-(defmacro deftests-ruler (win-type number &rest rest &key &allow-other-keys)
+(defmacro deftests-ruler (type number vertical &rest rest &key &allow-other-keys)
   "Creates tests window ruler of type and number.  Automatically positioned and
-sized according to type and window number."
-
-  (a:with-gensyms (local-win-type local-number generator)
+sized according to type and window number, just add to manager."
+  
+  (a:with-gensyms (l-type l-number l-vertical l-left l-top l-width l-height generator)
     `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
               (if r100-25-5
                   (ruler-100-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
@@ -194,71 +194,30 @@ sized according to type and window number."
                               :div-25-color (al:map-rgb-f 1 0 0) :div-25-extent 1
                               :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
                               :left l :top t_ :width w :height h ,@rest))))
-       (let ((,local-win-type ,win-type)
-             (,local-number ,number))
-         (ccase ,local-win-type
-           (:full
-            (assert (= ,local-number 1))
-            (,generator +F-W1L+ (- +F-W1T+ 10) +F-W1W+ 10 nil t))
-           (:full-vertical
-            (assert (= ,local-number 1))
-            (,generator (- +F-W1L+ 10) +F-W1T+ 10 +F-W1H+ t t))
-           (:standard
-            (assert (<= ,local-number 8))
-            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
-                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
-                        (tests-window-constant ,local-win-type ,local-number #\W)
-                        10))
-           (:standard-vertical
-            (assert (<= ,local-number 2))
-            (if (= ,local-number 2)
-                (setq ,local-number 5))
-            (,generator (- (tests-window-constant :standard ,local-number #\L) 10)
-                        (tests-window-constant :standard ,local-number #\T)
-                        10
-                        (tests-window-constant :standard ,local-number #\H)
-                        t))
-           (:tall
-            (assert (<= ,local-number 4))
-            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
-                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
-                        (tests-window-constant ,local-win-type ,local-number #\W)
-                        10))
-           (:tall-vertical
-            (assert (<= ,local-number 1))
-            (,generator (- (tests-window-constant :tall ,local-number #\L) 10)
-                        (tests-window-constant :tall ,local-number #\T)
-                        10
-                        (tests-window-constant :tall ,local-number #\H)
-                        t t))
-           (:wide
-            (assert (<= ,local-number 4))
-            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
-                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
-                        (tests-window-constant ,local-win-type ,local-number #\W)
-                        10))
-           (:wide-tall
-            (assert (<= ,local-number 2))
-            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
-                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
-                        (tests-window-constant ,local-win-type ,local-number #\W)
-                        10))
-           (:wide-tall-vertical
-            (assert (<= ,local-number 1))
-            (,generator (- (tests-window-constant :wide-tall ,local-number #\L) 10)
-                        (tests-window-constant :wide-tall ,local-number #\T)
-                        10
-                        (tests-window-constant :wide-tall ,local-number #\H)
-                        t t))
-           (:wide-vertical
-            (assert (<= ,local-number 2))
-            (if (= ,local-number 2)
-                (setq ,local-number 3))
-            (,generator (- (tests-window-constant :wide ,local-number #\L) 10)
-                        (tests-window-constant :wide ,local-number #\T)
-                        10
-                        (tests-window-constant :wide ,local-number #\H)
-                        t)))))))
+       (let ((,l-type ,type)
+             (,l-number ,number)
+             (,l-vertical ,vertical))
+         (when ,l-vertical
+           (case ,l-type
+             (:standard (when (= ,l-number 2) (setq ,l-number 5)))
+             (:wide (when (= ,l-number 2) (setq ,l-number 3)))))
+         (let ((,l-left (tests-window-constant ,l-type ,l-number #\L))
+               (,l-top (tests-window-constant ,l-type ,l-number #\T))
+               (,l-width (tests-window-constant ,l-type ,l-number #\W))
+               (,l-height (tests-window-constant ,l-type ,l-number #\H)))
+           (if ,l-vertical
+               (progn
+                 (setq ,l-width 10)
+                 (decf ,l-left 10))
+               (progn
+                 (setq ,l-height 10)
+                 (decf ,l-top 10)))
+           (ccase ,l-type
+             (:full (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))
+             (:standard (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+             (:tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical ,l-vertical))
+             (:wide (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+             (:wide-tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))))))))
 
 (defmacro deftests-status (window-type window rows per-row title row column)
   (declare (ignorable window-type window rows per-row title row column))
@@ -379,84 +338,84 @@ regardless of result."))
   rv1 rv2
   rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
 
-(defun tests-rulers-create-full (data &key (r1 '(:full 1 rh1))
-                                        (rv1 '(:full-vertical 1 rv1)))
+(defun tests-rulers-create-full (data &key (r1 '(1 nil rh1))
+                                        (rv1 '(1 t rv1)))
   (let (rulers)
     (mapc #'(lambda (arg)
               (when arg
                 (let ((a1 (first arg))
                       (a2 (second arg))
                       (a3 (third arg)))
-                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (setf (slot-value data a3) (deftests-ruler :full a1 a2))
                   (push (slot-value data a3) rulers))))
           (list rv1 r1))
     (values-list rulers)))
 
 (defun tests-rulers-create-standard (data &key
-                                            (r1 '(:standard 1 rh1))
-                                            (r2 '(:standard 2 rh2))
-                                            (r3 '(:standard 3 rh3))
-                                            (r4 '(:standard 4 rh4))
-                                            (r5 '(:standard 5 rh5))
-                                            (r6 '(:standard 6 rh6))
-                                            (r7 '(:standard 7 rh7))
-                                            (r8 '(:standard 8 rh8))
-                                            (rv1 '(:standard-vertical 1 rv1))
-                                            (rv2 '(:standard-vertical 2 rv2)))
+                                            (r1 '(1 nil rh1))
+                                            (r2 '(2 nil rh2))
+                                            (r3 '(3 nil rh3))
+                                            (r4 '(4 nil rh4))
+                                            (r5 '(5 nil rh5))
+                                            (r6 '(6 nil rh6))
+                                            (r7 '(7 nil rh7))
+                                            (r8 '(8 nil rh8))
+                                            (rv1 '(1 t rv1))
+                                            (rv2 '(2 t rv2)))
   (let (rulers)
     (mapc #'(lambda (arg)
               (when arg
                 (let ((a1 (first arg))
                       (a2 (second arg))
                       (a3 (third arg)))
-                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (setf (slot-value data a3) (deftests-ruler :standard a1 a2))
                   (push (slot-value data a3) rulers))))
           (list rv1 rv2 r1 r2 r3 r4 r5 r6 r7 r8))
     (values-list rulers)))
 
-(defun tests-rulers-create-tall (data &key (r1 '(:tall 1 rh1))
-                                        (r2 '(:tall 2 rh2))
-                                        (r3 '(:tall 3 rh3))
-                                        (r4 '(:tall 4 rh4))
-                                        (rv1 '(:tall-vertical 1 rv1)))
+(defun tests-rulers-create-tall (data &key (r1 '(1 nil rh1))
+                                        (r2 '(2 nil rh2))
+                                        (r3 '(3 nil rh3))
+                                        (r4 '(4 nil rh4))
+                                        (rv1 '(1 t rv1)))
   (let (rulers)
     (mapc #'(lambda (arg)
               (when arg
                 (let ((a1 (first arg))
                       (a2 (second arg))
                       (a3 (third arg)))
-                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (setf (slot-value data a3) (deftests-ruler :tall a1 a2))
                   (push (slot-value data a3) rulers))))
           (list rv1 r1 r2 r3 r4))
     (values-list rulers)))
 
-(defun tests-rulers-create-wide (data &key (r1 '(:wide 1 rh1))
-                                        (r2 '(:wide 2 rh2))
-                                        (r3 '(:wide 3 rh3))
-                                        (r4 '(:wide 4 rh4))
-                                        (rv1 '(:wide-vertical 1 rv1))
-                                        (rv2 '(:wide-vertical 2 rv2)))
+(defun tests-rulers-create-wide (data &key (r1 '(1 nil rh1))
+                                        (r2 '(2 nil rh2))
+                                        (r3 '(3 nil rh3))
+                                        (r4 '(4 nil rh4))
+                                        (rv1 '(1 t rv1))
+                                        (rv2 '(2 t rv2)))
   (let (rulers)
     (mapc #'(lambda (arg)
               (when arg
                 (let ((a1 (first arg))
                       (a2 (second arg))
                       (a3 (third arg)))
-                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (setf (slot-value data a3) (deftests-ruler :wide a1 a2))
                   (push (slot-value data a3) rulers))))
           (list rv1 rv2 r1 r2 r3 r4))
     (values-list rulers)))
 
-(defun tests-rulers-create-wide-tall (data &key (r1 '(:wide-tall 1 rh1))
-                                             (r2 '(:wide-tall 2 rh2))
-                                             (rv1 '(:wide-tall-vertical 1 rv1)))
+(defun tests-rulers-create-wide-tall (data &key (r1 '(1 nil rh1))
+                                             (r2 '(2 nil rh2))
+                                             (rv1 '(1 t rv1)))
   (let (rulers)
     (mapc #'(lambda (arg)
               (when arg
                 (let ((a1 (first arg))
                       (a2 (second arg))
                       (a3 (third arg)))
-                  (setf (slot-value data a3) (deftests-ruler a1 a2))
+                  (setf (slot-value data a3) (deftests-ruler :wide-tall a1 a2))
                   (push (slot-value data a3) rulers))))
           (list rv1 r1 r2))
     (values-list rulers)))
