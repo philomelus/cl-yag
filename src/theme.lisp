@@ -84,7 +84,7 @@
 
 ;;;; common methods ===========================================================
 
-(defmethod paint-border-bottom ((border border) (object area-mixin) (theme theme-3d) &key blend-left blend-right)
+(defmethod paint-border-bottom ((border border) object (theme theme-3d) &key blend-left blend-right)
   (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
     (declare (ignorable lto lti rbo rbi))
     (with-area-and-spacing (object-left object-top object-right object-bottom) object

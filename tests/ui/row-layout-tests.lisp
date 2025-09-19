@@ -76,14 +76,14 @@
       (mapc #'(lambda (o) (push o widgets))
             (multiple-value-list (tests-instructions-create
                                   data
-                                  (list "<1> - :left/:center/:right"
-                                        "<2> - :top/:middle/:bottom"
-                                        "<3> - spacing +"
-                                        "<4> - spacing -")
-                                  (list "+ border thickness - <5>"
-                                        "- border thickness - <6>"
-                                        "window interior red/default - <7>"
-                                        "theme-flat/theme-3d - <8>"))))
+                                  (list "h   = :left/:center/:right"
+                                        "v   = :top/:middle/:bottom"
+                                        "s/S = Spacing +/-"
+                                        "b/B = Border +/-")
+                                  (list "k/K = Thickness +/-"
+                                        ""
+                                        "c   = window interior red/default"
+                                        "t   = theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data)))
@@ -93,94 +93,35 @@
 
 (defmethod tests-destroy ((data (eql *row-layout-data*)))
   (let ((args `((eql ,data))))
-    (cleanup-method tests-command-1 args)
-    (cleanup-method tests-command-2 args)
-    (cleanup-method tests-command-3 args)
-    (cleanup-method tests-command-4 args)
-    (cleanup-method tests-command-5 args)
-    (cleanup-method tests-command-6 args)
-    (cleanup-method tests-command-7 args)
-    (cleanup-method tests-command-8 args)
-    (cleanup-method tests-command-update args))
+    (cleanup-method tests-command-update args)
+    (cleanup-method tests-get-h-align args)
+    (cleanup-method tests-get-interior-color args)
+    (cleanup-method tests-get-spacing args)
+    (cleanup-method tests-get-thickness args)
+    (cleanup-method tests-get-v-align args))
   nil)
 
 (defmethod tests-ready ((row-layout-data (eql *row-layout-data*)))
-  (defmethod tests-command-1 ((data (eql row-layout-data)))
+
+  (defmethod tests-get-h-align ((data (eql row-layout-data)))
     (with-slots (t11 t12 t13 t21 t22 t23) data
-      (dolist (w (list t11 t12 t13 t21 t22 t23))
-        (unless (eql w nil)
-          (with-slots ((ha h-align)) w
-            (case ha
-              (:left
-               (setf ha :center))
-              (:center
-               (setf ha :right))
-              (:right
-               (setf ha :left)))))))
-    t)
+      (values (list t11 t12 t13 t21 t22 t23) t)))
+  
+  (defmethod tests-get-interior-color ((data (eql row-layout-data)))
+    (with-slots (w1 w2 w3) data
+      (values (list w1 w2 w3) nil)))
 
-  (defmethod tests-command-2 ((data (eql row-layout-data)))
+  (defmethod tests-get-spacing ((data (eql row-layout-data)))
+    (with-slots (w1 w2 w3) data
+        (values (list w1 w2 w3) t)))
+
+  (defmethod tests-get-thickness ((data (eql row-layout-data)))
+    (with-slots (b31 b32) data
+      (values (list b31 b32) t)))
+  
+  (defmethod tests-get-v-align ((data (eql row-layout-data)))
     (with-slots (t11 t12 t13 t21 t22 t23) data
-      (dolist (w (list t11 t12 t13 t21 t22 t23))
-        (unless (eql w nil)
-          (with-slots ((va v-align)) w
-            (case va
-              (:top
-               (setf va :middle))
-              (:middle
-               (setf va :bottom))
-              (:bottom
-               (setf va :top)))))))
-    t)
-
-  (defmethod tests-command-3 ((data (eql row-layout-data)))
-    (with-slots (w1 w2 w3) data
-      (dolist (w (list w1 w2 w3 ))
-        (unless (eql w nil)
-          (when (< (spacing-left w) 24)
-            (with-changes w
-             (incf (spacing-left w))
-             (incf (spacing-top w))
-             (incf (spacing-right w))
-             (incf (spacing-bottom w)))))))
-    t)
-  
-  (defmethod tests-command-4 ((data (eql row-layout-data)))
-    (with-slots (w1 w2 w3) data
-      (dolist (w (list w1 w2 w3))
-        (unless (eql w nil)
-          (when (> (spacing-left w) 0)
-            (with-changes w
-              (decf (spacing-left w))
-              (decf (spacing-top w))
-              (decf (spacing-right w))
-              (decf (spacing-bottom w)))))))
-    t)
-  
-  (defmethod tests-command-5 ((data (eql row-layout-data)))
-    (with-slots (b31 b32) data
-      (dolist (w (list b31 b32))
-        (unless (eql w nil)
-          (when (< (thickness w) 40)
-            (incf (thickness w))))))
-    t)
-
-  (defmethod tests-command-6 ((data (eql row-layout-data)))
-    (with-slots (b31 b32) data
-      (dolist (w (list b31 b32))
-        (unless (eql w nil)
-          (when (> (thickness w) 1)
-            (decf (thickness w))))))
-    t)
-  
-  (defmethod tests-command-7 ((data (eql row-layout-data)))
-    (with-slots (w1 w2 w3 w4) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4)))
-    nil)
-
-  (defmethod tests-command-8 ((data (eql row-layout-data)))
-    (tests-toggle-theme data)
-    nil)
+      (values (list t11 t12 t13 t21 t22 t23) t)))
 
   (defmethod tests-command-update ((data (eql row-layout-data)))
     (macrolet ((update (status text)

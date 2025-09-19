@@ -17,12 +17,14 @@
 
 (defmethod tests-create ((data (eql *text-data*)))
   (let (widgets)
-    (with-slots (manager w1 w2 w3 w4 w5 w6
+    (with-slots (manager
                  a11 a12 a13 b1 cl1
                  a21 a22 a23 t2 cl2
                  a31 a32 a33 t3 cl31 cl32
                  a41 a42 a43 b41 b42 t4 cl4
-                 t5 b5 x1 cl5)
+                 t5 b5 x1 cl5
+                 w1 w2 w3 w4 w5 w6
+                 )
         data
 
       ;; Test 1
@@ -103,7 +105,6 @@
       ;; (setf (padding-left t5) 25)
       ;; (setf (spacing-top t5) 25)
       ;; (setf (spacing-bottom t5) 25)
-      
       (setf cl5 (defcolumn-layout :content `(,t5)))
       (setf w5 (deftests-window :wide 3 :content `(,cl5)))
       (push w5 widgets)
@@ -116,73 +117,46 @@
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1> - Increase padding"
-                                          "<2> - Decrease padding"
-                                          "<3> - Increate spacing"
-                                          "<4> - Decrease spacing")
-                                    (list "- <5>"
-                                          "- <6>"
-                                          "window interior red/default - <7>"
-                                          "theme-flat / theme-3d - <8>"))))
+                                    (list "p/P = Padding +/-"
+                                          "s/S = Spacing +/-"
+                                          ""
+                                          "")
+                                    (list ""
+                                          ""
+                                          "c = window interior red/default"
+                                          "t = theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard
                                                                   data :r5 nil :r6 nil :r7 nil :r8 nil :rv2 nil)))
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-wide data :r1 nil :r2 nil :r4 nil
-                                                                                                :r3 '(:wide 3 rh5))))
+                                                                                                :r3 '(3 nil rh5))))
       
       ;; The one in charge
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *text-data*)))
   (let ((args `((eql ,data))))
-    (cleanup-method tests-command-1 args)
-    (cleanup-method tests-command-2 args)
-    (cleanup-method tests-command-3 args)
-    (cleanup-method tests-command-4 args)
-    (cleanup-method tests-command-7 args)
-    (cleanup-method tests-command-8 args)
-    (cleanup-method on-command (list (find-class 'active-text))))
+    (cleanup-method tests-get-interior-color args)
+    (cleanup-method tests-get-padding args)
+    (cleanup-method tests-get-spacing args)
+    (cleanup-method cl-yag::on-command (list (find-class 'active-text))))
   nil)
 
 (defmethod tests-ready ((text-data (eql *text-data*)))
-  (defmethod on-command ((obj active-text) &key)
+  (defmethod cl-yag::on-command ((obj active-text) &key)
     (v:info :tests "Commanded ~a" (cl-yag::print-raw-object obj)))
 
-  (defmethod tests-command-1 ((data (eql text-data)))
-    )
-  
-  (defmethod tests-command-2 ((data (eql text-data)))
-    )
-  
-  (defmethod tests-command-3 ((data (eql text-data)))
-    (with-slots (t5) data
-      (unless (eql t5 nil)
-        (with-slots (spacing-left spacing-right spacing-top spacing-bottom) t5
-          (incf spacing-left)
-          (incf spacing-right)
-          (incf spacing-top)
-          (incf spacing-bottom)))))
-  
-  (defmethod tests-command-4 ((data (eql text-data)))
-    (with-slots (t5) data
-      (unless (eql t5 nil)
-        (with-slots (spacing-left spacing-right spacing-top spacing-bottom) t5
-          (decf spacing-left)
-          (decf spacing-right)
-          (decf spacing-top)
-          (decf spacing-bottom)))))
-  
-  (defmethod tests-command-7 ((data (eql text-data)))
+  (defmethod tests-get-interior-color ((data (eql text-data)))
     (with-slots (w1 w2 w3 w4) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4)))
-    nil)
-
-  (defmethod tests-command-8 ((data (eql text-data)))
-    (tests-toggle-theme data)
-    nil)
+      (values (list w1 w2 w3 w4) nil)))
   
-  nil)
+  (defmethod tests-get-padding ((data (eql text-data)))
+    (values nil nil))
+  
+  (defmethod tests-get-spacing ((data (eql text-data)))
+    (with-slots (t5) data
+      (values (list t5) nil))))
 
 (defun text-tests-main ()
   (tests-main *text-data*))

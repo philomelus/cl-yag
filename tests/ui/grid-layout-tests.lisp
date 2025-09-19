@@ -4,8 +4,7 @@
 
 (defstruct (grid-layout-tests-data (:include tests-data)
                             (:conc-name grid-layout-tests-))
-  t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9
-  gl1
+  t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9 gl1
   w1
   )
 
@@ -50,14 +49,14 @@
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1> top/middle/bottom"
-                                          "<2> left/center/right"
-                                          "<3>"
-                                          "<4>")
-                                    (list "<5>"
-                                          "<6>"
-                                          "window interior red/default - <7>"
-                                          "alternates theme-flat/theme-3d - <8>"))))
+                                    (list "v = top/middle/bottom"
+                                          "h = left/center/right"
+                                          ""
+                                          "")
+                                    (list ""
+                                          ""
+                                          "c = window interior red/default"
+                                          "t = alternates theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-full data)))
@@ -67,45 +66,23 @@
 
 (defmethod tests-destroy ((data (eql *grid-layout-data*)))
   (let ((args (list (list 'eql data))))
-    (cleanup-method tests-command-1 args)
-    (cleanup-method tests-command-2 args)
-    (cleanup-method tests-command-7 args)
-    (cleanup-method tests-command-8 args))
+    (cleanup-method tests-get-h-align args)
+    (cleanup-method tests-get-interior-color args)
+    (cleanup-method tests-get-v-align args))
   nil)
 
 (defmethod tests-ready ((grid-layout-data (eql *grid-layout-data*)))
-  (defmethod tests-command-1 ((data (eql grid-layout-data)))
+  (defmethod tests-get-h-align ((data (eql grid-layout-data)))
     (with-slots (t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) data
-      (mapc #'(lambda (obj)
-                (case (v-align obj)
-                  (:top
-                   (setf (v-align obj) :middle))
-                  (:middle
-                   (setf (v-align obj) :bottom))
-                  (:bottom
-                   (setf (v-align obj) :top))))
-            (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9))))
+      (values (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) nil)))
 
-  (defmethod tests-command-2 ((data (eql grid-layout-data)))
+  (defmethod tests-get-v-align ((data (eql grid-layout-data)))
     (with-slots (t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) data
-      (mapc #'(lambda (obj)
-                (case (h-align obj)
-                  (:left
-                   (setf (h-align obj) :center))
-                  (:center
-                   (setf (h-align obj) :right))
-                  (:right
-                   (setf (h-align obj) :left))))
-            (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9))))
-  
-  (defmethod tests-command-7 ((data (eql grid-layout-data)))
+      (values (list t1-1 t1-2 t1-3 t1-4 t1-5 t1-6 t1-7 t1-8 t1-9) nil)))
+
+  (defmethod tests-get-interior-color ((data (eql grid-layout-data)))
     (with-slots (w1) data
-      (tests-toggle-interior-color data (list w1)))
-    nil)
-  
-  (defmethod tests-command-8 ((data (eql grid-layout-data)))
-    (tests-toggle-theme data)
-    nil)
+      (values (list w1) nil)))
   
   nil)
 

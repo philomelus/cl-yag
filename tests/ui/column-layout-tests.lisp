@@ -50,14 +50,14 @@
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1>"
-                                          "<2>"
-                                          "<3>"
-                                          "<4> - alternates theme-flat/theme-3d")
-                                    (list "<5>"
-                                          "<6>"
-                                          "window interior red/default - <7>"
-                                          "<8>"))))
+                                    (list ""
+                                          ""
+                                          ""
+                                          "")
+                                    (list ""
+                                          ""
+                                          "c = window interior red/default"
+                                          "t = theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
@@ -66,19 +66,13 @@
       (setf manager (make-instance 'manager :content widgets)))))
 
 (defmethod tests-destroy ((data (eql *column-layout-data*)))
-  (remove-method #'tests-command-4 (find-method #'tests-command-4 () (list (list 'eql data))))
-  (remove-method #'tests-command-7 (find-method #'tests-command-7 () (list (list 'eql data))))
-  nil)
+  (let ((args `((eql ,data))))
+    (cleanup-method tests-get-interior-color args)))
 
 (defmethod tests-ready ((column-layout-data (eql *column-layout-data*)))
-  (defmethod tests-command-4 ((data (eql column-layout-data)))
-    (tests-toggle-theme data)
-    nil)
-  
-  (defmethod tests-command-7 ((data (eql column-layout-data)))
+  (defmethod tests-get-interior-color ((data (eql column-layout-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
-    nil)
+      (values (list w1 w2 w3 w4 w5 w6 w7 w8) nil)))
   nil)
 
 (defun column-layout-tests-main ()

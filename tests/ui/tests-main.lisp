@@ -5,34 +5,37 @@
 ;;;; stubs ====================================================================
 
 (defmethod tests-command-0 (data)
-  )
+  nil)
 
 (defmethod tests-command-1 (data)
-  )
+  nil)
 
 (defmethod tests-command-2 (data)
-  )
+  nil)
 
 (defmethod tests-command-3 (data)
-  )
+  nil)
 
 (defmethod tests-command-4 (data)
-  )
+  nil)
 
 (defmethod tests-command-5 (data)
-  )
+  nil)
 
 (defmethod tests-command-6 (data)
-  )
+  nil)
 
 (defmethod tests-command-7 (data)
-  )
+  nil)
 
 (defmethod tests-command-8 (data)
-  )
+  nil)
 
 (defmethod tests-command-9 (data)
-  )
+  nil)
+
+(defmethod tests-command (data key mods)
+  nil)
 
 (defmethod tests-command-update (data)
   )
@@ -40,18 +43,40 @@
 (defmethod tests-destroy (data)
   )
 
+(defmethod tests-get-h-align (data)
+  (values nil nil))
+
+(defmethod tests-get-interior-color (data)
+  (values nil nil))
+
+(defmethod tests-get-padding (data)
+  (values nil nil))
+
+(defmethod tests-get-spacing (data)
+  (values nil nil))
+
+(defmethod tests-get-theme (data)
+  (values nil nil))
+
+(defmethod tests-get-thickness (data)
+  (values nil nil))
+
+(defmethod tests-get-v-align (data)
+  (values nil nil))
+
 (defmethod tests-ready (data)
   )
 
 (defmethod tests-render (data)
-  )
+  nil)
 
 ;; structs ====================================================================
 
 (defstruct (tests-data (:include tests-theme-data)
                        (:conc-name tests-))
   
-  manager event queue timer)
+  manager event queue timer
+  mono-font)
 
 ;;;; functions ================================================================
 
@@ -105,7 +130,8 @@ Default event processing watches for :display-close event as well."
 
            ;; Set initial theme
            (setf (theme (tests-manager data)) (tests-theme1 data))
-
+           (setf (tests-mono-font data) (default-mono-font -24))
+           
            ;; Final preparations
            (al:start-timer timer)
            (al:clear-keyboard-state screen)
@@ -163,6 +189,121 @@ Default event processing watches for :display-close event as well."
              (if (tests-command-9 data)
                  (tests-command-update data))
              t)
+
+           (defmethod cl-yag::on-char ((key (eql :c)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-interior-color data)
+               (unless (eql widgets nil)
+                 (with-slots (manager theme1) data
+                   (let ((ic1 (interior-color theme1))
+                         (ic2 (al:map-rgb-f 1 0 0)))
+                     (mapc #'(lambda (w)
+                               (unless (eql w nil)
+                                 (with-local-slots ((ic interior-color)) w
+                                   (if (or (equal ic ic1)
+                                           (equal ic nil))
+                                       (setf (interior-color w) ic2)
+                                       (setf (interior-color w) ic1)))))
+                           widgets)))
+                 (when update
+                   (tests-command-update data)))))
+           
+           (defmethod cl-yag::on-char ((key (eql :h)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-h-align data)
+               (unless (eql widgets nil)
+                 (mapc #'(lambda (w)
+                           (unless (eql w nil)
+                             (with-slots (h-align) w
+                               (ecase h-align
+                                 (:left (setf h-align :center))
+                                 (:center (setf h-align :right))
+                                 (:right (setf h-align :left))))))
+                       widgets)
+                 (when update
+                   (tests-command-update data)))))
+           
+           (defmethod cl-yag::on-char ((key (eql :k)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-thickness data)
+               (unless (eql widgets nil)
+                 (if (member :shift mods)
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (unless (eql w nil)
+                                   (when (> (thickness w) 0)
+                                     (decf (thickness w)))))
+                             widgets))
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (unless (eql w nil)
+                                   (when (< (thickness w) 50)
+                                     (incf (thickness w)))))
+                             widgets)))
+                 (when update
+                   (tests-command-update data)))))
+
+           (defmethod cl-yag::on-char ((key (eql :p)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-padding data)
+               (unless (eql widgets nil)
+                 (if (member :shift mods)
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (unless (eql w nil)
+                                   (when (> (padding-left w) 0)
+                                     (decf (padding-left w))
+                                     (decf (padding-right w))
+                                     (decf (padding-top w))
+                                     (decf (padding-bottom w)))))
+                             widgets))
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (unless (eql w nil)
+                                   (when (< (padding-left w) 50)
+                                     (incf (padding-left w))
+                                     (incf (padding-right w))
+                                     (incf (padding-top w))
+                                     (incf (padding-bottom w)))))
+                             widgets)))
+                 (when update
+                   (tests-command-update data)))))
+           
+           (defmethod cl-yag::on-char ((key (eql :s)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-spacing data)
+               (unless (eql widgets nil)
+                 (if (member :shift mods)
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (when (> (spacing-left w) 0)
+                                   (decf (spacing-left w))
+                                   (decf (spacing-right w))
+                                   (decf (spacing-top w))
+                                   (decf (spacing-bottom w))))
+                             widgets))
+                     (progn
+                       (mapc #'(lambda (w)
+                                 (when (< (spacing-left w) 50)
+                                   (incf (spacing-left w))
+                                   (incf (spacing-right w))
+                                   (incf (spacing-top w))
+                                   (incf (spacing-bottom w))))
+                             widgets)))
+                 (when update
+                   (tests-command-update data)))))
+           
+           (defmethod cl-yag::on-char ((key (eql :t)) mods (object (eql (tests-manager data))) &key)
+             (tests-toggle-theme data))
+           
+           (defmethod cl-yag::on-char ((key (eql :v)) mods (object (eql (tests-manager data))) &key)
+             (multiple-value-bind (widgets update) (tests-get-h-align data)
+               (unless (eql widgets nil)
+                 (mapc #'(lambda (w)
+                           (unless (eql w nil)
+                             (with-slots (v-align) w
+                               (ecase v-align
+                                 (:top (setf v-align :middle))
+                                 (:middle (setf v-align :bottom))
+                                 (:bottom (setf v-align :top))))))
+                       widgets)
+                 (when update
+                   (tests-command-update data)))))
            
            (defmethod cl-yag::on-timer (timer count (object (eql (tests-manager data))) &key)
              ;; Let test render.  If returns nil, perform default rendering
@@ -183,7 +324,7 @@ Default event processing watches for :display-close event as well."
            (with-local-slots ((m manager)) data
              (mapcar #'(lambda (char)
                          (cleanup-method cl-yag::on-char (list (list 'eql char) t (list 'eql m))))
-                     (list :0 :1 :2 :3 :4 :5 :6 :7 :8 :9))
+                     (list :0 :1 :2 :3 :4 :5 :6 :7 :8 :9 :c :h :p :s :t :v))
              (cleanup-method cl-yag::on-timer (list t t (list 'eql m))))
            
            ;; Clean up test

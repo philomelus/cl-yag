@@ -4,18 +4,19 @@
 
 (defstruct (window-tests-data (:include tests-data)
                             (:conc-name window-tests-))
-  w1 w2 w3 w4 w5 w6 w7 w8
   b1 st11 st12 st13 st14 st15
   st21 st22 st23 st24
+  w1 w2 w3 w4 w5 w6 w7 w8
   )
 
 (defparameter *window-data* (make-window-tests-data))
 
 (defmethod tests-create ((data (eql *window-data*)))
   (let (widgets)
-    (with-slots (manager w1 w2 w3 w4 w5 w6 w7 w8
+    (with-slots (manager
                  b1 st11 st12 st13 st14 st15
                  st21 st22 st23 st24
+                 w1 w2 w3 w4 w5 w6 w7 w8
                  )
         data
 
@@ -64,14 +65,14 @@
       (mapcar #'(lambda (o) (push o widgets))
               (multiple-value-list (tests-instructions-create
                                     data
-                                    (list "<1> - Increase spacing"
-                                          "<2> - Decrease spacing"
-                                          "<3>"
-                                          "<4> - :inset/:outset/:flat")
-                                    (list "<5>"
-                                          "<6>"
-                                          "window interior red/default - <7>"
-                                          "theme-flat/theme-3d - <8>"))))
+                                    (list "s/S = Spacing +/-"
+                                          ""
+                                          ""
+                                          "4 = :inset/:outset/:flat")
+                                    (list ""
+                                          ""
+                                          "c = window interior red/default"
+                                          "t = theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o widgets)) (multiple-value-list (tests-rulers-create-standard data)))
@@ -81,44 +82,11 @@
 
 (defmethod tests-destroy ((data (eql *window-data*)))
   (let ((args `((eql ,data))))
-    (cleanup-method tests-command-1 args)
-    (cleanup-method tests-command-2 args)
-    (cleanup-method tests-command-7 args)
-    (cleanup-method tests-command-8 args))
-  nil)
+    (cleanup-method tests-command-4 args)
+    (cleanup-method tests-get-interior-color args)
+    (cleanup-method tests-get-spacing args)))
 
 (defmethod tests-ready ((window-data (eql *window-data*)))
-  (defmethod tests-command-1 ((data (eql window-data)))
-    (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (dolist (w (list w1 w2))
-        (unless (eql w nil)
-          (with-slots (spacing-left spacing-right spacing-top spacing-bottom) w
-            (when (< spacing-left 75)
-              (incf spacing-left))
-            (when (< spacing-right 75)
-              (incf spacing-right))
-            (when (< spacing-top 75)
-              (incf spacing-top))
-            (when (< spacing-bottom 75)
-              (incf spacing-bottom))))))
-    t)
-  
-  (defmethod tests-command-2 ((data (eql window-data)))
-    (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-        (dolist (w (list w1 w2))
-          (unless (eql w nil)
-            (with-slots (spacing-left spacing-right spacing-top spacing-bottom) w
-              (unless (= spacing-left 0)
-                (decf spacing-left))
-              (unless (= spacing-right 0)
-                (decf spacing-right))
-              (unless (= spacing-top 0)
-                (decf spacing-top))
-              (unless (= spacing-bottom 0)
-                (decf spacing-bottom)))))))
-    t)
-  
   (defmethod tests-command-4 ((data (eql window-data)))
     (with-slots (manager theme2 b1 b2 b3 b4 b5 b6 b7) data
       (when (equal (theme manager) theme2)
@@ -132,15 +100,14 @@
              (setf style :inset))))))
     t)
   
-  (defmethod tests-command-7 ((data (eql window-data)))
+  (defmethod tests-get-interior-color ((data (eql window-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
-    nil)
+      (values (list w1 w2 w3 w4 w5 w6 w7 w8) nil)))
 
-  (defmethod tests-command-8 ((data (eql window-data)))
-    (tests-toggle-theme data)
-    nil)
-
+  (defmethod tests-get-spacing ((data (eql window-data)))
+    (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
+      (values (list w1 w2) t)))
+  
   (defmethod tests-command-update ((data (eql window-data)))
     (with-slots (st11 st12 st13 st14 st15 w1 theme2) data
       (unless (eql st11 nil)

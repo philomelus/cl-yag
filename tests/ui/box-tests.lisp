@@ -2,8 +2,15 @@
 
 (defstruct (box-tests-data (:include tests-data)
                            (:conc-name box-tests-))
-  b1 b2 b3 b4 b5 b6 b7 b8
-  cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
+  b1 cl1
+  b2 cl2
+  b3 cl3
+  b4 cl4
+  b5 cl5
+  b6 cl6
+  b7 cl7
+  b8 cl8
+  
   w1 w2 w3 w4 w5 w6 w7 w8
   )
 
@@ -13,8 +20,15 @@
 
   (let (objs)
     (with-slots (manager
-                 b1 b2 b3 b4 b5 b6 b7
-                 cl1 cl2 cl3 cl4 cl5 cl6 cl7 cl8
+                 b1 cl1
+                 b2 cl2
+                 b3 cl3
+                 b4 cl4
+                 b5 cl5
+                 b6 cl6
+                 b7 cl7
+                 b8 cl8
+  
                  w1 w2 w3 w4 w5 w6 w7 w8
                  )
         data
@@ -87,20 +101,20 @@
     
       ;; Instructions
       (mapc #'(lambda (o) (push o objs))
-              (multiple-value-list (tests-instructions-create
-                                    data
-                                    (list "<1> - :left/:center/:right"
-                                          "<2> - :top/:middle/:bottom"
-                                          "<3> - v-align :top/:middle/:bottom"
-                                          "<4> - :inset/:outset/:flat")
-                                    (list "decrease border width - <5>"
-                                          "increase border width - <6>"
-                                          "window interior red/default - <7>"
-                                          "theme-flat/theme-3d- <8>"))))
+            (multiple-value-list (tests-instructions-create
+                                  data
+                                  (list "1 = :left/:center/:right"
+                                        "2 = :top/:middle/:bottom"
+                                        "3 = v-align :top/:middle/:bottom"
+                                        "4 = :inset/:outset/:flat")
+                                  (list ""
+                                        "k/K = Thickness +/-"
+                                        "c   = window interior red/default"
+                                        "t   = theme-flat/theme-3d"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-standard data :r7 nil :r8 nil)))
-      (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-wide data :r4 '(:wide 4 rh7))))
+      (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-wide data :r4 '(4 nil rh7))))
 
       ;; The one in charge
       (setf manager (make-instance 'manager :content (reverse objs))))))
@@ -111,11 +125,9 @@
     (cl-yag::cleanup-method tests-command-2 args)
     (cl-yag::cleanup-method tests-command-3 args)
     (cl-yag::cleanup-method tests-command-4 args)
-    (cl-yag::cleanup-method tests-command-5 args)
-    (cl-yag::cleanup-method tests-command-6 args)
-    (cl-yag::cleanup-method tests-command-7 args)
-    (cl-yag::cleanup-method tests-command-8 args)
     (cl-yag::cleanup-method tests-command-update args)
+    (cl-yag::cleanup-method tests-get-interior-color args)
+    (cl-yag::cleanup-method tests-get-thickness args)
     (cl-yag::cleanup-method tests-render args))
   nil)
 
@@ -199,34 +211,14 @@
             (:flat
              (setf style :inset))))))
     nil)
+
+  (defmethod tests-get-thickness ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
+      (values (list b1 b2 b3 b4 b5 b6 b7 b8) nil)))
   
-  (defmethod tests-command-5 ((data (eql box-data)))
-    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
-      (let ((objs (list b1 b2 b3 b4 b5 b6 b7)))
-        (dolist (obj objs)
-          (unless (eql obj nil)
-            (with-accessors ((tn thickness)) obj
-              (unless (= tn 0)
-                (decf tn)))))))
-    nil)
-
-  (defmethod tests-command-6 ((data (eql box-data)))
-    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
-      (let ((objs (list b1 b2 b3 b4 b5 b6 b7)))
-        (dolist (obj objs)
-          (unless (eql obj nil)
-            (with-accessors ((tn thickness)) obj
-              (incf tn))))))
-    nil)
-
-  (defmethod tests-command-7 ((data (eql box-data)))
-    (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
-    nil)
-
-  (defmethod tests-command-8 ((data (eql box-data)))
-    (tests-toggle-theme data)
-    nil)
+  (defmethod tests-get-interior-color ((data (eql box-data)))
+    (with-slots (w1 w2 w3 w4 w5 w6 w7) data
+      (values (list w1 w2 w3 w4 w5 w6 w7) nil)))
 
   (defmethod tests-command-update ((data (eql box-data)))
     (with-slots (b1 b2 b3 b4 b5 b6 b7) data

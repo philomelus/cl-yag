@@ -269,6 +269,20 @@ sized according to type and window number, just add to manager."
 
 (defgeneric tests-destroy (data) (:documentation "Clean up data created for tests."))
 
+(defgeneric tests-get-h-align (data) (:documentation "Called to get list of windows/widgets to affect with h-align changes."))
+
+(defgeneric tests-get-interior-color (data) (:documentation "Called to get list of windows/widgets to affect with interior color changes."))
+
+(defgeneric tests-get-padding (data) (:documentation "Called to get list of windows/widgets to affect with padding changes."))
+
+(defgeneric tests-get-spacing (data) (:documentation "Called to get list of windows/widgets to affect with spacing changes."))
+
+(defgeneric tests-get-theme (data) (:documentation "Called to get list of windows/widgets to affect with theme changes."))
+
+(defgeneric tests-get-thickness (data) (:documentation "Called to get list of windws/widgets to affect with thickness changes."))
+
+(defgeneric tests-get-v-align (data) (:documentation "Call to get list of windows/widgets to affect with v-align changes."))
+
 (defgeneric tests-ready (data) (:documentation "Called just before entering event loop."))
 
 (defgeneric tests-render (data) (:documentation "Called to render display. If it returns nil, will clear screen and call
@@ -288,11 +302,11 @@ regardless of result."))
                  `(let ((,u ,used))
                     (when ,u
                       ,(if is-left
-                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-left 10))
-                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :padding-right 10 :h-align :right))))
+                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5 :font mono-font))
+                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5 :font mono-font))))
                     ,u))))
     
-    (with-slots (iw1 iw2 icl1 icl2 it1 it2 it3 it4 it5 it6 it7 it8) data
+    (with-slots (iw1 iw2 icl1 icl2 it1 it2 it3 it4 it5 it6 it7 it8 mono-font) data
       (let ((num-left (length left))
             (num-right 0)
             widgets-l widgets-r)
@@ -432,18 +446,4 @@ regardless of result."))
     (if (eql (theme manager) theme1)
         (setf (theme manager) theme2)
         (setf (theme manager) theme1))))
-
-;;;; TESTS MISC ===============================================================
-
-(defun tests-toggle-interior-color (data widgets)
-  (with-slots (manager theme1) data
-    (let ((ic1 (interior-color theme1))
-          (ic2 (al:map-rgb-f 1 0 0)))
-      (dolist (w widgets)
-        (unless (eql w nil)
-          (with-local-slots ((ic interior-color)) w
-            (if (or (equal ic ic1)
-                    (eql ic nil))
-                (setf (interior-color w) ic2)
-                (setf (interior-color w) ic1))))))))
 

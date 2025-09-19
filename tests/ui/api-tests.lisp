@@ -92,14 +92,14 @@
       (mapc #'(lambda (o) (push o widgets))
             (multiple-value-list (tests-instructions-create
                                   data
-                                  (list "<1>"
-                                        "<2>"
-                                        "<3>"
-                                        "<4>")
-                                  (list "<5>"
-                                        "<6>"
-                                        "window interior red/default - <7>"
-                                        "theme-flat/theme-3d - <8>"))))
+                                  (list ""
+                                        ""
+                                        ""
+                                        "")
+                                  (list ""
+                                        ""
+                                        "c = window interior red/default"
+                                        "t = theme-flat/theme-3d"))))
 
       ;; Rulers
       (when (eql *api-data-type* :standard)
@@ -118,20 +118,13 @@
 
 (defmethod tests-destroy ((data (eql *api-data*)))
   (let ((args `((eql ,data))))
-    (cleanup-method tests-command-7 args)
-    (cleanup-method tests-command-8 args))
+    (cleanup-method tests-get-interior-color args))
   nil)
 
 (defmethod tests-ready ((api-data (eql *api-data*)))
-  (defmethod tests-command-7 ((data (eql api-data)))
+  (defmethod tests-get-interior-color ((data (eql api-data)))
     (with-slots (w1 w2 w3 w4 w5 w6 w7 w8) data
-      (tests-toggle-interior-color data (list w1 w2 w3 w4 w5 w6 w7 w8)))
-    nil)
-  
-  (defmethod tests-command-8 ((data (eql api-data)))
-    (tests-toggle-theme data)
-    nil)
-  nil)
+      (values (list w1 w2 w3 w4 w5 w6 w7 w8) nil))))
 
 (defun api-tests-main ()
   (tests-main *api-data*))
