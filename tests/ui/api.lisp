@@ -30,7 +30,7 @@
 
 (defconstant +W5H+ +WH+ "Standard window 5 height")
 (defconstant +W5L+ +W1L+ "Standard window 5 left")
-(defconstant +W5T+ (+ +W1L+ +WH+ +WHS+) "Standard window 5 top")
+(defconstant +W5T+ (+ +W1T+ +W1H+ +WHS+) "Standard window 5 top")
 (defconstant +W5W+ +WW+ "Standard window 5 width")
 
 (defconstant +W6H+ +WH+ "Standard window 6 height")
@@ -182,10 +182,7 @@ field  = character of desired field, as follows:
   "Creates tests window ruler of type and number.  Automatically positioned and
 sized according to type and window number."
 
-  (let ((local-win-type (gensym))
-        (local-number (gensym))
-        (local-number-string (gensym))
-        (generator (gensym)))
+  (a:with-gensyms (local-win-type local-number generator)
     `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
               (if r100-25-5
                   (ruler-100-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
@@ -198,9 +195,7 @@ sized according to type and window number."
                               :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
                               :left l :top t_ :width w :height h ,@rest))))
        (let ((,local-win-type ,win-type)
-             (,local-number ,number)
-             (,local-number-string))
-         (setq ,local-number-string (format nil "~1d" ,local-number))
+             (,local-number ,number))
          (ccase ,local-win-type
            (:full
             (assert (= ,local-number 1))
@@ -210,61 +205,59 @@ sized according to type and window number."
             (,generator (- +F-W1L+ 10) +F-W1T+ 10 +F-W1H+ t t))
            (:standard
             (assert (<= ,local-number 8))
-            (,generator ;;(tests-window-constant :standard ,local-number #\L)
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "L+"))
-                        (- (symbol-value (a:symbolicate "+W" ,local-number-string "T+")) 10)
-                        ;;(tests-window-constant :standard ,local-number #\W)
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "W+"))
+            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
+                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
+                        (tests-window-constant ,local-win-type ,local-number #\W)
                         10))
            (:standard-vertical
             (assert (<= ,local-number 2))
             (if (= ,local-number 2)
-                (setq ,local-number-string "5"))
-            (,generator (- (symbol-value (a:symbolicate "+W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "T+"))
+                (setq ,local-number 5))
+            (,generator (- (tests-window-constant :standard ,local-number #\L) 10)
+                        (tests-window-constant :standard ,local-number #\T)
                         10
-                        (symbol-value (a:symbolicate "+W" ,local-number-string "H+"))
+                        (tests-window-constant :standard ,local-number #\H)
                         t))
            (:tall
             (assert (<= ,local-number 4))
-            (,generator (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+"))
-                        (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+")) 10)
-                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "W+"))
+            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
+                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
+                        (tests-window-constant ,local-win-type ,local-number #\W)
                         10))
            (:tall-vertical
             (assert (<= ,local-number 1))
-            (,generator (- (symbol-value (a:symbolicate "+T-W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "T+"))
+            (,generator (- (tests-window-constant :tall ,local-number #\L) 10)
+                        (tests-window-constant :tall ,local-number #\T)
                         10
-                        (symbol-value (a:symbolicate "+T-W" ,local-number-string "H+"))
+                        (tests-window-constant :tall ,local-number #\H)
                         t t))
            (:wide
             (assert (<= ,local-number 4))
-            (,generator (symbol-value (a:symbolicate "+W-W" ,local-number-string "L+"))
-                        (- (symbol-value (a:symbolicate "+W-W" ,local-number-string "T+")) 10)
-                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "W+"))
+            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
+                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
+                        (tests-window-constant ,local-win-type ,local-number #\W)
                         10))
            (:wide-tall
             (assert (<= ,local-number 2))
-            (,generator (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+"))
-                        (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+")) 10)
-                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "W+"))
+            (,generator (tests-window-constant ,local-win-type ,local-number #\L)
+                        (- (tests-window-constant ,local-win-type ,local-number #\T) 10)
+                        (tests-window-constant ,local-win-type ,local-number #\W)
                         10))
            (:wide-tall-vertical
             (assert (<= ,local-number 1))
-            (,generator (- (symbol-value (a:symbolicate "+WT-W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "T+"))
+            (,generator (- (tests-window-constant :wide-tall ,local-number #\L) 10)
+                        (tests-window-constant :wide-tall ,local-number #\T)
                         10
-                        (symbol-value (a:symbolicate "+WT-W" ,local-number-string "H+"))
+                        (tests-window-constant :wide-tall ,local-number #\H)
                         t t))
            (:wide-vertical
-            (if (= ,local-number 2)
-                (setq ,local-number-string "3"))
             (assert (<= ,local-number 2))
-            (,generator (- (symbol-value (a:symbolicate "+W-W" ,local-number-string "L+")) 10)
-                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "T+"))
+            (if (= ,local-number 2)
+                (setq ,local-number 3))
+            (,generator (- (tests-window-constant :wide ,local-number #\L) 10)
+                        (tests-window-constant :wide ,local-number #\T)
                         10
-                        (symbol-value (a:symbolicate "+W-W" ,local-number-string "H+"))
+                        (tests-window-constant :wide ,local-number #\H)
                         t)))))))
 
 (defmacro deftests-status (window-type window rows per-row title row column)
@@ -294,42 +287,11 @@ sized according to type and window number."
   (let ((local-win-type (gensym))
         (local-number (format nil "~1d" number)))
     `(let ((,local-win-type ,win-type))
-       (ecase ,local-win-type
-         (:full
-          (symbol-macrolet ((prefix "+F-W"))
-            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
-                (symbol-value (a:symbolicate prefix ,local-number "T+"))
-              (symbol-value (a:symbolicate prefix ,local-number "W+"))
-              (symbol-value (a:symbolicate prefix ,local-number "H+"))
-              ,@rest)))
-         (:standard
-          (symbol-macrolet ((prefix "+W"))
-            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
-                (symbol-value (a:symbolicate prefix ,local-number "T+"))
-              (symbol-value (a:symbolicate prefix ,local-number "W+"))
-              (symbol-value (a:symbolicate prefix ,local-number "H+"))
-              ,@rest)))
-         (:tall
-          (symbol-macrolet ((prefix "+T-W"))
-            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
-                (symbol-value (a:symbolicate prefix ,local-number "T+"))
-              (symbol-value (a:symbolicate prefix ,local-number "W+"))
-              (symbol-value (a:symbolicate prefix ,local-number "H+"))
-              ,@rest)))
-         (:wide
-          (symbol-macrolet ((prefix "+W-W"))
-            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
-                (symbol-value (a:symbolicate prefix ,local-number "T+"))
-              (symbol-value (a:symbolicate prefix ,local-number "W+"))
-              (symbol-value (a:symbolicate prefix ,local-number "H+"))
-              ,@rest)))
-         (:wide-tall
-          (symbol-macrolet ((prefix "+WT-W"))
-            (defwindow (symbol-value (a:symbolicate prefix ,local-number "L+"))
-                (symbol-value (a:symbolicate prefix ,local-number "T+"))
-              (symbol-value (a:symbolicate prefix ,local-number "W+"))
-              (symbol-value (a:symbolicate prefix ,local-number "H+"))
-              ,@rest)))))))
+       (defwindow (tests-window-constant ,local-win-type ,local-number #\L)
+           (tests-window-constant ,local-win-type ,local-number #\T)
+         (tests-window-constant ,local-win-type ,local-number #\W)
+         (tests-window-constant ,local-win-type ,local-number #\H)
+         ,@rest))))
 
 (defgeneric tests-command-0 (data) (:documentation "Called when 0 is pressed."))
 (defgeneric tests-command-1 (data) (:documentation "Called when 1 is pressed."))
@@ -351,7 +313,7 @@ sized according to type and window number."
 (defgeneric tests-ready (data) (:documentation "Called just before entering event loop."))
 
 (defgeneric tests-render (data) (:documentation "Called to render display. If it returns nil, will clear screen and call
-paint for manager object.  Display is flipped automatically after call
+paint for manager object. Display is flipped automatically after call
 regardless of result."))
 
 ;;;; TESTS-INSTRUCTIONS =======================================================

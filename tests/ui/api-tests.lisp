@@ -8,10 +8,10 @@
   )
 
 (defparameter *api-data-type* :standard)
-;; (defparameter *api-data-type* :full)
-;; (defparameter *api-data-type* :tall)
-;; (defparameter *api-data-type* :wide)
-;; (defparameter *api-data-type* :wide-tall)
+;;(defparameter *api-data-type* :full)
+;;(defparameter *api-data-type* :tall)
+;;(defparameter *api-data-type* :wide)
+;;(defparameter *api-data-type* :wide-tall)
 (defparameter *api-data* (make-api-tests-data))
 
 (defmethod tests-create ((data (eql *api-data*)))
