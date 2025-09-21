@@ -70,26 +70,24 @@ area allocated to them, whether they choose to use it or not."
           (assert parent)
           (unless (eql (slot-value object 'child-area) nil)
             (v:info :layout "[layout-changed] {row-layout} forcing relayout")
+            ;; Reset child-area
             (setf (slot-value object 'child-area) nil)
+
+            ;; Reset all child areas
             (dolist (child (content object))
               (when (typep child 'area-mixin)
-                (when (slot-value child 'width-calc)
-                  (setf (slot-value child 'width) (slot-value child 'width-calc)))
-                (when (slot-value child 'height-calc)
-                  (setf (slot-value child 'height) (slot-value child 'height-calc)))
-                (when (slot-value child 'left-calc)
-                  (setf (slot-value child 'left) (slot-value child 'left-calc)))
-                (when (slot-value child 'top-calc)
-                  (setf (slot-value child 'top) (slot-value child 'top-calc)))))
-            ;; NOTE: EXACT same code/logic as RESET-AREA, but we aren't an
-            ;; area-mixin so we can't use it.
+                (reset-area child)))
+
+            ;; Reset our internal layout
             (macrolet ((update-value (dest src)
                          `(when (slot-value object ,src)
                             (setf (slot-value object ,dest) (slot-value object ,src)))))
               (update-value 'width 'width-calc)
               (update-value 'height 'height-calc)
               (update-value 'left 'left-calc)
-              (update-value 'top 'top-calc))            
+              (update-value 'top 'top-calc))
+
+            ;; Relayout ourselves
             (calc-layout-area object)
             (calc-layout-child-areas object)))
         ;; Something affecting our child layouts changed
@@ -187,19 +185,19 @@ recalculates the sizes of the children that are affected by it."
             ;; Update child area to objects actual area
             (with-slots (content) object
               (when upd-ch-h-p
-                (setf (height (aref child-area index)) (slot-value (foro (nth index content)) 'height))
+                (setf (slot-value (aref child-area index) 'height) (slot-value (foro (nth index content)) 'height))
                 (v:debug :layout "[update-layout-child-areas] {row-layout} child ~d internal height updated (~d)"
                          index (height (aref child-area index))))
               (when upd-ch-w-p
-                (setf (width (aref child-area index)) (slot-value (foro (nth index content)) 'width))
+                (setf (slot-value (aref child-area index) 'width) (slot-value (foro (nth index content)) 'width))
                 (v:debug :layout "[update-layout-child-areas] {row-layout} child ~d internal width updated (~d)"
                          index (width (aref child-area index))))
               (when upd-ch-l-p
-                (setf (left (aref child-area index)) (slot-value (foro (nth index content)) 'left))
+                (setf (slot-value (aref child-area index) 'left) (slot-value (foro (nth index content)) 'left))
                 (v:debug :layout "[update-layout-child-areas] {row-layout} child ~d internal left updated (~d)"
                          index (left (aref child-area index))))
               (when upd-ch-t-p
-                (setf (top (aref child-area index)) (slot-value (foro (nth index content)) 'top))
+                (setf (slot-value (aref child-area index) 'top) (slot-value (foro (nth index content)) 'top))
                 (v:debug :layout "[update-layout-child-areas] {row-layout} child ~d internal top updated (~d)"
                          index (top (aref child-area index)))))
             
@@ -209,17 +207,17 @@ recalculates the sizes of the children that are affected by it."
                     (new-width new-child-width))
 
                 (let ((child (foro (nth i (content object))))
-                      (child-a (aref child-area i)))
+                      (child-internal (aref child-area i)))
 
                   ;; Save new internal width
-                  (setf (width child-a) new-width)
+                  (setf (width child-internal) new-width)
                   
                   ;; Force recalc of child width if originally calculated
                   (when (slot-value child 'width-calc)
                     (setf (slot-value child 'width) (slot-value child 'width-calc)))
 
                   ;; Save new internal left
-                  (setf (left child-a) new-left)
+                  (setf (slot-value child-internal 'left) new-left)
 
                   ;; Force recalc of child left if originally calculated
                   (when (slot-value child 'left-calc)
