@@ -150,19 +150,19 @@ recalculates the sizes of the children that are affected by it."
             ;; Update child area to objects actual area
             (with-slots (content) object
               (when upd-ch-h-p
-                (setf (height (aref child-area index)) (slot-value (foro (nth index content)) 'height))
+                (setf (slot-value (aref child-area index) 'width) (slot-value (foro (nth index content)) 'height))
                 (v:debug :layout "[update-layout-child-areas] {column-layout} child ~d internal height updated (~d)"
                          index (height (aref child-area index))))
               (when upd-ch-w-p
-                (setf (width (aref child-area index)) (slot-value (foro (nth index content)) 'width))
+                (setf (slot-value (aref child-area index) 'height) (slot-value (foro (nth index content)) 'width))
                 (v:debug :layout "[update-layout-child-areas] {column-layout} child ~d internal width updated (~d)"
                          index (width (aref child-area index))))
               (when upd-ch-l-p
-                (setf (left (aref child-area index)) (slot-value (foro (nth index content)) 'left))
+                (setf (slot-value (aref child-area index) 'left) (slot-value (foro (nth index content)) 'left))
                 (v:debug :layout "[update-layout-child-areas] {column-layout} child ~d internal left updated (~d)"
                          index (left (aref child-area index))))
               (when upd-ch-t-p
-                (setf (top (aref child-area index)) (slot-value (foro (nth index content)) 'top))
+                (setf (slot-value (aref child-area index) 'top) (slot-value (foro (nth index content)) 'top))
                 (v:debug :layout "[update-layout-child-areas] {column-layout} child ~d internal top updated (~d)"
                          index (top (aref child-area index)))))
             
