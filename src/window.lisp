@@ -27,29 +27,29 @@
 
 (defmethod on-char (key mods (obj window) &key)
   (dolist (child (content obj))
-    (unless (eql child nil)
-      (when (on-char key mods child)
+    (unless (eql (foro child) nil)
+      (when (on-char key mods (foro child))
         (return-from on-char t))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj window) &key)
   (dolist (child (content obj))
-    (unless (eql child nil)
-      (if (on-mouse-down x y b child)
+    (unless (eql (foro child) nil)
+      (if (on-mouse-down x y b (foro child))
           (return-from on-mouse-down t))))
   nil)
 
 (defmethod on-mouse-move (x y dx dy (obj window) &key)
   (dolist (child (content obj))
-    (unless (eql child nil)
-      (if (on-mouse-move x y dx dy child)
+    (unless (eql (foro child) nil)
+      (if (on-mouse-move x y dx dy (foro child))
           (return t))))
   nil)
 
 (defmethod on-mouse-up (x y b (obj window) &key)
   (dolist (child (content obj))
-    (unless (eql child nil)
-      (if (on-mouse-up x y b child)
+    (unless (eql (foro child) nil)
+      (if (on-mouse-up x y b (foro child))
           (return t))))
   nil)
 
@@ -66,8 +66,8 @@
   (with-slots (content) obj
     (let ((children content))
       (dolist (c children)
-        (unless (eql c nil)
-          (on-paint c)))))
+        (unless (eql (foro c) nil)
+          (on-paint (foro c))))))
 
   (my-next-method))
 
