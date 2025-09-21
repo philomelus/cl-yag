@@ -52,6 +52,9 @@
 (defmethod tests-get-padding (data)
   (values nil nil))
 
+(defmethod tests-get-rulers (data)
+  (values nil nil))
+
 (defmethod tests-get-spacing (data)
   (values nil nil))
 
@@ -264,6 +267,13 @@ Default event processing watches for :display-close event as well."
                              widgets)))
                  (when update
                    (tests-command-update data)))))
+
+           (defmethod cl-yag::on-char ((key (eql :r)) mods (object (eql (tests-manager data))) &key)
+             (let ((rulers (tests-get-rulers data)))
+               (dolist (r rulers)
+                 (if (visible r)
+                     (setf (visible r) nil)
+                     (setf (visible r) t)))))
            
            (defmethod cl-yag::on-char ((key (eql :s)) mods (object (eql (tests-manager data))) &key)
              (multiple-value-bind (widgets update) (tests-get-spacing data)
@@ -272,18 +282,20 @@ Default event processing watches for :display-close event as well."
                      (progn
                        (mapc #'(lambda (w)
                                  (when (> (spacing-left w) 0)
-                                   (decf (spacing-left w))
-                                   (decf (spacing-right w))
-                                   (decf (spacing-top w))
-                                   (decf (spacing-bottom w))))
+                                   (with-changes w
+                                     (decf (spacing-left w))
+                                     (decf (spacing-right w))
+                                     (decf (spacing-top w))
+                                     (decf (spacing-bottom w)))))
                              widgets))
                      (progn
                        (mapc #'(lambda (w)
                                  (when (< (spacing-left w) 50)
-                                   (incf (spacing-left w))
-                                   (incf (spacing-right w))
-                                   (incf (spacing-top w))
-                                   (incf (spacing-bottom w))))
+                                   (with-changes w
+                                     (incf (spacing-left w))
+                                     (incf (spacing-right w))
+                                     (incf (spacing-top w))
+                                     (incf (spacing-bottom w)))))
                              widgets)))
                  (when update
                    (tests-command-update data)))))

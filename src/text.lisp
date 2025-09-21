@@ -91,46 +91,11 @@
     ;; Draw border
     (paint-border obj (find-theme obj))
     
-    (let (x f)
-      (case (h-align obj)
-        ((:none :left)
-         (setq x (left obj))
-         (incf x (padding-left obj))
-         (incf x (spacing-left obj))
-         (with-slots (border-left) obj
-           (unless (eql border-left nil)
-             (incf x (thickness border-left))))
-         (setq f +ALIGN-LEFT+)
-         (v:debug :paint "[on-paint] {text} aligning text left:~d ~a" x (print-raw-object obj)))
-        (:center
-         (with-slots (border-left border-right
-                      padding-left padding-right
-                      spacing-left spacing-right)
-             obj
-           (let ((calc-width (width obj)))
-             (decf calc-width (+ padding-left padding-right spacing-left spacing-right))
-             (unless (eql border-left nil)
-               (decf calc-width (thickness border-left)))
-             (unless (eql border-right nil)
-               (decf calc-width (thickness border-right)))
-             (setq x (+ (left obj) (/ calc-width 2)))))
-         (setq f +ALIGN-CENTER+)
-         (v:debug :paint "[on-paint] {text} aligning text center:~d ~a" x (print-raw-object obj)))
-        (:right
-         (let ((area (area-allocated obj)))
-           (setq x (right area))
-           (decf x (padding-right obj))
-           (decf x (spacing-right obj))
-           (with-slots (border-right) obj
-             (unless (eql border-right nil)
-               (decf x (thickness border-right))))
-           (setq f +ALIGN-RIGHT+)
-           (v:debug :paint "[on-paint] {text} aligning text right:~d ~a" x (print-raw-object obj)))))
-      (with-local-slots ((l left) (t_ top) (w width) (h height)) obj
+    (with-local-slots ((l left) (t_ top) (w width) (h height)) obj
+      (multiple-value-bind (x f) (text-calc-title-left obj)
         (with-clipping (l t_ w h)
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-            (al:draw-text fnt fc x (text-calc-title-top obj) f (title obj)))))))
-  (my-next-method))
+            (al:draw-text fnt fc x (text-calc-title-top obj) f (title obj))))))))
 
 ;;;; active-text ==============================================================
 
@@ -139,7 +104,12 @@
 (defclass active-text-theme-mixin (text-theme-mixin)
   ((down-color :initarg :down-color :initform nil :accessor down-color)
    (hover-color :initarg :hover-color :initform (al:map-rgb-f 0.5 0.5 0.5) :accessor hover-color)
-   (up-color :initarg :up-color :initform nil :accessor up-color)))
+   (up-color :initarg :up-color :initform nil :accessor up-color)
+   ;; TODO: Maybe?
+   ;; (hilite-thickness)
+   ;; (hilite-inside-padding)
+   ;; (hilite-inside-border)
+   ))
 
 ;;; active-text -----------------------------------------------------
 
@@ -219,98 +189,153 @@
 
 (defmethod on-paint ((obj active-text) &key)
   (with-local-slots ((in inside) (down was-down)) obj
-    (with-object-or-theme ((cd down-color) (ch hover-color) (cu up-color)
-                           (fg fore-color) (bg back-color) (ic interior-color)
-                           (fnt font))
-                          obj
-      ;; Draw background
-      (assert (not (eql bg nil)))
-      (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
-    
-      ;; Draw border
-      (paint-border obj (find-theme obj))
-    
-      ;; Draw text
-      (let (x f)
-        (case (h-align obj)
-          ((:none :left)
-           (setq x (left obj))
-           (setq f +ALIGN-LEFT+))
-          (:center
-           (setq x (+ (left obj) (/ (width obj) 2)))
-           (setq f +ALIGN-CENTER+))
-          (:right
-           (let ((area (area-allocated obj)))
-             (setq x (right area))
-             (decf x (padding-right obj))
-             (setq f +ALIGN-RIGHT+))))
-        (with-clipping ((left obj) (top obj) (width obj) (height obj))
-          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-            (assert (not (eql (if down cd cu) nil)))
-            (al:draw-text fnt (if down cd cu) x (text-calc-title-top obj) f (title obj)))))
-    
-      ;; Hilight if needed
-      (when in
-        (assert (not (eql ch nil)))
-        (let ((left (+ (left obj) 2))
-              (top (+ (top obj) 2))
-              (right (- (right obj) 1.5))
-              (bottom (- (bottom obj) 1.5)))
-          (with-borders (bl bt br bb) obj
-            (unless (eql bl nil)
-              (incf left (thickness bl)))
-            (unless (eql bt nil)
-              (incf top (thickness bt)))
-            (unless (eql br nil)
-              (decf right (thickness br)))
-            (unless (eql bb nil)
-              (decf bottom (thickness bb))))
-          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
-            (al:draw-rectangle left top right bottom ch 1))))))
+    (with-local-accessors (left top width height) obj
+      (with-object-or-theme ((cd down-color) (ch hover-color) (cu up-color)
+                             (fg fore-color) (bg back-color) (ic interior-color)
+                             (fnt font))
+                            obj
+      
+        ;; Draw background
+        (assert (not (eql bg nil)))
+        (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
+      
+        ;; Draw border
+        (paint-border obj (find-theme obj))
+      
+        ;; Draw text
+        (multiple-value-bind (x f) (text-calc-title-left obj)
+          (with-clipping (left top width height)
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+              (al:draw-text fnt (if down cd cu) x (text-calc-title-top obj) f (title obj)))))
+      
+        ;; Hilight if needed
+        (when in
+          (assert (not (eql ch nil)))
+          (let ((calc-left (+ left 2))
+                (calc-top (+ top 2))
+                (calc-right (- (right obj) 1.5))
+                (calc-bottom (- (bottom obj) 1.5)))
+            (with-borders (bl bt br bb) obj
+              (unless (eql bl nil)
+                (incf calc-left (thickness bl))
+                (incf calc-left (padding-left obj)))
+              (unless (eql bt nil)
+                (incf calc-top (thickness bt))
+                (incf calc-top (padding-top obj)))
+              (unless (eql br nil)
+                (decf calc-right (thickness br))
+                (decf calc-right (padding-right obj)))
+              (unless (eql bb nil)
+                (decf calc-bottom (thickness bb))
+                (decf calc-bottom (padding-bottom obj))))
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+              (al:draw-rectangle calc-left calc-top calc-right calc-bottom ch 1))))
+
+        )))
+  
   (my-next-method))
 
 ;;;; functions ================================================================
 
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-height))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or float integer ratio)) text-calc-height))
 (defun text-calc-height (type area object)
-  (with-local-accessors ((rv height)) area
+  (with-local-slots ((rv height)) area
     (case type
       ((:auto :auto-max))               ; nothing to do
       
       (:auto-min
-       (let ((fnt (theme-field font object)))
-         (assert (and (not (eql fnt nil))
-                      (not (cffi:null-pointer-p fnt))))
-         (let ((fh (al:get-font-line-height fnt)))
-           (setq rv (min fh (height area)))))))
+       (with-local-slots (spacing-top spacing-bottom
+                          border-top border-bottom
+                          padding-top padding-bottom)
+                         object
+         (setq rv (al:get-font-line-height (theme-field font object)))
+         (incf rv spacing-top)
+         (incf rv spacing-bottom)
+         (unless (eql border-top nil)
+           (incf rv (thickness border-top))
+           (incf rv padding-top))
+         (unless (eql border-bottom nil)
+           (incf rv (thickness border-bottom))
+           (incf rv padding-bottom)))
+       (assert (<= rv (height area)))))
     rv))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-left))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or float integer ratio)) text-calc-left))
 (defun text-calc-left (type area object)
-  (with-local-accessors ((rv left)) area
-    (case type
-      ((:left :auto)
-       (incf rv (padding-left object))
-       (v:debug :layout "[text-calc-left] {:left/:auto} start:~d padding:~d" (left area) (padding-left object)))
+  (with-local-slots ((rv left)) area
+    (ccase type
+      ((:left :auto :right))
       
       (:center
-       (with-local-slots ((w width)) object
-         (incf w (padding-left object))
-         (incf w (padding-right object))
+       (with-local-slots (border-left border-right
+                          padding-left padding-right
+                          spacing-left spacing-right
+                          width)
+                         object
+         (incf width spacing-left)
+         (incf width spacing-right)
+         (unless (eql border-left nil)
+           (incf width (thickness border-left))
+           (incf width padding-left))
+         (unless (eql border-right nil)
+           (incf width (thickness border-right))
+           (incf width padding-right))
          (let ((aw (width area)))
-           (if (> aw w)
-               (incf rv (truncate (/ (- aw w) 2)))))))
-
-      (:right
-       (with-local-slots ((w width)) object
-         (incf w (padding-left object))
-         (incf w (padding-right object))
-         (setq rv (- (width area) w))
-         (v:debug :layout "[text-calc-left] {:right} start:~d witdh:~d padding:~d" (left area) w (padding-right object)))))
+           (assert (> aw width))
+           (incf rv (/ (- aw width) 2))))))
     rv))
 
+(declaim (ftype (function ((or text active-text)) (values (or float integer ratio) integer)) text-calc-title-left))
+(defun text-calc-title-left (object)
+  "Calculate left coordinate of title.  Returns left coordinate and text align flag."
+  
+  (let (flags calc-left)
+    (case (h-align object)
+      ((:none :left)
+       (setq calc-left (left object))
+       (incf calc-left (spacing-left object))
+       (with-slots (border-left) object
+         (unless (eql border-left nil)
+           (incf calc-left (thickness border-left))
+           (incf calc-left (padding-left object))))
+       (setq flags +ALIGN-LEFT+)
+       (v:debug :layout "[text-calc-title-left] aligning text left:~d ~a" calc-left (print-raw-object object)))
+     
+      (:center
+       (with-slots (border-left border-right
+                    padding-left padding-right
+                    spacing-left spacing-right)
+           object
+         (let ((calc-width (width object)))
+           (decf calc-width (+ spacing-left spacing-right))
+           (unless (eql border-left nil)
+             (decf calc-width (thickness border-left))
+             (decf calc-width padding-left))
+           (unless (eql border-right nil)
+             (decf calc-width (thickness border-right))
+             (decf calc-width padding-right))
+           ;;(setq x (+ (left object) (/ calc-width 2)))
+           (setq calc-left (+ (left object) (/ (width object) 2)))))
+       (setq flags +ALIGN-CENTER+)
+       (v:debug :layout "[text-calc-title-left] aligning text center:~d ~a" calc-left (print-raw-object object)))
+     
+      (:right
+       (setq calc-left (right object))
+       (decf calc-left (spacing-right object))
+       (with-slots (border-right) object
+         (unless (eql border-right nil)
+           (decf calc-left (thickness border-right))
+           (decf calc-left (padding-right object))))
+       (setq flags +ALIGN-RIGHT+)
+       (v:debug :layout "[text-calc-title-left] aligning text right:~d ~a" calc-left (print-raw-object object))))
+    
+    (values calc-left flags)))
+
+(declaim (ftype (function ((or text active-text)) (or float integer ratio)) text-calc-title-top))
 (defun text-calc-title-top (obj)
-  (with-local-accessors ((at top) (va v-align)) obj
+  "Calculate top coordinate of title.  Returns the coordinate."
+  
+  (with-local-slots ((at top) (va v-align)) obj
     (with-object-or-theme ((fnt font)) obj
       (assert (and (not (eql fnt nil))
                    (not (cffi:null-pointer-p fnt))))
@@ -319,40 +344,40 @@
       (if (member at +AREA-TOP-OPTS+)
           (setf at 0))
 
-      (case va
-        (:top)                          ; nothing to do
+      (ecase va
+        ((:top :none)
+         (with-local-slots (spacing-top padding-top border-top) obj
+           (incf at spacing-top)
+           (unless (eql border-top nil)
+             (incf at (thickness border-top))
+             (incf at padding-top)))
+         (v:debug :layout "[text-calc-title-top] aligning text top:~a ~a" at (print-raw-object obj)))
         
         (:middle
          (let ((h (height obj))
                (fh (al:get-font-line-height fnt)))
-           (incf at (truncate (/ (- h fh) 2)))))
+           (incf at (truncate (/ (- h fh) 2))))
+         (v:debug :layout "[text-calc-title-top] aligning text middle:~a ~a" at (print-raw-object obj)))
         
         (:bottom
-         (let ((h (height obj))
-               (fh (al:get-font-line-height fnt)))
-           (incf at (- h fh))))
-        
-        (:none)
-        (otherwise
-         (error "text unknown vertical alignment: ~a" va)))
+         (with-local-slots (spacing-bottom padding-bottom border-bottom height) obj
+           (let ((raise (al:get-font-line-height fnt)))
+             (incf raise spacing-bottom)
+             (unless (eql border-bottom nil)
+               (incf raise (thickness border-bottom))
+               (incf raise padding-bottom))
+             (incf at (- height raise))))
+         (v:debug :layout "[text-calc-title-top] aligning text bottom:~a ~a" at (print-raw-object obj))))
       at)))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-top))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or float integer ratio)) text-calc-top))
 (defun text-calc-top (type area object)
-  (with-local-accessors ((rv top)) area
-    (case type
-      ((:top :auto))                    ; already done
+  (with-local-slots ((rv top)) area
+    (ecase type
+      ((:top :none :auto))                    ; already done
 
       (:middle
-       ;; Calculate our height
-       (with-local-slots ((h height)) object
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (with-local-accessors ((ha height)) area
-           ;; Is there room for us to move?
-           (if (> ha h)
-               ;; Yup, so move to middle
-               (incf rv (truncate (/ (- ha h) 2)))))))
+       (incf rv (/ (- (height area) (height object)) 2)))
 
       (:bottom
        (with-local-slots ((h height)) object
@@ -361,7 +386,7 @@
          (incf rv (- (height area) h)))))
     rv))
 
-(declaim (ftype (function (keyword %rect (or text active-text)) (or integer float)) text-calc-width))
+(declaim (ftype (function (keyword %rect (or text active-text)) (or float integer ratio)) text-calc-width))
 (defun text-calc-width (type area object)
   (let (rv)
     (case type
@@ -369,7 +394,21 @@
        (setq rv (width area)))
 
       (:auto-min
-       (let ((tw (al:get-text-width (theme-field font object) (title object))))
-         (setq rv (min tw (width area))))))
+       (with-local-slots (spacing-left spacing-right
+                          border-left border-right
+                          padding-left padding-right)
+                         object
+         (setq rv (al:get-text-width (theme-field font object) (title object)))
+         (incf rv spacing-left)
+         (incf rv spacing-right)
+         (unless (eql border-left nil)
+           (incf rv (thickness border-left))
+           (incf rv padding-left))
+         (unless (eql border-right nil)
+           (incf rv (thickness border-right))
+           (incf rv padding-right)))
+       ;; User should know when it doesn't fit
+       (assert (<= rv (width area)))))
+    
     rv))
 

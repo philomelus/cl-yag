@@ -4,10 +4,6 @@
 
 ;;;; main =====================================================================
 
-;; (defmethod on-paint :after (object &key)
-;;   (v:info :pain "on-paint: ~a" (print-raw-object object))
-;;   (my-next-method))
-
 (defparameter *boss* nil)
 (defparameter *w* nil)
 (defparameter *cl1* nil)

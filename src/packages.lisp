@@ -65,13 +65,16 @@
            #:+LAYOUT-CHILD-OPTIONS
            #:area-allocated
            #:calc-layout-area
+           #:deflayout
            #:dump-layout
            #:find-parent-area-or-layout
            #:find-parent-content
            #:height
+           #:layout
            #:layout-base
            #:layout-cell
            #:layout-cell-reset
+           #:layout-change
            #:left
            #:top
            #:validate-layout-base-options
@@ -121,6 +124,7 @@
            #:area
            #:area-mixin
            #:area-rb
+           #:area-rect
            #:bottom
            #:find-parent-area
            #:height

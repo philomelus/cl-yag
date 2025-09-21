@@ -36,83 +36,6 @@ If object is list, and first tiem is symbol, returns value of it."
 (defmacro my-next-method ()
   `(if (next-method-p) (call-next-method)))
 
-;;;------------------------------------------------------------------
-
-;; For print-mixin (and print-object sometimes)
-;; Seemed like a good idea, but I'm not so sure now.  print-object
-;; is a bit of a pain to work with (which probably means I still'
-;; don't fully understand how it works)
-
-(defmacro pprint-color (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a (~a) " (symbol-name ',field) (print-color (slot-value ,object ',field)))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-color-nil (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a " (symbol-name ',field))
-     (with-slots (,field) ,object
-       (if (eql ,field nil)
-           (format ,stream "NIL ")
-           (format ,stream "(~a) " (print-color ,field))))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-field (field object stream &key (fmt "~a"))
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream (concatenate 'string ":~a " ,fmt " ") (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-field-keyword (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a :~a" (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-field-nil (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a " (symbol-name ',field))
-     (with-slots (,field) ,object
-       (if (eql ,field nil)
-           (format ,stream "NIL ")
-           (format ,stream "~a " ,field)))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-object (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a (~a) " (symbol-name ',field) (slot-value ,object ',field))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-object-nil (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a " (symbol-name ',field))
-     (with-slots (,field) ,object
-       (if (eql ,field nil)
-           (format ,stream "NIL ")
-           (format ,stream "(~a) " ,field)))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-raw (field object stream)
-  `(progn
-     (pprint-index :current 0 ,stream)
-     (format ,stream ":~a ~a" (symbol-name ',field) (print-raw-object (slot-value ,object ',field)))
-     (pprint-newline :mandatory ,stream)))
-
-(defmacro pprint-raw-nil (field object stream)
-  `(progn
-     (pprint-indent :current 0 ,stream)
-     (format ,stream ":~a " (symbol-name ',field))
-     (with-slots (,field) ,object
-       (if (eql ,field nil)
-           (format ,stream "NIL ")
-           (format ,stream "~a " (print-raw-object ,field))))
-     (pprint-newline :mandatory ,stream)))
-
 ;;;; various ==================================================================
 
 (defmacro theme-field (field obj)
@@ -171,14 +94,37 @@ and paddiing space."
   "Provide left, top, right, and bottom coordinates of object, removing border,
 padding, and spacing of object."
   
-  (a:with-gensyms (instance)
+  (a:with-gensyms (instance bl bt br bb padding)
     `(let ((,instance ,object))
-      (with-area-border (,left ,top ,right ,bottom) ,instance
-       (incf ,left (padding-left ,instance))
-       (incf ,top (padding-top ,instance))
-       (decf ,right (padding-right ,instance))
-       (decf ,bottom (padding-bottom ,instance))
-       ,@body))))
+       (let ((,left (left ,instance))
+             (,top (top ,instance))
+             (,right (right ,instance))
+             (,bottom (bottom ,instance)))
+         (declare (ignorable ,left ,top ,right ,bottom))
+         (when (typep ,instance 'border-mixin)
+           (let ((,bl (border-left ,instance))
+                 (,bt (border-top ,instance))
+                 (,br (border-right ,instance))
+                 (,bb (border-bottom ,instance))
+                 (,padding (typep ,instance 'padding-mixin)))
+             (declare (dynamic-extent ,bl ,bt ,br ,bb ,padding))
+             (unless (eql ,bl nil)
+               (incf ,left (thickness ,bl))
+               (when ,padding
+                 (incf ,left (padding-left ,instance))))
+             (unless (eql ,bt nil)
+               (incf ,top (thickness ,bt))
+               (when ,padding
+                (incf ,top (padding-top ,instance))))
+             (unless (eql ,br nil)
+               (decf ,right (thickness ,br))
+               (when ,padding
+                (decf ,right (padding-right ,instance))))
+             (unless (eql ,bb nil)
+               (decf ,bottom (thickness ,bb))
+               (when ,padding
+                (decf ,bottom (padding-bottom ,instance))))))
+         ,@body))))
 
 (defmacro with-area-and-spacing ((left top right bottom) object &body body)
   "Provide left, top, right, and bottom from object area removing spacing."
@@ -221,6 +167,11 @@ updated (changes are local only)."
                                `(,(first obj) (slot-value ,in ',(second obj)))
                                `(,obj (slot-value ,in ',obj))))
                        slots))
+         (declare (dynamic-extent ,@(mapcar #'(lambda (obj)
+                                                (if (consp obj)
+                                                    (first obj)
+                                                    obj))
+                                            slots)))
          ,@body))))
 
 ;; BUGBUG: TODO: slots evaluated more than once

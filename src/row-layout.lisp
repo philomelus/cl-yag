@@ -69,9 +69,9 @@ area allocated to them, whether they choose to use it or not."
         (progn
           (assert parent)
           (unless (eql (slot-value object 'child-area) nil)
-            (v:info :layout "[layout-changed] {row-layout} forcing relayout")
             ;; Reset child-area
-            (setf (slot-value object 'child-area) nil)
+            (unless (eql (slot-value object 'child-area) nil)
+              (setf (slot-value object 'child-area) nil))
 
             ;; Reset all child areas
             (dolist (child (content object))
@@ -79,21 +79,23 @@ area allocated to them, whether they choose to use it or not."
                 (reset-area child)))
 
             ;; Reset our internal layout
-            (macrolet ((update-value (dest src)
-                         `(when (slot-value object ,src)
-                            (setf (slot-value object ,dest) (slot-value object ,src)))))
-              (update-value 'width 'width-calc)
-              (update-value 'height 'height-calc)
-              (update-value 'left 'left-calc)
-              (update-value 'top 'top-calc))
+            (layout-reset-original object)
 
-            ;; Relayout ourselves
+            ;; Re-layout ourselves
             (calc-layout-area object)
             (calc-layout-child-areas object)))
+        
         ;; Something affecting our child layouts changed
         (progn
           (assert child)
-          (error "not implemented")))))
+
+          ;; Reset children
+          (dolist (child (content object))
+            (reset-area (foro child)))
+
+          ;; Re-layout children
+          (dolist (child (content object))
+            (calc-area (foro child) object))))))
 
 (defmethod update-layout-child-areas (index (object row-layout))
   "When a child has options changing the area used within the layout, this

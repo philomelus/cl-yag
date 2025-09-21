@@ -178,68 +178,8 @@ field  = character of desired field, as follows:
            (:wide-tall
             (symbol-value (a:symbolicate "+WT-W" ,number-string ,lfield "+"))))))))
 
-(defmacro deftests-ruler (type number vertical &rest rest &key &allow-other-keys)
-  "Creates tests window ruler of type and number.  Automatically positioned and
-sized according to type and window number, just add to manager."
-  
-  (a:with-gensyms (l-type l-number l-vertical l-left l-top l-width l-height generator)
-    `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
-              (if r100-25-5
-                  (ruler-100-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
-                                  :div-100-color (al:map-rgb-f 1 0 0) :div-100-extent 1
-                                  :div-25-color (al:map-rgb-f 0.8 0 0) :div-25-extent 0.6667
-                                  :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.3333
-                                  :left l :top t_ :width w :height h ,@rest)
-                  (ruler-25-5 :visible t :line-color (al:map-rgb-f 1 0 0) :vertical v
-                              :div-25-color (al:map-rgb-f 1 0 0) :div-25-extent 1
-                              :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
-                              :left l :top t_ :width w :height h ,@rest))))
-       (let ((,l-type ,type)
-             (,l-number ,number)
-             (,l-vertical ,vertical))
-         (when ,l-vertical
-           (case ,l-type
-             (:standard (when (= ,l-number 2) (setq ,l-number 5)))
-             (:wide (when (= ,l-number 2) (setq ,l-number 3)))))
-         (let ((,l-left (tests-window-constant ,l-type ,l-number #\L))
-               (,l-top (tests-window-constant ,l-type ,l-number #\T))
-               (,l-width (tests-window-constant ,l-type ,l-number #\W))
-               (,l-height (tests-window-constant ,l-type ,l-number #\H)))
-           (if ,l-vertical
-               (progn
-                 (setq ,l-width 10)
-                 (decf ,l-left 10))
-               (progn
-                 (setq ,l-height 10)
-                 (decf ,l-top 10)))
-           (ccase ,l-type
-             (:full (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))
-             (:standard (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
-             (:tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical ,l-vertical))
-             (:wide (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
-             (:wide-tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))))))))
+;;;; TESTS-WINDOW =============================================================
 
-(defmacro deftests-status (window-type window rows per-row title row column)
-  (declare (ignorable window-type window rows per-row title row column))
-  (a:with-gensyms (lwin-type lwin lrows lper-row ltitle lrow lcol left top width height)
-    `(let ((,lwin-type ,window-type)
-           (,lwin ,window)
-           (,lrows ,rows)
-           (,lper-row ,per-row)
-           (,ltitle ,title)
-           (,lrow ,row)
-           (,lcol ,column)
-           (,height 24))
-       (let ((,width (/ (- (tests-window-constant ,lwin-type ,lwin #\W) 20) ,lper-row))
-             (,top (+ (- (+ (tests-window-constant ,lwin-type ,lwin #\T)
-                            (tests-window-constant ,lwin-type ,lwin #\H))
-                         (* ,lrows 25))
-                      (* (1- ,lrow) 25))))
-         (let ((,left (+ (tests-window-constant ,lwin-type ,lwin #\L) 10 (* (1- ,lcol) ,width))))
-           (deftext :title ,ltitle :left ,left :top ,top :width ,width :height ,height))))))
-
-;; TODO: Figure out how to deduplicate the defwindow's.  I've tried symbol-macrolet
-;;       and couldn't get it to work.
 (defmacro deftests-window (win-type number &rest rest &key &allow-other-keys)
   "Create tests window of type and number.  Determines size and location from type and number."
   
@@ -251,6 +191,8 @@ sized according to type and window number, just add to manager."
          (tests-window-constant ,local-win-type ,local-number #\W)
          (tests-window-constant ,local-win-type ,local-number #\H)
          ,@rest))))
+
+;;;; GENERICS =================================================================
 
 (defgeneric tests-command-0 (data) (:documentation "Called when 0 is pressed."))
 (defgeneric tests-command-1 (data) (:documentation "Called when 1 is pressed."))
@@ -274,6 +216,8 @@ sized according to type and window number, just add to manager."
 (defgeneric tests-get-interior-color (data) (:documentation "Called to get list of windows/widgets to affect with interior color changes."))
 
 (defgeneric tests-get-padding (data) (:documentation "Called to get list of windows/widgets to affect with padding changes."))
+
+(defgeneric tests-get-rulers (data) (:documentation "Called to get list of rulers to show/hide."))
 
 (defgeneric tests-get-spacing (data) (:documentation "Called to get list of windows/widgets to affect with spacing changes."))
 
@@ -346,11 +290,62 @@ regardless of result."))
 
 ;;;; TESTS-RULERS =============================================================
 
+(defmacro deftests-ruler (type number vertical &rest rest &key &allow-other-keys)
+  "Creates tests window ruler of type and number.  Automatically positioned and
+sized according to type and window number, just add to manager."
+  
+  (a:with-gensyms (l-type l-number l-vertical l-left l-top l-width l-height generator)
+    `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
+              (if r100-25-5
+                  (ruler-100-25-5 :visible nil :line-color (al:map-rgb-f 1 0 0) :vertical v
+                                  :div-100-color (al:map-rgb-f 1 0 0) :div-100-extent 1
+                                  :div-25-color (al:map-rgb-f 0.8 0 0) :div-25-extent 0.6667
+                                  :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.3333
+                                  :left l :top t_ :width w :height h ,@rest)
+                  (ruler-25-5 :visible nil :line-color (al:map-rgb-f 1 0 0) :vertical v
+                              :div-25-color (al:map-rgb-f 1 0 0) :div-25-extent 1
+                              :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
+                              :left l :top t_ :width w :height h ,@rest))))
+       (let ((,l-type ,type)
+             (,l-number ,number)
+             (,l-vertical ,vertical))
+         (when ,l-vertical
+           (case ,l-type
+             (:standard (when (= ,l-number 2) (setq ,l-number 5)))
+             (:wide (when (= ,l-number 2) (setq ,l-number 3)))))
+         (let ((,l-left (tests-window-constant ,l-type ,l-number #\L))
+               (,l-top (tests-window-constant ,l-type ,l-number #\T))
+               (,l-width (tests-window-constant ,l-type ,l-number #\W))
+               (,l-height (tests-window-constant ,l-type ,l-number #\H)))
+           (if ,l-vertical
+               (progn
+                 (setq ,l-width 10)
+                 (decf ,l-left 10))
+               (progn
+                 (setq ,l-height 10)
+                 (decf ,l-top 10)))
+           (ccase ,l-type
+             (:full (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))
+             (:standard (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+             (:tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical ,l-vertical))
+             (:wide (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+             (:wide-tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))))))))
+
 (defstruct (tests-rulers-data (:include tests-instructions-data)
                               (:conc-name tests-rulers-))
   
   rv1 rv2
   rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
+
+(defun tests-list-rulers (data)
+    (with-slots (rv1 rv2
+                 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8)
+        data
+      (let (rulers)
+        (dolist (o (list rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8))
+          (unless (eql o nil)
+            (push o rulers)))
+        rulers)))
 
 (defun tests-rulers-create-full (data &key (r1 '(1 nil rh1))
                                         (rv1 '(1 t rv1)))
@@ -434,6 +429,50 @@ regardless of result."))
           (list rv1 r1 r2))
     (values-list rulers)))
 
+;;;; TESTS-STATUS =============================================================
+
+(defmacro deftests-status (window-type window rows per-row title row column)
+  (declare (ignorable window-type window rows per-row title row column))
+  (a:with-gensyms (lwin-type lwin lrows lper-row ltitle lrow lcol left top width height)
+    `(let ((,lwin-type ,window-type)
+           (,lwin ,window)
+           (,lrows ,rows)
+           (,lper-row ,per-row)
+           (,ltitle ,title)
+           (,lrow ,row)
+           (,lcol ,column)
+           (,height 24))
+       (let ((,width (/ (- (tests-window-constant ,lwin-type ,lwin #\W) 20) ,lper-row))
+             (,top (+ (- (+ (tests-window-constant ,lwin-type ,lwin #\T)
+                            (tests-window-constant ,lwin-type ,lwin #\H))
+                         (* ,lrows 25))
+                      (* (1- ,lrow) 25))))
+         (let ((,left (+ (tests-window-constant ,lwin-type ,lwin #\L) 10 (* (1- ,lcol) ,width))))
+           (deftext :title ,ltitle :left ,left :top ,top :width ,width :height ,height))))))
+
+(defmacro tests-status-update (format-string object value)
+  `(setf (title ,object) (format nil ,format-string ,value)))
+
+(defmacro tests-status-update-keywords (format-string object keywords accessor)
+  "Update TITLE of object with current keyword name or NONE. The target slot can
+have multiple keywords, not including the keywards prived here.
+
+format-string = Format string with single format directive
+object        = Status object to update TITLE of
+keywords      = List of keywords
+accessor      = How to access the field that contains a keyword"
+  
+  (a:with-gensyms (child kw name)
+    `(let ((,child ,accessor)
+           ,name)
+       (when (consp ,child)
+         (dolist (,kw ,keywords)
+           (when (member ,kw ,child)
+             (setq ,name (symbol-name ,kw))
+             (return))))
+       (when (eql ,name nil)
+         (setq ,name "NONE"))
+       (setf (title ,object) (format nil ,format-string ,name)))))
 
 ;;;; TESTS-THEME ==============================================================
 

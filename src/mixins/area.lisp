@@ -4,6 +4,14 @@
 
 (deftype coordinate () '(or integer float))
 
+;;;; area-mixin-base ==========================================================
+
+(defclass area-mixin-base ()
+  ((left :initarg :left :initform :auto :accessor left)
+   (top :initarg :top :initform :auto :accessor top)
+   (width :initarg :width :initform :auto :accessor width)
+   (height :initarg :height :initform :auto :accessor height)))
+
 ;;;; area-mixin ===============================================================
 
 ;; TODO:
@@ -17,19 +25,27 @@
 
 ;; TODO: (deftype area-height () '(or integer float (member :auto :auto-max :auto-min)))
 
-(defclass area-mixin ()
-  ((left :initarg :left :initform :auto :accessor left)
-   (top :initarg :top :initform :auto :accessor top)
-   (width :initarg :width :initform :auto :accessor width)
-   (height :initarg :height :initform :auto :accessor height)
-
-   ;; Internal
-   (left-calc :initform nil)
+(defclass area-mixin (area-mixin-base)
+  ((left-calc :initform nil)
    (top-calc :initform nil)
    (width-calc :initform nil)
    (height-calc :initform nil)))
 
 ;;; methods ---------------------------------------------------------
+
+(defmethod bottom ((obj area-mixin))
+  (+ (top obj) (height obj)))
+
+(defmethod height ((obj area-mixin))
+  (with-slots ((h height)) obj
+    (when (typep h 'keyword)
+      (v:debug :layout "[height] {area-mixin} calculating ~a" (print-raw-object obj))
+      (assert (member h +AREA-HEIGHT-OPTS+))
+      (calc-area obj (parent obj))
+      (assert (typep (slot-value obj 'height) 'number))
+      (setf h (slot-value obj 'height))
+      (v:debug :layout "[height] {area-mixin} result:~d ~a" h (print-raw-object obj)))
+    h))
 
 (defmethod initialize-instance :after ((object area-mixin) &key)
   (with-slots (left top width height) object
@@ -58,30 +74,16 @@
       ))
   (my-next-method))
 
-(defmethod bottom ((obj area-mixin))
-  (+ (top obj) (height obj)))
-
-(defmethod height ((obj area-mixin))
-  (with-slots ((h height)) obj
-    (when (typep h 'keyword)
-      (v:debug :layout "[height] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member h +AREA-HEIGHT-OPTS+))
-      (calc-area obj (parent obj))
-      (assert (typep (slot-value obj 'height) 'number))
-      (setf h (slot-value obj 'height))
-      (v:debug :layout "[height] {area-mixin} result:~d ~a" h (print-raw-object obj)))
-    h))
-
 (defmethod left ((obj area-mixin))
-  (with-slots ((l left)) obj
-    (when (typep l 'keyword)
+  (with-slots (left) obj
+    (when (typep left 'keyword)
       (v:debug :layout "[left] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member l +AREA-LEFT-OPTS+))
+      (assert (member left +AREA-LEFT-OPTS+))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'left) 'number))
-      (setf l (slot-value obj 'left))
-      (v:debug :layout "[left] {area-mixin} result:~d ~a" l (print-raw-object obj)))
-    l))
+      (setf left (slot-value obj 'left))
+      (v:debug :layout "[left] {area-mixin} result:~d ~a" left (print-raw-object obj)))
+    left))
 
 (defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
   ;; If we are a container, pass on to all children
@@ -190,16 +192,33 @@
 ;;;; functions ================================================================
 
 (defun area (object)
-  "Return left, top, width, and height as mutliple values."
+  "Return left, top, width, and height of object as mutliple values."
   
   (assert (typep object 'area-mixin))
   (values (left object) (top object) (width object) (height object)))
 
 (defun area-rb (object)
-  "Return left, top, right, and bottom as multiple values."
+  "Return left, top, right, and bottom of object as multiple values."
   
   (assert (typep object 'area-mixin))
   (values (left object) (top object) (right object) (bottom object)))
+
+(defun area-rect (object)
+  "Return %rect holding left, top, width, and height of object."
+  
+  (make-instance '%rect :left (left object) :top (top object) :width (width object) :height (height object)))
+
+(defun area-save-calc (object)
+  (assert (typep object 'area-mixin))
+  (with-slots (left top width height) object
+    (flet ((is-keyword (field)
+             (if (typep field 'keyword)
+                 field
+                 nil)))
+      (setf (slot-value object 'left-calc) (is-keyword left))
+      (setf (slot-value object 'top-calc) (is-keyword top))
+      (setf (slot-value object 'width-calc) (is-keyword width))
+      (setf (slot-value object 'height-calc) (is-keyword height)))))
 
 (defun find-parent-area (object)
   "Find first parent of OBJECT derived from parent-mixin. Generates error on
@@ -222,15 +241,31 @@ failure."
       (assert (typep p 'area-mixin))
       (setf p (parent p)))))
 
-(defun reset-area (object)
+(defun reset-area (object &optional original)
   "Return layout of object to original state, allowing it to be
-relayed-out."
+relayedout. When ORIGINAL provided, updates area of OBJECT based on slots of
+ORIGINAL."
 
   (macrolet ((update-value (dest src)
-               `(when (slot-value object ,src)
-                  (setf (slot-value object ,dest) (slot-value object ,src)))))
-    (update-value 'width 'width-calc)
-    (update-value 'height 'height-calc)
-    (update-value 'left 'left-calc)
-    (update-value 'top 'top-calc)))
+               `(unless (typep (slot-value object ,dest) 'keyword)
+                  (let ((value (slot-value object ,src)))
+                    (when value
+                      (setf (slot-value object ,dest) value)))))
+             
+             (update-if (old new dest src)
+               `(when (eql (slot-value ,old ,dest) (slot-value ,new ,dest))
+                  (when (slot-value ,new ,src)
+                    (setf (slot-value ,new ,dest) (slot-value ,old ,src))))))
+    
+    (if (eql original nil)
+        (progn
+          (update-value 'width 'width-calc)
+          (update-value 'height 'height-calc)
+          (update-value 'left 'left-calc)
+          (update-value 'top 'top-calc))
+        (progn
+          (update-if original object 'width 'width-calc)
+          (update-if original object 'height 'height-calc)
+          (update-if original object 'left 'left-calc)
+          (update-if original object 'top 'top-calc)))))
 
