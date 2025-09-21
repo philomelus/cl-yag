@@ -101,14 +101,6 @@
            (setq *w* (defwindow 200 200 300 400 :content (list *cl1*)))
            (setf *boss* (defmanager :content (list *w* *rl* *rt* *rr* *rb* *g*)))
            
-           ;; Adjust rulers
-           ;; (setf (height *rl*) (1+ (height *w*)))
-           ;; (setf (width *rt*) (width *w*))
-           ;; (setf (left *rr*) (+ (left *w*) (width *w*)))
-           ;; (setf (height *rr*) (1+ (height *w*)))
-           ;; (setf (top *rb*) (+ (top *w*) (height *w*)))
-           ;; (setf (width *rb*) (width *w*))
-           
            ;; Set grid color
            (setf (major-color *g*) (al:map-rgb-f 0 0.35 0))
            (setf (minor-color *g*) (al:map-rgb-f 0 0.25 0))
