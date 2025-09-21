@@ -26,12 +26,12 @@
 
 (defmethod paint ((obj manager) &key)
   (dolist (child (content obj))
-    (assert (not (eql child nil)))
-    (on-paint child)))
+    (let ((co (foro child)))
+      (unless (eql co nil)
+        (on-paint co)))))
 
 (defmethod process-events (queue (object manager) &key &allow-other-keys)
-  ;; TODO: BUGBUG:  This needs to be unbound when this method returns
-  ;;                I don't currently know exactly how to do that
+
   (defmethod on-mouse-down-accept (o (m (eql object)))
     (v:debug :event "on-mouse-down-accept: ~a" (print-raw-object o))
     (setf (slot-value object 'last-mouse-down) o))
@@ -98,7 +98,9 @@
               (v:debug :event "unhandled event: ~a" (event-type event))
               (unhandled-event event object))))
       
-      (cffi:foreign-free event)))
+      (progn
+        (cleanup-method on-mouse-down-accept `(t (eql ,object)))
+        (cffi:foreign-free event))))
   
   (my-next-method))
 
