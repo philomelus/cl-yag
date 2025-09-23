@@ -5,8 +5,8 @@
 (defstruct (row-layout-tests-data (:include tests-data)
                                   (:conc-name row-layout-tests-))
 
-  st111 st112 st121 st122 st131 st132 rl1 t11 t12 t13
-  st211 st212 st221 st222 st231 st232 rl2 t21 t22 t23
+  st111 st112 st121 st122 st131 st132 rl1 bt11 t12 bt13
+  st211 st212 st221 st222 st231 st232 rl2 bt21 t22 bt23
   st311 st312 st321 st322 st331 st332 rl3 t31 t32 t33 b31 b32
 
   w1 w2 w3 w4)
@@ -16,8 +16,8 @@
 (defmethod tests-create ((data (eql *row-layout-data*)))
   (let (widgets)
     (with-slots (manager w1 w2 w3 w4
-                 st111 st112 st121 st122 st131 st132 rl1 t11 t12 t13
-                 st211 st212 st221 st222 st231 st232 rl2 t21 t22 t23
+                 st111 st112 st121 st122 st131 st132 rl1 bt11 t12 bt13
+                 st211 st212 st221 st222 st231 st232 rl2 bt21 t22 bt23
                  st311 st312 st321 st322 st331 st332 rl3 t31 t32 t33 b31 b32)
         data
 
@@ -28,10 +28,10 @@
       (setf st122 (deftests-status :wide 4 11 2 "[VA2] :MIDDLE" 2 2))
       (setf st131 (deftests-status :wide 4 11 2 "[HA3] :LEFT" 3 1))
       (setf st132 (deftests-status :wide 4 11 2 "[VA3] :MIDDLE" 3 2))
-      (setf t11 (defactive-text :title "Title 1" :v-align :middle :h-align :right))
+      (setf bt11 (defbutton :title "Title 1" :v-align :middle :h-align :right))
       (setf t12 (deftext :title "Title 2" :v-align :middle :h-align :center))
-      (setf t13 (defactive-text :title "Title 3" :v-align :middle :h-align :left))
-      (setf rl1 (defrow-layout :content `(,t11 ,t12 ,t13)))
+      (setf bt13 (defbutton :title "Title 3" :v-align :middle :h-align :left))
+      (setf rl1 (defrow-layout :content `(,bt11 ,t12 ,bt13)))
       (setf w1 (deftests-window :wide 1 :content `(,rl1 ,st111 ,st112 ,st121 ,st122 ,st131 ,st132)))
       (push w1 widgets)
       
@@ -42,10 +42,10 @@
       (setf st222 (deftests-status :wide 4 11 2 "[VA2] :MIDDLE" 6 2))
       (setf st231 (deftests-status :wide 4 11 2 "[HA3] :LEFT" 7 1))
       (setf st232 (deftests-status :wide 4 11 2 "[VA3] :MIDDLE" 7 2))
-      (setf t21 (defactive-text :title "Title 1" :v-align :middle :h-align :right))
+      (setf bt21 (defbutton :title "Title 1" :v-align :middle :h-align :right))
       (setf t22 (deftext :title "Title 2" :v-align :middle :h-align :center))
-      (setf t23 (defactive-text :title "Title 3" :v-align :middle :h-align :left))
-      (setf rl2 (defrow-layout :content `((,t21 :min-width) (,t22 :max-width) (,t23 :min-width))))
+      (setf bt23 (defbutton :title "Title 3" :v-align :middle :h-align :left))
+      (setf rl2 (defrow-layout :content `((,bt21 :min-width) (,t22 :max-width) (,bt23 :min-width))))
       (setf w2 (deftests-window :wide 2 :content `(,rl2 ,st211 ,st212 ,st221 ,st222 ,st231 ,st232)))
       (push w2 widgets)
       
@@ -104,8 +104,8 @@
 (defmethod tests-ready ((row-layout-data (eql *row-layout-data*)))
 
   (defmethod tests-get-h-align ((data (eql row-layout-data)))
-    (with-slots (t11 t12 t13 t21 t22 t23) data
-      (values (list t11 t12 t13 t21 t22 t23) t)))
+    (with-slots (bt11 t12 bt13 bt21 t22 bt23) data
+      (values (list bt11 t12 bt13 bt21 t22 bt23) t)))
   
   (defmethod tests-get-interior-color ((data (eql row-layout-data)))
     (with-slots (w1 w2 w3) data
@@ -120,35 +120,35 @@
       (values (list b31 b32) t)))
   
   (defmethod tests-get-v-align ((data (eql row-layout-data)))
-    (with-slots (t11 t12 t13 t21 t22 t23) data
-      (values (list t11 t12 t13 t21 t22 t23) t)))
+    (with-slots (bt11 t12 bt13 bt21 t22 bt23) data
+      (values (list bt11 t12 bt13 bt21 t22 bt23) t)))
 
   (defmethod tests-command-update ((data (eql row-layout-data)))
     (macrolet ((update (status text)
                  `(unless (eql ,status nil)
                     (setf (title ,status) ,text))))
-      (with-slots (st111 st112 t11 st121 st122 t12 st131 st132 t13
-                   st211 st212 t21 st221 st222 t22 st231 st232 t23
+      (with-slots (st111 st112 bt11 st121 st122 t12 st131 st132 bt13
+                   st211 st212 bt21 st221 st222 t22 st231 st232 bt23
                    st311 st312 st321 st322 st331 st332 b31 w1 w2 w3)
           data
-        (unless (eql t11 nil)
-          (update st111 (format nil "[HA1] :~a" (h-align t11)))
-          (update st112 (format nil "[VA1] :~a" (v-align t11))))
+        (unless (eql bt11 nil)
+          (update st111 (format nil "[HA1] :~a" (h-align bt11)))
+          (update st112 (format nil "[VA1] :~a" (v-align bt11))))
         (unless (eql t12 nil)
           (update st121 (format nil "[HA2] :~a" (h-align t12)))
           (update st122 (format nil "[VA2] :~a" (v-align t12))))
-        (unless (eql t13 nil)
-          (update st131 (format nil "[HA3] :~a" (h-align t13)))
-          (update st132 (format nil "[VA3] :~a" (v-align t13))))
-        (unless (eql t21 nil)
-          (update st211 (format nil "[HA1] :~a" (h-align t21)))
-          (update st212 (format nil "[VA1] :~a" (v-align t21))))
+        (unless (eql bt13 nil)
+          (update st131 (format nil "[HA3] :~a" (h-align bt13)))
+          (update st132 (format nil "[VA3] :~a" (v-align bt13))))
+        (unless (eql bt21 nil)
+          (update st211 (format nil "[HA1] :~a" (h-align bt21)))
+          (update st212 (format nil "[VA1] :~a" (v-align bt21))))
         (unless (eql t22 nil)
           (update st221 (format nil "[HA2] :~a" (h-align t22)))
           (update st222 (format nil "[VA2] :~a" (v-align t22))))
-        (unless (eql t23 nil)
-          (update st231 (format nil "[HA3] :~a" (h-align t23)))
-          (update st232 (format nil "[VA3] :~a" (v-align t23))))
+        (unless (eql bt23 nil)
+          (update st231 (format nil "[HA3] :~a" (h-align bt23)))
+          (update st232 (format nil "[VA3] :~a" (v-align bt23))))
         (unless (eql w1 nil)
           (update st311 (format nil "w1:~d" (spacing-left w1))))
         (unless (eql w2 nil)

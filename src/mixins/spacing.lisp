@@ -5,10 +5,10 @@
 ;;;; spacing-mixin ============================================================
 
 (defclass spacing-mixin ()
-  ((spacing-left :initarg :spacing-left :initform 0 :accessor spacing-left)
-   (spacing-top :initarg :spacing-top :initform 0 :accessor spacing-top)
-   (spacing-right :initarg :spacing-right :initform 0 :accessor spacing-right)
-   (spacing-bottom :initarg :spacing-bottom :initform 0 :accessor spacing-bottom)))
+  ((spacing-left :type thickness-type :initarg :spacing-left :initform 0 :accessor spacing-left)
+   (spacing-top :type thickness-type :initarg :spacing-top :initform 0 :accessor spacing-top)
+   (spacing-right :type thickness-type :initarg :spacing-right :initform 0 :accessor spacing-right)
+   (spacing-bottom :type thickness-type :initarg :spacing-bottom :initform 0 :accessor spacing-bottom)))
 
 (defmethod (setf spacing) (value (object spacing-mixin))
   (with-slots (spacing-left spacing-right spacing-top spacing-bottom) object

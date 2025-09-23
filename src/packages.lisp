@@ -59,10 +59,12 @@
            #:manager
            #:process
            #:process-events
+
+           ;; ========== Types ==========
+           #:coordinate
            
            ;; ========== Layout ==========
            ;; layout
-           #:+LAYOUT-CHILD-OPTIONS
            #:area-allocated
            #:calc-layout-area
            #:deflayout
@@ -75,11 +77,17 @@
            #:layout-cell
            #:layout-cell-reset
            #:layout-change
+           #:layout-child-type
+           #:layout-coordinate-option-type
+           #:layout-height-type
+           #:layout-left-type
+           #:layout-top-type
+           #:layout-width-type
            #:left
            #:top
            #:validate-layout-base-options
-           #:with-changes
            #:width
+           #:with-changes
            
            ;; column-layout
            #:column-layout
@@ -94,8 +102,12 @@
            #:grid-layout-child
            #:grid-layout-column
            #:grid-layout-column-cells-set
+           #:grid-layout-column-options
+           #:grid-layout-column-type
            #:grid-layout-row
            #:grid-layout-row-cells-set
+           #:grid-layout-row-height-type
+           #:grid-layout-row-options
            #:height-type
            #:rows
            #:width-type
@@ -113,14 +125,12 @@
            #:align-mixin
            #:h-align
            #:h-align-mixin
+           #:h-align-type
            #:v-align
            #:v-align-mixin
+           #:v-align-type
            
            ;; area
-           #:+AREA-HEIGHT-OPTS+
-           #:+AREA-LEFT-OPTS+
-           #:+AREA-TOP-OPTS+
-           #:+AREA-WIDTH-OPTS+
            #:area
            #:area-mixin
            #:area-rb
@@ -135,9 +145,9 @@
            
            ;; border
            #:border
-           #:border-3d-theme-mixin
+           #:border-theme-3d-mixin
            #:border-bottom
-           #:border-flat-theme-mixin
+           #:border-theme-flat-mixin
            #:border-h
            #:border-left
            #:border-mixin
@@ -149,6 +159,21 @@
            #:style
            #:thickness
            #:with-borders
+           
+           ;; button
+           #:border-thickness
+           #:borderp
+           #:button
+           #:button-theme-3d-mixin
+           #:button-theme-flat-mixin
+           #:button-theme-mixin
+           #:defbutton
+           #:down-color
+           #:hover-color
+           #:hover-inside-borderp
+           #:hover-inside-paddingp
+           #:hover-thickness
+           #:up-color
            
            ;; child
            #:child
@@ -234,9 +259,9 @@
            #:spacing-v
            
            ;; style
-           #:+STYLE-3D-MIXIN-OPTIONS+
            #:style
            #:style-3d-mixin
+           #:style-3d-type
            
            ;; theme
            #:theme
@@ -252,11 +277,11 @@
            
            ;; ========== Widgets ==========
            ;; box
-           #:+BOX-TITLE-POSITION-OPTIONS+
            #:box
-           #:box-3d-theme-mixin
-           #:box-flat-theme-mixin
+           #:box-theme-3d-mixin
+           #:box-theme-flat-mixin
            #:box-theme-mixin
+           #:box-title-position-type
            #:defbox
            #:filled
            #:thickness
@@ -313,7 +338,6 @@
            #:width
            
            ;; ruler
-           #:+EXTENT-TYPE-OPTIONS+
            #:align
            #:defdivision
            #:defruler
@@ -347,34 +371,29 @@
            #:divisions
            #:extent
            #:extent-type
+           #:extent-type-type
            #:period
            #:ruler
            #:ruler-10-2
            #:ruler-100-25-5
            #:ruler-25-5
+           #:ruler-align-type
            #:ruler-theme-mixin
            #:thickness
            #:validate-ruler-options
            #:vertical
-           
+
            ;; text
-           #:active-text
-           #:active-text-theme-mixin
-           #:defactive-text
            #:deftext
-           #:down-color
-           #:hover-color
            #:interior-color
            #:text
-           #:text-base
-           #:text-base-theme-mixin
            #:text-calc-height
            #:text-calc-left
+           #:text-calc-title-left
            #:text-calc-title-top
            #:text-calc-top
            #:text-calc-width
            #:text-theme-mixin
-           #:up-color
            
            ;; window
            #:defwindow
@@ -395,7 +414,6 @@
            #:calc-width
            #:left
            #:location
-           #:must-init
            #:on-char
            #:on-command
            #:on-key-down

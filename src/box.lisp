@@ -11,18 +11,19 @@
                            interior-color-mixin)
   ())
 
-(defclass box-3d-theme-mixin (color-3d-mixin
+(defclass box-theme-3d-mixin (color-3d-mixin
                               style-3d-mixin)
   ())
 
-(defclass box-flat-theme-mixin (frame-color-mixin)
+(defclass box-theme-flat-mixin (frame-color-mixin)
   ())
 
 ;;; box ---- --------------------------------------------------------
 
-(defparameter +BOX-TITLE-POSITION-OPTIONS+ '(:left-top :left-middle :left-bottom
-                                             :center-top :center-middle :center-bottom
-                                             :right-top :right-middle :right-bottom))
+(deftype box-title-position-type () '(member :left-top :left-middle :left-bottom
+                                      :center-top :center-middle :center-bottom
+                                      :right-top :right-middle :right-bottom nil))
+
 (defclass box (box-theme-mixin
                area-mixin
                parent-mixin
@@ -31,7 +32,7 @@
                v-align-mixin)
   ((thickness :initarg :thickness :initform 1 :accessor thickness :documentation "Number of pixels wide for the box frame.")
    (filled :initarg :filled :initform nil :accessor filled :documentation "When T, fill interior of box.")
-   (title-position :initarg :title-position :initform nil :accessor title-position)))
+   (title-position :type box-title-position-type :initarg :title-position :initform nil :accessor title-position)))
 
 (defmacro defbox (&rest rest &key &allow-other-keys)
   `(make-instance 'box ,@rest))
@@ -73,6 +74,8 @@ INSIDE should be T when draing a side for the interior portion of 3d.
 TITLE can contain a triplet of (BEGIN, END, TOPP). BEGIN is the starting
 horizontal coordinate. END is the ending horizontal coordinate. TOPP is T for
 leaving the title blank at top, or NIL for bottom."
+
+  (assert (not (eql color nil)))
   
   (let ((half-width (/ width 2))
         (side-bottom-extra 0)

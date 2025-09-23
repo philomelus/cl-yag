@@ -5,6 +5,6 @@
 ;;;; enable-mixin =============================================================
 
 (defclass enable-mixin ()
-  ((enabled :initarg :enabled :initform nil :type boolean :accessor enabled)))
+  ((enabled :type boolean :initarg :enabled :initform nil :accessor enabled)))
 
 

@@ -4,32 +4,48 @@
 
 ;;;; layout-base ==============================================================
 
-(defparameter +LAYOUT-CHILD-OPTIONS+ '(:min-height :min-width :max-height :max-width
-                                       :left :center :right
-                                       :top :middle :bottom))
+;; These can be combined with widgets in the content list to change the way
+;; the widget is layed out (for example
+;;
+;; :content (list (list (defwindow ...) :max-width))
+;;
+;; would make sure the window used the maximum available width.
+(deftype layout-child-options () '(member :min-height :min-width :max-height :max-width
+                                   :left :center :right
+                                   :top :middle :bottom))
+(deftype layout-coordinate-option-type () '(member :auto :auto-min :auto-max))
+(deftype layout-left-type () '(or coordinate layout-coordinate-option-type (member :left :center :right)))
+(deftype layout-top-type () '(or coordinate layout-coordinate-option-type (member :top :middle :bottom)))
+(deftype layout-width-type () '(or coordinate layout-coordinate-option-type))
+(deftype layout-height-type () '(or coordinate layout-coordinate-option-type))
+
+(deftype layout-original-left-type () '(or null layout-left-type))
+(deftype layout-original-top-type () '(or null layout-top-type))
+(deftype layout-original-width-type () '(or null layout-width-type))
+(deftype layout-original-height-type () '(or null layout-height-type))
 
 (defclass layout-base (area-mixin-base
                        content-mixin
                        parent-mixin)
-  ((height :initform :auto :initarg nil :documentation "HEIGHT coordinate of allocated area. Type shouldn't be changed after creation.")
-   (left :initform :auto :initarg nil :documentation "LEFT coordinate of allocated area. Type shouldn't be changed after creation.")
-   (top :initform :auto :initarg nil :documentation "TOP coordinate of allocated area. Type shouldn't be changed after creation.")
-   (width :initform :auto :initarg nil :documentation "WIDTH of allocated area. Type shouldn't be changed after creation.")
+  ((height :type layout-left-type :initform :auto :initarg nil :documentation "HEIGHT coordinate of allocated area. Type shouldn't be changed after creation.")
+   (left :type layout-top-type :initform :auto :initarg nil :documentation "LEFT coordinate of allocated area. Type shouldn't be changed after creation.")
+   (top :type layout-top-type :initform :auto :initarg nil :documentation "TOP coordinate of allocated area. Type shouldn't be changed after creation.")
+   (width :type layout-height-type :initform :auto :initarg nil :documentation "WIDTH of allocated area. Type shouldn't be changed after creation.")
 
    ;; Internal
-   (changing :initform nil :documentation "When T, causes LAYOUT-CHANGED calls to be ignored.")
+   (changing :type boolean :initform nil :documentation "When T, causes LAYOUT-CHANGED calls to be ignored.")
    (child-area :initform nil :documentation "Holds actual area allocated to each child, even if they don't use it.")
    
-   (original-height :initform nil :documentation "Holds original HEIGHT slot value.  Used when re-layout is required.")
-   (original-left :initform nil :documentation "Holds original LEFT slot value.  Used when re-layout is required.")
-   (original-top :initform nil :documentation "Holds original TOP slot value.  Used when re-layout is required.")
-   (original-width :initform nil :documentation "Holds original WIDTH slot value.  Used when re-layout is required.")
-   ))
+   (original-height :type layout-original-left-type :initform nil :documentation "Holds original HEIGHT slot value. Used when re-layout is required.")
+   (original-left :type layout-original-top-type :initform nil :documentation "Holds original LEFT slot value. Used when re-layout is required.")
+   (original-top :type layout-original-width-type :initform nil :documentation "Holds original TOP slot value. Used when re-layout is required.")
+   (original-width :type layout-original-height-type :initform nil :documentation "Holds original WIDTH slot value. Used when re-layout is required.")))
 
 ;;; methods ---------------------------------------------------------
 
 (defmethod calc-area (child (parent layout-base) &key)
-
+  "Determine sizes and positions of widgets contained within CONTENT."
+  
   (v:debug :layout "[calc-area] {layout-base} called with child ~a" (print-raw-object child))
   
   ;; Calculate parent area if needed
@@ -83,7 +99,7 @@
 (defmethod (setf content) :after (value (object layout-base))
   "After content update, make sure options area valid."
   
-  (validate-layout-base-options object))
+  (validate-layout-options object))
 
 (defmethod (setf content) :around (value (object layout-base))
   "When updating content, allow reuse of previous contents by tracking objects
@@ -120,7 +136,7 @@ internal calc-* slots."
     (setf (slot-value object 'child-area) nil)))
 
 (defmethod initialize-instance :after ((object layout-base) &key)
-  (validate-layout-base-options object)
+  (validate-layout-options object)
   (layout-save-original object))
 
 (defmethod on-char (key mods (obj layout-base) &key)
@@ -320,95 +336,102 @@ Returns nil if not found."
   nil)
 
 (defun calc-layout-area (object)
-  "Calculate area of a layout itself."
+  "Calculate area of a layout."
   
   ;; Start with existing area
-  (with-local-slots ((ll left) (lt top) (lw width) (lh height)) object
+  (with-local-slots ((local-left left) (local-top top) (local-width width) (local-height height))
+                    object
 
     ;; Calculate our area if needed
-    (when (or (typep ll 'keyword)
-              (typep lt 'keyword)
-              (typep lw 'keyword)
-              (typep lh 'keyword))
+    (when (or (typep local-left 'keyword)
+              (typep local-top 'keyword)
+              (typep local-width 'keyword)
+              (typep local-height 'keyword))
       (v:debug :layout "[calc-layout-area] calculating layout area ~a" (print-raw-object object))
       
       ;; Locate first parent that's layout or has area
-      (let ((pam (find-parent-area-or-layout object)))
-        (let (pal pat paw pah)
-          ;; Get area of parent.  Is it another layout?
-          (if (typep pam 'layout-base)
-              ;; Yeah, so get our area from its child-area
-              (let ((pamo (position object (content pam))))
-                (assert (not (eql pamo nil)))
-                (with-local-slots ((pl left) (pt top) (pw width) (ph height))
-                                  (aref (slot-value pam 'child-area) pamo)
-                  (setf pal pl pat pt paw pw pah ph)
-                  (assert (typep pal 'number))
-                  (assert (typep pat 'number))
-                  (assert (typep paw 'number))
-                  (assert (typep pah 'number))))
-              ;; Nope, so get the actual area
-              (setf pal (slot-value pam 'left)
-                    pat (slot-value pam 'top)
-                    paw (slot-value pam 'width)
-                    pah (slot-value pam 'height)))
+      (let ((pam (find-parent-area-or-layout object))
+            pam-left pam-top pam-width pam-height)
+        ;; Get area of parent.  Is it another layout?
+        (if (typep pam 'layout-base)
+            ;; Yes, so get our area from its child-area
+            (let ((pam-offset (position object (content pam))))
+              (assert (not (eql pam-offset nil)))
+              (with-local-slots ((pl left) (pt top) (pw width) (ph height))
+                                (aref (slot-value pam 'child-area) pam-offset)
+                (setf pam-left pl pam-top pt pam-width pw pam-height ph)
+                (assert (typep pam-left 'layout-left-type))
+                (assert (typep pam-top 'layout-top-type))
+                (assert (typep pam-width 'layout-width-type))
+                (assert (typep pam-height 'layout-height-type))))
+            ;; Nope, so get the actual area
+            (setf pam-left (slot-value pam 'left)
+                  pam-top (slot-value pam 'top)
+                  pam-width (slot-value pam 'width)
+                  pam-height (slot-value pam 'height)))
 
-          (v:debug :layout "[calc-layout-area] parent area: (~d ~d) @ (~d ~d) ~a"
-                   paw pah pal pat (print-raw-object object))
-          
-          ;; If parent has borders
-          (when (typep pam 'border-mixin)
-            
-            (with-borders (pam-bl pam-br pam-bt pam-bb) pam
-             (let ((pam-pl 0)
-                   (pam-pt 0)
-                   (pam-pr 0)
-                   (pam-pb 0))
+        (v:debug :layout "[calc-layout-area] parent area: (~d ~d) @ (~d ~d) ~a"
+                 pam-width pam-height pam-left pam-top (print-raw-object object))
+        
+        ;; If parent has borders
+        (when (typep pam 'border-mixin)
 
-               ;; If parent has padding (only applies when there are borders)
-               (when (typep pam 'padding-mixin)
-                 (setq pam-pl (padding-left pam))
-                 (setq pam-pt (padding-top pam))
-                 (setq pam-pr (padding-right pam))
-                 (setq pam-pb (padding-bottom pam)))
+          ;; DO NOT USER with-border, as its too early in compilation to
+          ;; access it without circular dependencies
+          (let ((pam-border-left (border-left pam))
+                (pam-border-right (border-right pam))
+                (pam-border-top (border-top pam))
+                (pam-border-bottom (border-bottom pam)))
+           
+            (let ((pam-pad-left 0)
+                  (pam-pad-top 0)
+                  (pam-pad-right 0)
+                  (pam-pad-bottom 0))
+
+              ;; If parent has padding
+              (when (typep pam 'padding-mixin)
+                (setq pam-pad-left (padding-left pam))
+                (setq pam-pad-top (padding-top pam))
+                (setq pam-pad-right (padding-right pam))
+                (setq pam-pad-bottom (padding-bottom pam)))
               
-               ;; Adjust for border sizes
-               (unless (eql pam-bl nil)
-                 (incf pal (+ (thickness pam-bl) pam-pl))
-                 (decf paw (+ (thickness pam-bl) pam-pl)))
-               (unless (eql pam-bt nil)
-                 (incf pat (+ (thickness pam-bt) pam-pt))
-                 (decf pah (+ (thickness pam-bt) pam-pt)))
-               (unless (eql pam-br nil)
-                 (decf paw (+ (thickness pam-br) pam-pr)))
-               (unless (eql pam-bb nil)
-                 (decf pah (+ (thickness pam-bb) pam-pb))))))
+              ;; Adjust for border sizes
+              (unless (eql pam-border-left nil)
+                (incf pam-left (+ (thickness pam-border-left) pam-pad-left))
+                (decf pam-width (+ (thickness pam-border-left) pam-pad-left)))
+              (unless (eql pam-border-top nil)
+                (incf pam-top (+ (thickness pam-border-top) pam-pad-top))
+                (decf pam-height (+ (thickness pam-border-top) pam-pad-top)))
+              (unless (eql pam-border-right nil)
+                (decf pam-width (+ (thickness pam-border-right) pam-pad-right)))
+              (unless (eql pam-border-bottom nil)
+                (decf pam-height (+ (thickness pam-border-bottom) pam-pad-bottom))))))
 
-          ;; If parent has spacing
-          (when (typep pam 'spacing-mixin)
-            ;; Adjust for spacing
-            (let ((pam-sl (spacing-left pam))
-                  (pam-st (spacing-top pam)))
-              (incf pal pam-sl)
-              (incf pat pam-st)
-              (decf paw (+ pam-sl (spacing-right pam)))
-              (decf pah (+ pam-st (spacing-bottom pam)))))
-          
-          ;; Save our area where needed
-          (when (member lh +AREA-HEIGHT-OPTS+)
-            (setf (slot-value object 'height) pah))
-          (when (member lw +AREA-WIDTH-OPTS+)
-            (setf (slot-value object 'width) paw))
-          (when (member ll +AREA-LEFT-OPTS+)
-            (setf (slot-value object 'left) pal))
-          (when (member lt +AREA-TOP-OPTS+)
-            (setf (slot-value object 'top) pat))
-
-          (v:debug :layout "[calc-layout-area] new area: (~d ~d) @ (~d ~d) ~a"
-                   paw pah pal pat (print-raw-object object))
-          (v:debug :layout "[calc-layout-area] actual area: (~d ~d) @ (~d ~d) ~a"
-                   (slot-value object 'width) (slot-value object 'height) (slot-value object 'left)
-                   (slot-value object 'top) (print-raw-object object)))))))
+        ;; If parent has spacing
+        (when (typep pam 'spacing-mixin)
+          ;; Adjust for spacing
+          (let ((pam-space-left (spacing-left pam))
+                (pam-space-top (spacing-top pam)))
+            (incf pam-left pam-space-left)
+            (incf pam-top pam-space-top)
+            (decf pam-width (+ pam-space-left (spacing-right pam)))
+            (decf pam-height (+ pam-space-top (spacing-bottom pam)))))
+        
+        ;; Save our calculate area where needed
+        (when (keywordp local-height)
+          (setf (slot-value object 'height) pam-height))
+        (when (keywordp local-width)
+          (setf (slot-value object 'width) pam-width))
+        (when (keywordp local-left)
+          (setf (slot-value object 'left) pam-left))
+        (when (keywordp local-top)
+          (setf (slot-value object 'top) pam-top))
+        
+        (v:debug :layout "[calc-layout-area] calculated area: (~d ~d) @ (~d ~d) ~a"
+                 pam-width pam-height pam-left pam-top (print-raw-object object))
+        (v:debug :layout "[calc-layout-area] actual area: (~d ~d) @ (~d ~d) ~a"
+                 (slot-value object 'width) (slot-value object 'height) (slot-value object 'left)
+                 (slot-value object 'top) (print-raw-object object))))))
 
 (defun dump-layout (object &optional (indent ""))
   (when (not (eql object nil))
@@ -487,7 +510,7 @@ re-layed out."
     (update-value 'width 'original-width)
     (update-value 'height 'original-height)
     (update-value 'left 'original-left)
-    (update-value 'top 'originaltop))
+    (update-value 'top 'original-top))
   
   nil)
 
@@ -495,7 +518,7 @@ re-layed out."
 (defun layout-save-original (object)
   (with-slots (left top width height) object
     (flet ((is-keyword (field)
-             (if (typep field 'keyword)
+             (if (keywordp field)
                  field
                  nil)))
       (setf (slot-value object 'original-left) (is-keyword left))
@@ -504,7 +527,7 @@ re-layed out."
       (setf (slot-value object 'original-height) (is-keyword height))))
   nil)
 
-(defmethod validate-layout-base-options (object)
+(defmethod validate-layout-options (object)
   "Validate options for slots in LAYOUT-BASE. Raises an error when invalid
 settings are detected."
   
@@ -517,7 +540,7 @@ settings are detected."
           ;; Yes so validate them
           (let ((options (rest child)))
             (dolist (option (rest child))
-              (unless (member option +LAYOUT-CHILD-OPTIONS+)
+              (unless (typep option 'layout-child-options)
                 (error "unknown layout option: ~a" option)))
             (when (and (member :min-height options)
                        (member :max-height options))
@@ -536,12 +559,30 @@ settings are detected."
 
 ;;;; MACROS ===================================================================
 
+(defmacro layout-change (object)
+  "Call LAYOUT-CHANGED for appropriate parent or children of OBJECT."
+  
+  (a:with-gensyms (parlo block instance child)
+    `(block ,block
+       (let ((,instance ,object))
+         (when (typep ,instance 'parent-mixin)
+           (let ((,parlo (find-parent-layout ,instance)))
+             (unless (eql ,parlo nil)
+               (layout-changed ,parlo :child t)
+               (return-from ,block))))
+         (when (typep ,instance 'content-mixin)
+           (mapc #'(lambda (,child)
+                     (when (typep ,child 'layout-base)
+                       (layout-changed ,child :parent t)))
+                 (content ,instance))
+           (return-from ,block))))))
+
 (defmacro with-changes (object &body body)
   "Prevent LAYOUT-CHANGED calls while performing multiple slot updates that would
 normally cause LAYOUT-CHANGED to be called for each change. Generates a single
-LAYOUT-CHANGED after body (even if none had been)."
+LAYOUT-CHANGED after body (even if no layout-changed calls were made)."
   
-  (a:with-gensyms (parlo block instance child parent children layout)
+  (a:with-gensyms (parent-layout block instance child parent children layout)
     `(let ((,instance ,object)
            ,parent ,children)
        (declare (ignorable ,parent ,children))
@@ -549,11 +590,11 @@ LAYOUT-CHANGED after body (even if none had been)."
          ;; Do we have a parent?
          (when (typep ,instance 'parent-mixin)
            ;; Yes, so see if we have a layout above us
-           (let ((,parlo (find-parent-layout ,instance)))
+           (let ((,parent-layout (find-parent-layout ,instance)))
              ;; Did we have a parent layout?
-             (unless (eql ,parlo nil)
+             (unless (eql ,parent-layout nil)
                ;; Yes.
-               (push ,parlo ,parent)
+               (push ,parent-layout ,parent)
                (return-from ,block))))
          ;; Not a parent or no parent layout, do we have content?
          (when (typep ,instance 'content-mixin)

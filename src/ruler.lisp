@@ -9,12 +9,12 @@
 
 ;;; division --------------------------------------------------------
 
-(defparameter +EXTENT-TYPE-OPTIONS+ '(:percent :absolute))
+(deftype extent-type-type () '(member :percent :absolute))
 
 (defclass division (division-theme-mixin)
-  ((thickness :initarg :thickness :initform -0.5 :accessor thickness)
+  ((thickness :initarg :thickness :initform -1 :accessor thickness)
    (extent :initarg :extent :initform 0.50 :accessor extent)
-   (extent-type :initarg :extent-type :initform :percent :accessor extent-type)
+   (extent-type :type extent-type-type :initarg :extent-type :initform :percent :accessor extent-type)
    (period :initarg :period :initform 1 :accessor period)
    ;; Internal use
    (parent :initform nil)
@@ -94,7 +94,7 @@
 (declaim (ftype (function (division) null) validate-division-options))
 (defun validate-division-options (object)
   (with-local-accessors (extent-type) object
-    (unless (member extent-type +EXTENT-TYPE-OPTIONS+)
+    (unless (typep extent-type 'extent-type-type)
       (error "unknown EXTENT-TYPE option: ~a" extent-type))))
 
 ;;; macros ----------------------------------------------------------
@@ -124,7 +124,7 @@
 
 ;;; ruler -----------------------------------------------------------
 
-(defparameter +RULER-ALIGN-OPTIONS+ '(:begin :center :middle :end))
+(deftype ruler-align-type () '(member :begin :center :middle :end))
 
 (defclass ruler (ruler-theme-mixin
                  area-mixin
@@ -133,7 +133,7 @@
                  visible-mixin)
   ((divisions :initarg :divisions :initform nil :accessor divisions)
    (vertical :initarg :vertical :initform nil :accessor vertical)
-   (align :initarg :align :initform :end :accessor align)
+   (align :type ruler-align-type :initarg :align :initform :end :accessor align)
    ;; Internal use
    (recalc-periods :initform t)))
 
@@ -262,7 +262,7 @@
 (declaim (ftype (function (ruler) null) validate-ruler-options))
 (defun validate-ruler-options (object)
   (with-local-slots (align) object
-    (unless (member align +RULER-ALIGN-OPTIONS+)
+    (unless (typep align 'ruler-align-type)
       (error "unknown align option: ~a" align))))
 
 ;;;; macros ===================================================================

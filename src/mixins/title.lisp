@@ -5,5 +5,5 @@
 ;;;; title-mixin ==============================================================
 
 (defclass title-mixin ()
-  ((title :initarg :title :initform "" :type string :accessor title)))
+  ((title :type string :initarg :title :initform "" :accessor title)))
 

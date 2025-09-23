@@ -5,17 +5,17 @@
 ;;;; shortcuts-mixin ==========================================================
 
 (defclass shortcuts-mixin ()
-  ((shortcuts :initarg :shortcuts :initform nil :type list :accessor shortcuts)
+  ((shortcuts :type list :initarg :shortcuts :initform nil :accessor shortcuts)
    ;; Internal
    (accels :initform nil)))
 
 (defmethod initialize-instance :after ((object shortcuts-mixin) &key)
-  #+safety
+  ;; #+safety
   (validate-shortcuts object)
   (convert-shortcuts object))
 
 (defmethod (setf shortcuts) :after (value (object shortcuts-mixin))
-  #+safety
+  ;; #+safety
   (validate-shortcuts object)
   (convert-shortcuts object))
 

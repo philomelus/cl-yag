@@ -4,10 +4,10 @@
 
 (defstruct (text-tests-data (:include tests-data)
                             (:conc-name text-tests-))
-  a11 a12 a13 b1 cl1
-  a21 a22 a23 t2 cl2
-  a31 a32 a33 t3 cl31 cl32
-  a41 a42 a43 t4 b41 b42 cl4
+  bt11 bt12 bt13 b1 cl1
+  bt21 bt22 bt23 t2 cl2
+  bt31 bt32 bt33 t3 cl31 cl32
+  bt41 bt42 bt43 t4 b41 b42 cl4
   t5 b5 cl5
   a5
   w1 w2 w3 w4 w5 w6
@@ -18,29 +18,29 @@
 (defmethod tests-create ((data (eql *text-data*)))
   (let (widgets)
     (with-slots (manager
-                 a11 a12 a13 b1 cl1
-                 a21 a22 a23 t2 cl2
-                 a31 a32 a33 t3 cl31 cl32
-                 a41 a42 a43 b41 b42 t4 cl4
+                 bt11 bt12 bt13 b1 cl1
+                 bt21 bt22 bt23 t2 cl2
+                 bt31 bt32 bt33 t3 cl31 cl32
+                 bt41 bt42 bt43 b41 b42 t4 cl4
                  t5 b5 x1 cl5
                  w1 w2 w3 w4 w5 w6
                  )
         data
 
       ;; Test 1
-      (setf a11 (defactive-text :title "T 1 / O 1" :h-align :center :v-align :middle))
-      (setf a12 (defactive-text :title "T 1 / O 2" :h-align :center :v-align :middle))
-      (setf a13 (defactive-text :title "T 1 / O 3" :h-align :center :v-align :middle))
-      (setf cl1 (defcolumn-layout :content (list a11 a12 a13)))
+      (setf bt11 (defbutton :title "T 1 / O 1" :h-align :center :v-align :middle))
+      (setf bt12 (defbutton :title "T 1 / O 2" :h-align :center :v-align :middle))
+      (setf bt13 (defbutton :title "T 1 / O 3" :h-align :center :v-align :middle))
+      (setf cl1 (defcolumn-layout :content (list bt11 bt12 bt13)))
       (setf w1 (deftests-window :standard 1 :content (list cl1)))
       (push w1 widgets)
       
       ;; Test 2
       (setf t2 (deftext :title "T 2 Title" :h-align :center :height :auto-min))
-      (setf a21 (defactive-text :title "T 2 / O 1" :h-align :center :v-align :middle))
-      (setf a22 (defactive-text :title "T 2 / O 2" :h-align :center :v-align :middle))
-      (setf a23 (defactive-text :title "T 2 / O 3" :h-align :center :v-align :middle))
-      (setf cl2 (defcolumn-layout :content (list (list t2 :min-height) a21 a22 a23)))
+      (setf bt21 (defbutton :title "T 2 / O 1" :h-align :center :v-align :middle))
+      (setf bt22 (defbutton :title "T 2 / O 2" :h-align :center :v-align :middle))
+      (setf bt23 (defbutton :title "T 2 / O 3" :h-align :center :v-align :middle))
+      (setf cl2 (defcolumn-layout :content (list (list t2 :min-height) bt21 bt22 bt23)))
       (setf w2 (deftests-window :standard 2 :content (list cl2)))
       (push w2 widgets)
       
@@ -49,19 +49,19 @@
       (setf t3 (deftext :title "center/auto-min a really long title to see what happens" :h-align :center :height :auto-min
                         :padding-bottom 5
                         :border-bottom b1))
-      (setf a31 (defactive-text :title "T 3 / O 1" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W3W+ 24)
-                                :left :center :top :middle
-                                :padding-top 10 :padding-bottom 10))
-      (setf a32 (defactive-text :title "T 3 / O 2" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W3W+ 24)
-                                :left :center :top :middle
-                                :padding-top 10 :padding-bottom 10))
-      (setf a33 (defactive-text :title "T 3 / O 3" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W3W+ 24)
-                                :left :center :top :middle
-                                :padding-top 10 :padding-bottom 10))
-      (setf cl31 (defcolumn-layout :content (list a31 a32 a33)))
+      (setf bt31 (defbutton :title "T 3 / O 1" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W3W+ 24)
+                            :left :center :top :middle
+                            :padding-top 10 :padding-bottom 10))
+      (setf bt32 (defbutton :title "T 3 / O 2" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W3W+ 24)
+                            :left :center :top :middle
+                            :padding-top 10 :padding-bottom 10))
+      (setf bt33 (defbutton :title "T 3 / O 3" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W3W+ 24)
+                            :left :center :top :middle
+                            :padding-top 10 :padding-bottom 10))
+      (setf cl31 (defcolumn-layout :content (list bt31 bt32 bt33)))
       (setf cl32 (defcolumn-layout :content (list (list t3 :min-height) cl31)))
       (setf w3 (deftests-window :standard 3 :content (list cl32)))
       (push w3 widgets)
@@ -73,21 +73,21 @@
                         :border-bottom b41
                         :font (cl-yag:default-mono-font -20)))
       (setf b42 (defborder :thickness 2))
-      (setf a41 (defactive-text :title "T 4 / O 1" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W4W+ 24)
-                                :left :center :top :bottom
-                                :padding-top 10 :padding-bottom 10
-                                :border-left b42 :border-right b42 :border-top b42 :border-bottom b42
-                                :hover-color (al:map-rgb-f 0 1 1)))
-      (setf a42 (defactive-text :title "T 4 / O 2" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W4W+ 24)
-                                :left :center :top :middle
-                                :padding-top 10 :padding-bottom 10))
-      (setf a43 (defactive-text :title "T 4 / O 3" :h-align :center :v-align :middle :height :auto-min
-                                :width (- +W4W+ 24)
-                                :left :center :top :top
-                                :padding-top 10 :padding-bottom 10))
-      (setf cl4 (defcolumn-layout :content (list (list t4 :min-height) a41 a42 a43)))
+      (setf bt41 (defbutton :title "T 4 / O 1" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W4W+ 24)
+                            :left :center :top :bottom
+                            :padding-top 10 :padding-bottom 10
+                            :border-left b42 :border-right b42 :border-top b42 :border-bottom b42
+                            :hover-color (al:map-rgb-f 0 1 1)))
+      (setf bt42 (defbutton :title "T 4 / O 2" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W4W+ 24)
+                            :left :center :top :middle
+                            :padding-top 10 :padding-bottom 10))
+      (setf bt43 (defbutton :title "T 4 / O 3" :h-align :center :v-align :middle :height :auto-min
+                            :width (- +W4W+ 24)
+                            :left :center :top :top
+                            :padding-top 10 :padding-bottom 10))
+      (setf cl4 (defcolumn-layout :content (list (list t4 :min-height) bt41 bt42 bt43)))
       (setf w4 (deftests-window :standard 4 :content (list cl4)))
       (push w4 widgets)
 
@@ -140,11 +140,11 @@
     (cleanup-method tests-get-interior-color args)
     (cleanup-method tests-get-padding args)
     (cleanup-method tests-get-spacing args)
-    (cleanup-method cl-yag::on-command (list (find-class 'active-text))))
+    (cleanup-method cl-yag::on-command (list (find-class 'button))))
   nil)
 
 (defmethod tests-ready ((text-data (eql *text-data*)))
-  (defmethod cl-yag::on-command ((obj active-text) &key)
+  (defmethod cl-yag::on-command ((obj button) &key)
     (v:info :tests "Commanded ~a" (cl-yag::print-raw-object obj)))
 
   (defmethod tests-get-interior-color ((data (eql text-data)))

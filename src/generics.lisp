@@ -223,23 +223,3 @@ BORDER-OBJECT."))
 
 (defgeneric (setf spacing-v) (value object))
 
-;;;; MACROS ===================================================================
-
-(defmacro layout-change (object)
-  "Call LAYOUT-CHANGED for appropriate parent or children of OBJECT."
-  
-  (a:with-gensyms (parlo block instance child)
-    `(block ,block
-       (let ((,instance ,object))
-         (when (typep ,instance 'parent-mixin)
-           (let ((,parlo (find-parent-layout ,instance)))
-             (unless (eql ,parlo nil)
-               (layout-changed ,parlo :child t)
-               (return-from ,block))))
-         (when (typep ,instance 'content-mixin)
-           (mapc #'(lambda (,child)
-                     (when (typep ,child 'layout-base)
-                       (layout-changed ,child :parent t)))
-                 (content ,instance))
-           (return-from ,block))))))
-

@@ -27,11 +27,11 @@
       (setf t1-7 (deftext :title "Grid 5 5" :h-align :center :v-align :middle))
       (setf t1-8 (deftext :title "Grid 2 5" :h-align :center :v-align :middle))
       (setf t1-9 (deftext :title "Grid 6 5" :h-align :center :v-align :middle))
-      (setf gl1 (defgrid-layout :columns 7 :rows 5 :content (list nil t1-1 nil nil nil t1-2 nil
-                                                                  nil nil t1-3 nil t1-4 nil nil
-                                                                  nil nil nil t1-5 nil nil nil
-                                                                  nil nil t1-6 nil t1-7 nil nil
-                                                                  nil t1-8 nil nil nil t1-9 nil)))
+      (setf gl1 (defgrid-layout 7 5 :content (list nil t1-1 nil nil nil t1-2 nil
+                                                   nil nil t1-3 nil t1-4 nil nil
+                                                   nil nil nil t1-5 nil nil nil
+                                                   nil nil t1-6 nil t1-7 nil nil
+                                                   nil t1-8 nil nil nil t1-9 nil)))
       (setf (width (grid-layout-column 0 gl1)) 25)
       (setf (width (grid-layout-column 6 gl1)) 25)
       (setf (height (grid-layout-row 0 gl1)) 25)

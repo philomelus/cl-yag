@@ -6,7 +6,7 @@
                               (:conc-name layout-tests-))
   b1 t1 l1 st11 st12 st13 st14 st15
   b2 t2 l2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
-  b3 at3 l3 st31 st32 st33 st34
+  b3 bt3 l3 st31 st32 st33 st34
   w1 w2 w3 w4
   )
 
@@ -17,7 +17,7 @@
     (with-slots (manager
                  b1 t1 l1 st11 st12 st13 st14 st15
                  b2 t2 l2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
-                 b3 at3 l3 st31 st32 st33 st34
+                 b3 bt3 l3 st31 st32 st33 st34
                  w1 w2 w3 w4
                  )
         data
@@ -45,12 +45,12 @@
       
       ;; Test 3
       (setf b3 (defborder :thickness 10))
-      (setf at3 (defactive-text :title "Two" :h-align :center :v-align :middle
-                                :width :auto-min :height :auto-min))
-      (setf (border at3) b3)
-      (setf (spacing at3) 10)
-      (setf (padding at3) 10)
-      (setf l3 (deflayout :content `(,at3)))
+      (setf bt3 (defbutton :title "Two" :h-align :center :v-align :middle
+                           :width :auto-min :height :auto-min))
+      (setf (border bt3) b3)
+      (setf (spacing bt3) 10)
+      (setf (padding bt3) 10)
+      (setf l3 (deflayout :content `(,bt3)))
       (setf w3 (deftests-window :wide 3 :content `(,l3)))
       (push w3 widgets)
       
@@ -73,10 +73,10 @@
       (setf st29 (deftests-status :wide 4 12 2 "T2W: 0" 9 1))
       (setf st210 (deftests-status :wide 4 12 2 "T2H: 0" 9 2))
       ;; Test 3 status
-      (setf st31 (deftests-status :wide 4 12 2 "AT3L: 0" 11 1))
-      (setf st32 (deftests-status :wide 4 12 2 "AT3T: 0" 11 2))
-      (setf st33 (deftests-status :wide 4 12 2 "AT3W: 0" 12 1))
-      (setf st34 (deftests-status :wide 4 12 2 "AT3H: 0" 12 2))
+      (setf st31 (deftests-status :wide 4 12 2 "BT3L: 0" 11 1))
+      (setf st32 (deftests-status :wide 4 12 2 "BT3T: 0" 11 2))
+      (setf st33 (deftests-status :wide 4 12 2 "BT3W: 0" 12 1))
+      (setf st34 (deftests-status :wide 4 12 2 "BT3H: 0" 12 2))
       (setf w4 (deftests-window :wide 4 :content `(,st11 ,st12 ,st13 ,st14 ,st15
                                                          ,st21 ,st22 ,st23 ,st24 ,st25 ,st26
                                                          ,st27 ,st28 ,st29 ,st210
@@ -125,14 +125,14 @@
 
   (defmethod tests-command-1 ((data (eql layout-data)))
     (with-slots (l2 t2
-                 l3 at3)
+                 l3 bt3)
         data
       (let ((child (first (content l2))))
         ;; Child has options?
         (when (atom child)
           ;; No, so move to :min-width
           (setf (content l2) (list (list t2 :left))
-                (content l3) (list (list at3 :left)))
+                (content l3) (list (list bt3 :left)))
           (return-from tests-command-1 t))
         ;; Yes
         (let ((options (rest child))
@@ -162,7 +162,7 @@
                   (push o new-l2)
                   (push o new-l3)))
               (push t2 new-l2)
-              (push at3 new-l3)
+              (push bt3 new-l3)
               (if (> (length new-l2) 1)
                   (setf (content l2) (list new-l2)
                         (content l3) (list new-l3))
@@ -172,14 +172,14 @@
 
   (defmethod tests-command-2 ((data (eql layout-data)))
     (with-slots (l2 t2
-                 l3 at3)
+                 l3 bt3)
         data
       (let ((child (first (content l2))))
         ;; Child has options?
         (when (atom child)
           ;; No, so move to :min-width
           (setf (content l2) (list (list t2 :top))
-                (content l3) (list (list at3 :top)))
+                (content l3) (list (list bt3 :top)))
           (return-from tests-command-2 t))
         ;; Yes
         (let ((options (rest child))
@@ -209,7 +209,7 @@
                   (push o new-l2)
                   (push o new-l3)))
               (push t2 new-l2)
-              (push at3 new-l3)
+              (push bt3 new-l3)
               (if (> (length new-l2) 1)
                   (setf (content l2) (list new-l2)
                         (content l3) (list new-l3))
@@ -219,14 +219,14 @@
   
   (defmethod tests-command-3 ((data (eql layout-data)))
     (with-slots (l2 t2
-                 l3 at3)
+                 l3 bt3)
         data
       (let ((child (first (content l2))))
         ;; Child has options?
         (when (atom child)
           ;; No, so move to :min-width
           (setf (content l2) (list (list t2 :min-width))
-                (content l3) (list (list at3 :min-width)))
+                (content l3) (list (list bt3 :min-width)))
           (return-from tests-command-3 t))
         ;; Yes
         (let ((options (rest child))
@@ -253,7 +253,7 @@
                   (push o new-l2)
                   (push o new-l3)))
               (push t2 new-l2)
-              (push at3 new-l3)
+              (push bt3 new-l3)
               (if (> (length new-l2) 1)
                   (setf (content l2) (list new-l2)
                         (content l3) (list new-l3))
@@ -263,14 +263,14 @@
   
   (defmethod tests-command-4 ((data (eql layout-data)))
     (with-slots (l2 t2
-                 l3 at3)
+                 l3 bt3)
         data
       (let ((child (first (content l2))))
         ;; Child has options?
         (when (atom child)
           ;; No, so move to :min-height
           (setf (content l2) (list (list t2 :min-height))
-                (content l3) (list (list at3 :min-height)))
+                (content l3) (list (list bt3 :min-height)))
           (return-from tests-command-4 t))
         ;; Yes
         (let ((options (rest child))
@@ -297,7 +297,7 @@
                   (push o new-l2)
                   (push o new-l3)))
               (push t2 new-l2)
-              (push at3 new-l3)
+              (push bt3 new-l3)
               (if (> (length new-l2) 1)
                   (setf (content l2) (list new-l2)
                         (content l3) (list new-l3))
@@ -306,8 +306,8 @@
     t)
   
   (defmethod tests-command-5 ((data (eql layout-data)))
-    (with-slots (t2 at3) data
-      (dolist (w (list t2 at3))
+    (with-slots (t2 bt3) data
+      (dolist (w (list t2 bt3))
         (unless (eql w nil)
           (with-slots (cl-yag::width-calc) w
             (case cl-yag::width-calc
@@ -329,8 +329,8 @@
     t)
   
   (defmethod tests-command-6 ((data (eql layout-data)))
-    (with-slots (t2 at3) data
-      (dolist (w (list t2 at3))
+    (with-slots (t2 bt3) data
+      (dolist (w (list t2 bt3))
         (unless (eql w nil)
           (with-slots (cl-yag::height-calc) w
             (case cl-yag::height-calc
@@ -354,7 +354,7 @@
   (defmethod tests-command-update ((data (eql layout-data)))
     (with-slots (b1 t1 st11 st12 st13 st14 st15
                  l2 t2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
-                 at3 st31 st32 st33 st34)
+                 bt3 st31 st32 st33 st34)
         data
 
       (tests-status-update "P: ~4d" st11 (padding-left t1))
@@ -372,37 +372,37 @@
       (tests-status-update "T2T: ~f" st28 (top t2))
       (tests-status-update "T2W: ~f" st29 (width t2))
       (tests-status-update "T2H: ~f" st210 (height t2))
-      (tests-status-update "AT3L: ~f" st31 (left at3))
-      (tests-status-update "AT3T: ~f" st32 (top at3))
-      (tests-status-update "AT3W: ~f" st33 (width at3))
-      (tests-status-update "AT3H: ~f" st34 (height at3))))
+      (tests-status-update "BT3L: ~f" st31 (left bt3))
+      (tests-status-update "BT3T: ~f" st32 (top bt3))
+      (tests-status-update "BT3W: ~f" st33 (width bt3))
+      (tests-status-update "BT3H: ~f" st34 (height bt3))))
 
   (defmethod tests-get-h-align ((data (eql layout-data)))
-    (with-slots (t1 t2 at3) data
-      (values (list t1 t2 at3) t)))
+    (with-slots (t1 t2 bt3) data
+      (values (list t1 t2 bt3) t)))
   
   (defmethod tests-get-interior-color ((data (eql layout-data)))
     (with-slots (w1 w2 w3) data
       (values (list w1 w2 w3) nil)))
 
   (defmethod tests-get-padding ((data (eql layout-data)))
-    (with-slots (t1 t2 at3) data
-      (values (list t1 t2 at3) t)))
+    (with-slots (t1 t2 bt3) data
+      (values (list t1 t2 bt3) t)))
 
   (defmethod tests-get-rulers ((data (eql layout-data)))
     (tests-list-rulers data))
 
   (defmethod tests-get-spacing ((data (eql layout-data)))
-    (with-slots (t1 t2 at3) data
-      (values (list t1 t2 at3) t)))
+    (with-slots (t1 t2 bt3) data
+      (values (list t1 t2 bt3) t)))
 
   (defmethod tests-get-thickness ((data (eql layout-data)))
     (with-slots (b1 b2 b3) data
       (values (list b1 b2 b3) t)))
 
   (defmethod tests-get-v-align ((data (eql layout-data)))
-    (with-slots (t1 t2 at3) data
-      (values (list t1 t2 at3) t)))
+    (with-slots (t1 t2 bt3) data
+      (values (list t1 t2 bt3) t)))
   
   (tests-command-update layout-data))
 

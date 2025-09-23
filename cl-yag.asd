@@ -21,6 +21,7 @@
                 :components ((:file "packages")
                              
                              (:file "macros")
+                             (:file "types")
                              (:file "generics")
                              
                              (:file "utils")
@@ -29,6 +30,9 @@
                              
                              ;; Ease of use ...
                              (:file "allegro")
+
+                             ;; Contains types used in mixins
+                             (:file "layout")
 
                              ;; Composition objects
                              (:file "mixins/active")
@@ -60,21 +64,22 @@
                              (:file "fonts")
 
                              ;; Layouts
-                             (:file "layout")
                              (:file "column-layout")
                              (:file "grid-layout")
                              (:file "row-layout")
 
+                             (:file "theme")
+
                              ;; Interactive objects
-                             (:file "box")
-                             (:file "grid")
-                             (:file "ruler")
+                             (:file "box" :depends-on ("theme"))
+                             (:file "button" :depends-on ("theme"))
+                             (:file "grid" :depends-on ("theme"))
+                             (:file "ruler" :depends-on ("theme"))
                              (:file "text" :depends-on ("theme"))
-                             (:file "window")
+                             (:file "window" :depends-on ("theme"))
 
                              ;; theme needs to be last as it relies on all the
-                             ;; other objects -theme-mixins
-                             (:file "theme")
+                             ;; other objects theme mixins
                              (:file "theme-vars" :depends-on ("box" "grid" "ruler" "text" "theme" "window"))
 
                              ;; Used during development, and relies on ALL

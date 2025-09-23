@@ -5,10 +5,10 @@
 ;;;; padding-mixin ============================================================
 
 (defclass padding-mixin ()
-  ((padding-left :initarg :padding-left :initform 0 :accessor padding-left)
-   (padding-right :initarg :padding-right :initform 0 :accessor padding-right)
-   (padding-top :initarg :padding-top :initform 0 :accessor padding-top)
-   (padding-bottom :initarg :padding-bottom :initform 0 :accessor padding-bottom)))
+  ((padding-left :type thickness-type :initarg :padding-left :initform 0 :accessor padding-left)
+   (padding-right :type thickness-type :initarg :padding-right :initform 0 :accessor padding-right)
+   (padding-top :type thickness-type :initarg :padding-top :initform 0 :accessor padding-top)
+   (padding-bottom :type thickness-type :initarg :padding-bottom :initform 0 :accessor padding-bottom)))
 
 (defmethod (setf padding) (value (object padding-mixin))
   (setf (padding-h object) value)
@@ -16,15 +16,15 @@
   (my-next-method))
 
 (defmethod (setf padding-h) (value (object padding-mixin))
-  (unless (typep value 'float)
-    (setq value (coerce value 'float)))
+  ;; (unless (typep value 'float)
+  ;;   (setq value (coerce value 'float)))
   (setf (padding-left object) value)
   (setf (padding-right object) value)
   (my-next-method))
 
 (defmethod (setf padding-v) (value (object padding-mixin))
-  (unless (typep value 'float)
-    (setq value (coerce value 'float)))
+  ;; (unless (typep value 'float)
+  ;;   (setq value (coerce value 'float)))
   (setf (padding-top object) value)
   (setf (padding-bottom object) value)
   (my-next-method))

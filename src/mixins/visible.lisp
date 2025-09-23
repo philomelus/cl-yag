@@ -5,6 +5,6 @@
 ;;;; visible-mixin ============================================================
 
 (defclass visible-mixin ()
-  ((visible :initarg :visible :initform nil :type boolean :accessor visible)))
+  ((visible :type boolean :initarg :visible :initform nil :accessor visible)))
 
 

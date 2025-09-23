@@ -4,15 +4,13 @@
 
 ;;;; style-3d-mixin ===========================================================
 
-(deftype style-3d () '(member :default :inset :outset :flat))
-
-(defvar +STYLE-3D-MIXIN-OPTIONS+ '(:default :inset :outset :flat))
+(deftype style-3d-type () '(member nil :default :inset :outset :flat))
 
 (defclass style-3d-mixin ()
-  ((style :initarg :style :type style-3d :initform :default :accessor style)))
+  ((style :initarg :style :type style-3d-type :initform nil :accessor style)))
 
 (defmethod initializa-instance :after ((object style-3d-mixin) &key)
   (with-slots (style) object
-    (unless (member style +STYLE-3D-MIXIN-OPTIONS+)
+    (unless (typep style 'style-3d-type)
       (error "unknown style 3d option, got: ~a" style)))
   (my-next-method))

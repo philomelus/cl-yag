@@ -31,12 +31,6 @@
          (yag-path (asdf:system-relative-pathname "cl-yag" real-path)))
     (namestring yag-path)))
 
-(defmethod must-init ((test sb-sys::system-area-pointer) desc)
-  (when (null-pointer-p test)
-    (if (>  (al:get-errno) 0)
-        (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
-        (error "Couldn't initialize ~s." desc))))
-
 (defmethod must-init ((test t) desc)
   (unless test
     (if (>  (al:get-errno) 0)

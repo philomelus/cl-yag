@@ -9,8 +9,10 @@
 
 ;;;; h-align-mixin ============================================================
 
+(deftype h-align-type () '(member :none :left :center :right))
+
 (defclass h-align-mixin ()
-  ((h-align :initarg :h-align :initform :none :type keyword :accessor h-align)))
+  ((h-align :type h-align-type :initarg :h-align :initform :none :accessor h-align)))
 
 ;; Only allow valid keywords
 ;; #+safety
@@ -25,8 +27,10 @@
 
 ;;;; v-align-mixin ============================================================
 
+(deftype v-align-type () '(member :none :top :middle :bottom))
+
 (defclass v-align-mixin ()
-  ((v-align :initarg :v-align :initform :none :type keyword :accessor v-align)))
+  ((v-align :type v-align-type :initarg :v-align :initform :none :accessor v-align)))
 
 ;; Only allow valid keywords
 ;; #+safety

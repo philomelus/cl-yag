@@ -4,6 +4,8 @@
 
 ;;;; font-mixin ===============================================================
 
+(deftype font-type () '(or null cffi::foreign-pointer))
+
 (defclass font-mixin ()
-  ((font :initarg :font :initform nil :accessor font)))
+  ((font :type font-type :initarg :font :initform nil :accessor font)))
 

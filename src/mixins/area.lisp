@@ -2,15 +2,13 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-(deftype coordinate () '(or integer float))
-
 ;;;; area-mixin-base ==========================================================
 
 (defclass area-mixin-base ()
-  ((left :initarg :left :initform :auto :accessor left)
-   (top :initarg :top :initform :auto :accessor top)
-   (width :initarg :width :initform :auto :accessor width)
-   (height :initarg :height :initform :auto :accessor height)))
+  ((left :type layout-left-type :initarg :left :initform :auto :accessor left :documentation "Coordinate of left side.")
+   (top :type layout-top-type :initarg :top :initform :auto :accessor top :documentation "Coordinate of top side.")
+   (width :type layout-width-type :initarg :width :initform :auto :accessor width :documentation "Width of object.")
+   (height :type layout-height-type :initarg :height :initform :auto :accessor height :documentation "Height of object.")))
 
 ;;;; area-mixin ===============================================================
 
@@ -18,12 +16,7 @@
 ;; minimize maximize
 ;; none (means default or auto or both)
 
-(defvar +AREA-HEIGHT-OPTS+ '(:auto :auto-max :auto-min))
-(defvar +AREA-LEFT-OPTS+ '(:auto :left :center :right))
-(defvar +AREA-TOP-OPTS+ '(:auto :top :middle :bottom))
-(defvar +AREA-WIDTH-OPTS+ '(:auto :auto-max :auto-min))
-
-;; TODO: (deftype area-height () '(or integer float (member :auto :auto-max :auto-min)))
+(deftype area-calc-type () '(or integer float ratio (member :auto :auto-max :auto-min)))
 
 (defclass area-mixin (area-mixin-base)
   ((left-calc :initform nil)
@@ -40,7 +33,7 @@
   (with-slots ((h height)) obj
     (when (typep h 'keyword)
       (v:debug :layout "[height] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member h +AREA-HEIGHT-OPTS+))
+      (assert (typep h 'layout-height-type))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'height) 'number))
       (setf h (slot-value obj 'height))
@@ -50,17 +43,17 @@
 (defmethod initialize-instance :after ((object area-mixin) &key)
   (with-slots (left top width height) object
     ;; Validate fields are valid
-    (macrolet ((validate (field opts)
+    (macrolet ((validate (field opt)
                  `(unless (or (typep ,field 'number)
                               (constantp ,field))
-                    (if (typep ,field 'keyword)
-                        (unless (member ,field ,opts)
+                    (if (keywordp ,field)
+                        (unless (typep ,field ,opt)
                           (error "unrecognized keyword for ~a: ~a" (symbol-name ,field) ,field))
                         (error "unrecognized format for ~a: ~a" (symbol-name ,field) ,field)))))
-      (validate height +AREA-HEIGHT-OPTS+)
-      (validate left +AREA-LEFT-OPTS+)
-      (validate top +AREA-TOP-OPTS+)
-      (validate width +AREA-WIDTH-OPTS+))
+      (validate height 'layout-height-type)
+      (validate left 'layout-left-type)
+      (validate top 'layout-top-type)
+      (validate width 'layout-width-type))
 
     ;; Save original state of area
     (flet ((is-keyword (field)
@@ -78,7 +71,7 @@
   (with-slots (left) obj
     (when (typep left 'keyword)
       (v:debug :layout "[left] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member left +AREA-LEFT-OPTS+))
+      (assert (typep left 'layout-left-type))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'left) 'number))
       (setf left (slot-value obj 'left))
@@ -114,7 +107,7 @@
   (with-slots ((top top)) obj
     (when (typep top 'keyword)
       (v:debug :layout "[top] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member top +AREA-TOP-OPTS+))
+      (assert (typep top 'layout-top-type))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'top) 'number))
       (setf top (slot-value obj 'top))
@@ -125,7 +118,7 @@
   (with-slots ((w width)) obj
     (when (typep w 'keyword)
       (v:debug :layout "[width] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (member w +AREA-WIDTH-OPTS+))
+      (assert (typep w 'layout-width-type))
       (calc-area obj (parent obj))
       (assert (typep (slot-value obj 'width) 'number))
       (setf w (slot-value obj 'width))

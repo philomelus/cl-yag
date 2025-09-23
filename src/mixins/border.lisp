@@ -4,6 +4,8 @@
 
 ;;;; macros ===================================================================
 
+(deftype border-thickness-type () '(thickness-type))
+
 (defmacro with-borders ((left right top bottom) object &body body)
   (a:with-gensyms (instance)
     `(let ((,instance ,object))
@@ -19,12 +21,12 @@
 (defclass border-theme-mixin ()
   ((thickness :initarg :thickness :accessor thickness)))
 
-(defclass border-3d-theme-mixin (color-3d-mixin
+(defclass border-theme-3d-mixin (color-3d-mixin
                                  style-3d-mixin)
   ((thickness :initform 2.0)
    (style :accessor border-style)))
 
-(defclass border-flat-theme-mixin (color-mixin)
+(defclass border-theme-flat-mixin (color-mixin)
   ())
 
 (defclass border (border-theme-mixin)

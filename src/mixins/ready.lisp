@@ -3,7 +3,7 @@
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
 (defclass ready-mixin ()
-  ((ready :initform nil)))
+  ((ready :type boolean :initform nil)))
 
 (defmethod initialize-instance :after ((object ready-mixin) &key)
   (assert (not (slot-value object 'ready)))
