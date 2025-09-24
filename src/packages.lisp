@@ -117,10 +117,6 @@
            #:defrow-layout
            
            ;; ========== Mixins ==========
-           ;; active
-           #:active
-           #:active-mixin
-           
            ;; align
            #:align-mixin
            #:h-align
@@ -175,10 +171,6 @@
            #:hover-thickness
            #:up-color
            
-           ;; child
-           #:child
-           #:child-mixin
-           
            ;; color
            #:back-color
            #:back-color-mixin
@@ -198,24 +190,13 @@
            #:very-dark
            #:very-light
            
-           ;; container
-           #:container-mixin
-           
            ;; content
            #:content
            #:content-mixin
            
-           ;; enable
-           #:enable-mixin
-           #:enabled
-           
            ;; font
            #:font
            #:font-mixin
-           
-           ;; layout
-           #:layout
-           #:layout-mixin
            
            ;; manager
            #:manager
@@ -235,10 +216,6 @@
            #:owner
            #:parent
            #:parent-mixin
-           
-           ;; ready
-           #:ready
-           #:ready-mixin
            
            ;; shortcuts
            #:convert-shortcuts
