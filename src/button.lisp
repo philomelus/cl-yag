@@ -30,15 +30,16 @@
 
 ;;; button -----------------------------------------------------
 
-(defclass button (align-mixin
-                  area-mixin
+(defclass button (area-mixin
                   border-mixin
+                  h-align-mixin
                   padding-mixin
                   parent-mixin
                   spacing-mixin
                   title-mixin
                   button-theme-mixin
-                  shortcuts-mixin)
+                  shortcuts-mixin
+                  v-align-mixin)
   
   ((inside :initform nil :type boolean)     ;internal use
    (down :initform nil :type boolean)       ;internal use

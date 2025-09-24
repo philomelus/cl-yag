@@ -76,14 +76,14 @@
 
 (defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
   ;; If we are a container, pass on to all children
-  (if (typep obj 'container-mixin)
+  (if (typep obj 'content-mixin)
       (dolist (child (content obj))
         (unless (eql child nil)
          (on-mouse-move x y dx dy child))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj area-mixin) &key)
-  (if (typep obj 'container-mixin)
+  (if (typep obj 'content-mixin)
       (dolist (child (content obj))
         (unless (eql child nil)
             (if (on-mouse-down x y b child)
@@ -91,7 +91,7 @@
   (my-next-method))
 
 (defmethod on-mouse-up (x y b (obj area-mixin) &key)
-  (if (typep obj 'container-mixin)
+  (if (typep obj 'content-mixin)
       (dolist (child (content obj))
         (on-mouse-up x y b child)))
   (my-next-method))

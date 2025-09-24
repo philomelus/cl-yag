@@ -1,11 +1,6 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
-
-;;;; align-mixin ==============================================================
-
-(defclass align-mixin (h-align-mixin v-align-mixin)
-  ())
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
 ;;;; h-align-mixin ============================================================
 

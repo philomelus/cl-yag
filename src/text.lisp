@@ -11,13 +11,14 @@
 ;; This exists purely to allow a common base for all text objects.  If that
 ;; changes, the other logic in this file may need revalidation.
 (defclass text-base (text-base-theme-mixin
-                     align-mixin
                      area-mixin
                      border-mixin
+                     h-align-mixin
                      padding-mixin      ; between title and border
                      parent-mixin
                      spacing-mixin      ; between border and edge
-                     title-mixin)
+                     title-mixin
+                     v-align-mixin)
   ())
 
 ;;;; text =====================================================================
