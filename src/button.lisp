@@ -40,12 +40,9 @@
                   button-theme-mixin
                   shortcuts-mixin)
   
-  (
-
-   (inside :initform nil :type boolean)     ;internal use
+  ((inside :initform nil :type boolean)     ;internal use
    (down :initform nil :type boolean)       ;internal use
    (was-down :initform nil :type boolean))) ;internal use
-
 
 (defmacro defbutton (&rest rest &key &allow-other-keys)
   `(make-instance 'button ,@rest))
