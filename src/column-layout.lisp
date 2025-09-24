@@ -26,9 +26,15 @@
            (let ((total-height 0))
              (loop :for row :from 0 :below (length rects) :do
                (incf total-height (slot-value (aref rects row) 'height)))
-             total-height)))
+             total-height))
+         ;; (dump-rects (rects &optional (title "") (where ""))
+         ;;   (loop :for row :from 0 :below (length rects) :do
+         ;;     (v:info :layout "[calc-area] {column-layout} ~achild ~d ~aarea (~f ~f) @ (~f ~f)"
+         ;;             title row where (width (aref rects row)) (height (aref rects row))
+         ;;             (left (aref rects row)) (top (aref rects row)))))
+         )
     
-    (v:info :layout "[calc-area] {column-layout} calculating child areas ~a" (print-raw-object object))
+    (v:debug :layout "[calc-area] {column-layout} calculating child areas ~a" (print-raw-object object))
   
     ;; Calculate our internal child areas
     (assert (not (eql (slot-value object 'child-area) nil)))
@@ -41,6 +47,8 @@
         (let* ((child-count (length content))
                (requested-areas (make-array child-count :adjustable nil :fill-pointer nil))
                (requested-height 0))
+          (declare (dynamic-extent requested-height))
+          
           ;; Get initial area of children
           (loop :for row :from 0 :below child-count :do
             (let ((child (foro (nth row content))))
@@ -64,12 +72,15 @@
                                                                          :width new-width :height new-height ))))))
           ;; Nothing should be changed yet (sanity check)
           (assert (= (total-height object) object-height))
-        
+          ;; (dump-rects requested-areas "calc ")
+          ;; (dump-rects child-area "calc " "internal ")
+          
           ;; Adjust for min/max height updates
           (let ((min-height-count 0)
                 (max-height-count 0)
                 (min-height-offsets ())
                 (max-height-offsets ()))
+            (declare (dynamic-extent min-height-count max-height-count min-height-offsets max-height-offsets))
             (loop :for row :from 0 :below child-count :do
               (let ((child-all (nth row content)))
                 (when (consp child-all)
@@ -86,13 +97,16 @@
                       (when max-h
                         (incf max-height-count)
                         (push row max-height-offsets)))))))
+            ;; (dump-rects requested-areas "mm ")
+            ;; (dump-rects child-area "mm " "internal ")
 
             ;; Perform any min/max adjustments
             (when (and (> min-height-count 0))
-              (v:info :layout "[calc-area] {column-layout} adjusting for :min-height")
+              (v:debug :layout "[calc-area] {column-layout} adjusting for :min-height")
             
               ;; Tally the min-height that needs reallocated
               (let ((extra-height 0))
+                (declare (dynamic-extent extra-height))
                 (dolist (offset min-height-offsets)
                   (let ((internal-height (slot-value (aref child-area offset) 'height))
                         (child-height (slot-value (aref requested-areas offset) 'height)))
@@ -105,7 +119,7 @@
                   (when (> requested-difference 0)
                     (incf extra-height requested-difference)
                     (setq requested-height object-height)))
-                (v:info :layout "[calc-area] {column-layout} :min-height gave away ~f" extra-height)
+                (v:debug :layout "[calc-area] {column-layout} :min-height gave away ~f" extra-height)
                 
                 ;; Give the extra vertical space to others
                 (when (> extra-height 0)
@@ -113,7 +127,7 @@
                   (if (> max-height-count 0)
                       ;; Give it to the max-height children
                       (progn
-                        (v:info :layout "[calc-area] {column-layout} giving :min-height extra to :max-height siblings")
+                        (v:debug :layout "[calc-area] {column-layout} giving :min-height extra to :max-height siblings")
                         (assert (= (length max-height-offsets) max-height-count))
                         ;; TODO:  When large, give away blocks first
                         (loop :while (> extra-height 0) :do
@@ -124,7 +138,7 @@
                               (return)))))
                       ;; Spread it across all non-min-height children
                       (progn
-                        (v:info :layout "[calc-area] {column-layout} giving :min-height extra to siblings")
+                        (v:debug :layout "[calc-area] {column-layout} giving :min-height extra to siblings")
                         (assert (= (length min-height-offsets) min-height-count))
                         (when (= child-count min-height-count)
                           (error "there is no place to allocate extra space from :min-height options"))
@@ -136,8 +150,10 @@
                               (loop :for row :from 0 :below child-count :do
                                 (when (not (member row min-height-offsets))
                                   (incf (slot-value (aref requested-areas row) 'height) split-extra-height)
-                                  (v:info :layout "[calc-area] {column-layout} gave ~d to sibling ~d"
-                                          split-extra-height row)
+                                  (decf (slot-value (aref requested-areas row) 'top) split-extra-height)
+                                  (v:debug :layout "[calc-area] {column-layout} gave ~d to sibling ~d (h:~f t:~f)"
+                                          split-extra-height row (slot-value (aref requested-areas row) 'height)
+                                          (slot-value (aref requested-areas row) 'top))
                                   (decf extra-height split-extra-height))))))
                         ;; Give away the rest if needed
                         (when (> extra-height 0)
@@ -145,31 +161,37 @@
                             (loop :for row :from 0 :below min-height-count :do
                               (when (not (member row min-height-offsets))
                                 (incf (slot-value (aref requested-areas row) 'height))
-                                (v:info :layout "[calc-area] {column-layout} gave 1 to sibling ~d" row)
+                                (decf (slot-value (aref requested-areas row) 'top))
+                                (v:debug :layout "[calc-area] {column-layout} gave 1 to sibling ~d (h:~f t:~f)" row
+                                        (slot-value (aref requested-areas row) 'height)
+                                        (slot-value (aref requested-areas row) 'top))
                                 (decf extra-height)
                                 (when (= extra-height 0)
                                   (return)))))))))))
+            ;; (dump-rects requested-areas "mm++ ")
+            ;; (dump-rects child-area "mm++ " "internal ")
 
             ;; Allocate any extra (get here only when no :min-height in
             ;; siblings)
             (let ((extra-height (- object-height requested-height)))
+              (declare (dynamic-extent extra-height))
               (when (> extra-height 0)
                 (assert (= min-height-count 0))
-                (v:info :layout "[calc-area] {column-layout} extra height:~d" (- object-height requested-height))
+                (v:debug :layout "[calc-area] {column-layout} extra height:~d" (- object-height requested-height))
                 ;; Give it away, give it away now
                 (if (> max-height-count 0)
                     (progn
                       (error "not implemented"))
                     ;; Spread it across all non-max-height children
                     (progn
-                      (v:info :layout "[calc-area] {column-layout} giving extra away")
+                      (v:debug :layout "[calc-area] {column-layout} giving extra away")
                       ;; If the extra space if greather than number of
                       ;; siblings, attempt to give most of it away quickly
                       (when (> extra-height child-count)
                         (let ((split-extra-height (truncate (/ extra-height child-count))))
                           (loop :for row :from 0 :below child-count :do
                             (incf (slot-value (aref requested-areas row) 'height) split-extra-height)
-                            (v:info :layout "[calc-area] {column-layout} gave ~d to child ~d"
+                            (v:debug :layout "[calc-area] {column-layout} gave ~d to child ~d"
                                     split-extra-height row)
                             (decf extra-height split-extra-height))))
                       ;; Give away the rest if needed
@@ -177,13 +199,16 @@
                         (loop :while (> extra-height 0) :do
                           (loop :for row :from 0 :below child-count :do
                             (incf (slot-value (aref requested-areas row) 'height))
-                            (v:info :layout "[calc-area] {column-layout} gave 1 to child ~d" row)
+                            (v:debug :layout "[calc-area] {column-layout} gave 1 to child ~d" row)
                             (decf extra-height)
                             (when (= extra-height 0)
                               (return)))))))))
-          
+
+            
             ;; At this point all vertical space should be used, consistancy check
             (assert (= (total-rect-height requested-areas) object-height))
+            ;; (dump-rects requested-areas "++ ")
+            ;; (dump-rects child-area "++ " "internal ")
         
             ;; Finalize the child options
             (loop :for row :from 0 :below child-count :do
@@ -200,6 +225,9 @@
                       (setf (aref child-area row) new-internal-area)
                       (setf (aref requested-areas row) new-child-area)))))))
 
+          ;; (dump-rects requested-areas)
+          ;; (dump-rects child-area "" "internal ")
+          
           ;; Update the children
           (loop :for row :from 0 :below child-count :do
             (let ((child-object (foro (nth row content))))
@@ -208,7 +236,7 @@
                 (setf (slot-value child-object 'height) (slot-value (aref requested-areas row) 'height))
                 (setf (slot-value child-object 'left) (slot-value (aref requested-areas row) 'left))
                 (setf (slot-value child-object 'top) (slot-value (aref requested-areas row) 'top))
-                (v:info :layout "[calc-area] {column-layout} child ~d area (~f ~f) @ (~f ~f)"
+                (v:debug :layout "[calc-area] {column-layout} child ~d area (~f ~f) @ (~f ~f)"
                         row (slot-value child-object 'width) (slot-value child-object 'height)
                         (slot-value child-object 'left) (slot-value child-object 'top))))))))))
 
