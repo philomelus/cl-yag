@@ -64,3 +64,16 @@
         unless (member key declared-keys)
           collect key
           and collect val))
+
+(defun shallow-copy-object (original)
+  "Return duplicate of object with identical slot values, including unbound. No
+link to original object in new object."
+  
+  (let* ((class (class-of original))
+         (copy (allocate-instance class)))
+    (dolist (slot (mapcar #'slot-definition-name
+                          (class-slots class)))
+      (when (slot-boundp original slot)
+        (setf (slot-value copy slot)
+              (slot-value original slot))))
+    copy))
