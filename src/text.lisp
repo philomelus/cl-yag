@@ -4,8 +4,9 @@
 
 ;;;; text-base ================================================================
 
-(defclass text-base-theme-mixin (back-fore-color-mixin
-                                 font-mixin)
+(defclass text-base-theme-mixin (back-color-mixin
+                                 font-mixin
+                                 fore-color-mixin)
   ())
 
 ;; This exists purely to allow a common base for all text objects.  If that

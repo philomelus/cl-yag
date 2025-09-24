@@ -173,7 +173,6 @@
            ;; color
            #:back-color
            #:back-color-mixin
-           #:back-fore-color-mixin
            #:color
            #:color-3d-mixin
            #:color-mixin

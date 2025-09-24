@@ -6,7 +6,8 @@
 
 ;;; theme-mixin -----------------------------------------------------
 
-(defclass window-theme-mixin (back-fore-color-mixin)
+(defclass window-theme-mixin (back-color-mixin
+                              fore-color-mixin)
   ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
 
 ;;; window ----------------------------------------------------------

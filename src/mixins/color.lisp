@@ -26,12 +26,6 @@
 (defclass fore-color-mixin ()
   ((fore-color :initarg :fore-color :initform nil :accessor fore-color)))
 
-;;;; BACK-FORE-COLOR-MIXIN ====================================================
-
-(defclass back-fore-color-mixin (back-color-mixin
-                                 fore-color-mixin)
-  ())
-
 ;;;; FRAME-COLOR-MIXIN ========================================================
 
 (defclass frame-color-mixin ()

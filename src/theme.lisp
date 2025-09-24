@@ -26,7 +26,8 @@
 
 ;;;; theme-base ===============================================================
 
-(defclass theme-base (back-fore-color-mixin)
+(defclass theme-base (back-color-mixin
+                      fore-color-mixin)
   ())
 
 (defmethod paint-border ((object border-mixin) (theme theme-base))
