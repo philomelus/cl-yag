@@ -264,13 +264,13 @@ regardless of result."))
         (if (make-inst (>= num-left 4) it4 (fourth left) t) (push (list it4 :min-height) widgets-l))
         (if (make-inst (>= num-left 3) it3 (third left) t) (push (list it3 :min-height) widgets-l))
         (if (make-inst (>= num-left 2) it2 (second left) t) (push (list it2 :min-height) widgets-l))
-        (if (make-inst (>= num-left 1) it1 (first left) t) (push (list it1 :min-height) widgets-l))
+        (if (make-inst (>= num-left 1) it1 (first left) t) (push it1 widgets-l))
 
         ;; Create right instructions
         (if (make-inst (>= num-right 4) it8 (fourth right) nil) (push (list it8 :min-height) widgets-r))
         (if (make-inst (>= num-right 3) it7 (third right) nil) (push (list it7 :min-height) widgets-r))
         (if (make-inst (>= num-right 2) it6 (second right) nil) (push (list it6 :min-height) widgets-r))
-        (if (make-inst (>= num-right 1) it5 (first right) nil) (push (list it5 :min-height) widgets-r))
+        (if (make-inst (>= num-right 1) it5 (first right) nil) (push it5 widgets-r))
 
         ;; Final left preparations
         (setf icl1 (defcolumn-layout))
