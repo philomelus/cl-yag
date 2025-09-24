@@ -59,17 +59,17 @@
     (v:debug :layout "[calc-height] {button} result:~d" rv (print-raw-object object))
     rv))
 
-(defmethod calc-left (type (area %rect) (object button))
+(defmethod calc-left (type (area %rect) width height (object button))
   (v:debug :layout "[calc-left] {button} area: (~d ~d) @ (~d ~d) ~a"
            (width area) (height area) (left area) (top area) (print-raw-object object))
-  (let ((rv (text-calc-left type area object)))
+  (let ((rv (text-calc-left type area width height object)))
     (v:debug :layout "[calc-left] {button} result:~d ~a" rv (print-raw-object object))
     rv))
 
-(defmethod calc-top (type (area %rect) (object button))
+(defmethod calc-top (type (area %rect) width height (object button))
   (v:debug :layout "[calc-top] {button} area: (~d ~d) @ (~d ~d) ~a"
            (width area) (height area) (left area) (top area) (print-raw-object object))
-  (let ((rv (text-calc-top type area object)))
+  (let ((rv (text-calc-top type area width height object)))
     (v:debug :layout "[calc-top] {button} result:~d" rv (print-raw-object object))
     rv))
 

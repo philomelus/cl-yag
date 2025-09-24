@@ -2,6 +2,34 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
+;; TODO:
+;; Since we only have columns, rows, and cells, make all layouts use them.
+;; layout only uses cell options
+;; row-layout uses row and cell options
+;; column-layout uses column and cell options
+;; grid-layout uses  grid column and cell options
+;; new classes:
+;;    layout-cell-data
+;;    layout-column-data
+;;    layout-row-data
+;;
+;; Then have all the common needed generics for them, like:
+;;
+;; layout-column-cells returns all cells for a column
+;; layout-column-children returns all children for a column
+;; layout-row-cells returns all cells for a row
+;; layout-row-children returns all children for a row
+;; layout-cell returns cell for column and row
+;; layout-cells returns all cells
+;; layout-child returns child widget for column and row
+;; layout-children would be same as content
+;; layout-column-options allows setting all layout-column-options as keywords to support
+;;    deflayout initialization of rows and columns
+;; layout-row-options allows setting all layout-row-options as keywords to support
+;;    deflayout initialization of rows and columns
+;; layout-cell-options allows setting all layout-cell-options as keywords to support
+;;    deflayout initialization of cells
+
 ;;;; layout-base ==============================================================
 
 ;; These can be combined with widgets in the content list to change the way
@@ -43,58 +71,51 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod calc-area (child (parent layout-base) &key)
-  "Determine sizes and positions of widgets contained within CONTENT."
+(defmethod calc-area :around ((object layout-base) &key)
+  "Initialize our size, setup internal CHILD-AREA, call derived object's
+CALC-AREA to layout children, then allow all child LAYOUT-BASE derived objects
+to calculate their layout."
   
-  (v:debug :layout "[calc-area] {layout-base} called with child ~a" (print-raw-object child))
-  
-  ;; Calculate parent area if needed
-  (calc-layout-area parent)
+  ;; Calculate our area if needed
+  (calc-layout-area object)
 
-  ;; Calculate our children areas if needed
-  (when (eql (slot-value parent 'child-area) nil)
-    (calc-layout-child-areas parent))
+  ;; Calculate our internal child area if needed
+  (when (eql (slot-value object 'child-area) nil)
+    (calc-layout-child-areas object))
 
-  (with-slots (child-area content) parent
-    ;; Locate child object position (this is key to rest)
-    (let ((cp (position child content :key #'(lambda (o) (foro o)))))
-      (assert (not (eql cp nil)))
-      (let* ((ca (aref child-area cp))
-             (oa (make-instance '%rect :left (left ca) :top (top ca) :width (width ca) :height (height ca))))
-      
-        (with-slots ((cl left) (ct top) (cw width) (ch height)) child
+  ;; Let derived object handler deal with its children
+  (call-next-method)
 
-          (v:debug :layout "[calc-area] {layout-base} child ~d calculating (~a ~a) @ (~a ~a) ~a"
-                   cp cw ch cl ct (print-raw-object child))
-        
-          (macrolet ((do-calc (var func)
-                       `(if (typep ,var 'keyword)
-                            (progn
-                              (setf ,var (,func ,var oa child))
-                              t)
-                            nil)))
-            (let ((cwp (do-calc cw calc-width))
-                  (chp (do-calc ch calc-height))
-                  (clp (do-calc cl calc-left))
-                  (ctp (do-calc ct calc-top)))
+  ;; Allow any child layouts to layout as well
+  (dolist (child (content object))
+    (let ((child-object (foro child)))
+      (unless (eql child-object nil)
+        (when (typep child-object 'layout-base)
+          (calc-area child-object))))))
 
-              ;; Call update when there are child options or any area field wasn't
-              ;; calculated
-              (let ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
-                    options)
-                (when (consp co)
-                  (setq options (rest co)))
-                (when (or (not (or clp ctp cwp chp))
-                          (> (length options) 0))
-                  (with-local-slots ((lcl left) (lct top) (lcw width) (lch height)) (aref child-area cp)
-                    (v:debug :layout "[calc-area] {layout-base} child ~d internal area (~d ~d) @ (~d ~d) ~a"
-                             cp lcw lch lcl lct (print-raw-object child)))
-                  (update-layout-child-areas cp parent)))
+(defmethod calc-height (type area (object layout-base))
+  "Called to return height of layout. In particular, this specific method is
+called when we are a child of another layout."
 
-              ;; Log updated/changed area
-              (v:debug :layout "[calc-area] {layout-base} child ~d area (~d ~d) @ (~d ~d) ~a"
-                       cp cw ch cl ct (print-raw-object child))))))))
-  (my-next-method))
+  (slot-value area 'height))
+
+(defmethod calc-left (type area width height (object layout-base))
+  "Called to return left coordinate. In particular, this specific method is
+called when we are a child of another layout."
+
+  (slot-value area 'left))
+
+(defmethod calc-top (type area width height (object layout-base))
+  "Called to return top coordinate. In particular, this specific method is
+called when we are a child of another layout."
+
+  (slot-value area 'top))
+
+(defmethod calc-width (type area (object layout-base))
+  "Called to return width of layout. In particular, this specific method is
+called when we are a child of another layout."
+
+  (slot-value area 'width))
 
 (defmethod (setf content) :after (value (object layout-base))
   "After content update, make sure options area valid."
@@ -171,6 +192,15 @@ internal calc-* slots."
         (on-paint co))))
   (my-next-method))
 
+(defmethod width ((object layout-base))
+  (with-slots ((local-width width)) object
+    (when (keywordp local-width)
+      (assert (typep local-width 'layout-width-type))
+      (calc-area (find-parent-layout object))
+      (assert (typep (slot-value object 'width) 'coordinate))
+      (setf local-width (slot-value object 'width)))
+    local-width))
+
 ;;;; layout ===================================================================
 ;; Simple layout allowing single child object that can be use auto area
 
@@ -182,10 +212,8 @@ internal calc-* slots."
 
 ;;; METHODS ---------------------------------------------------------
 
-(defmethod calc-area (child (parent layout) &key)
+(defmethod calc-area ((parent layout) &key)
 
-  (v:debug :layout "[calc-area] {layout} called with child ~a" (print-raw-object child))
-  
   ;; Calculate parent area if needed
   (calc-layout-area parent)
 
@@ -195,25 +223,31 @@ internal calc-* slots."
 
   (with-slots (child-area content) parent
     ;; Only 1 possible child here
-    (assert (eql (foro (first content)) child))
-    (let ((cp 0))
+    (let ((child (first content))
+          (cp 0))
       (let* ((child-internal (aref child-area cp))
              (oa (make-instance '%rect :left (left child-internal) :top (top child-internal) :width (width child-internal) :height (height child-internal))))
       
         (with-slots ((cl left) (ct top) (cw width) (ch height)) child
-          (v:debug :layout "[calc-area] {layout} child calculating (~a ~a) @ (~a ~a) ~a"
-                   cw ch cl ct (print-raw-object child))
+          (v:debug :layout "[calc-area] {layout} child calculating (~a ~a) @ (~a ~a)"
+                   cw ch cl ct)
         
           (macrolet ((do-calc (var func)
                        `(if (typep ,var 'keyword)
                             (progn
                               (setf ,var (,func ,var oa child))
                               t)
+                            nil))
+                     (do-calc-alt (w h var func)
+                       `(if (typep ,var 'keyword)
+                            (progn
+                              (setf ,var (,func ,var oa ,w ,h child))
+                              t)
                             nil)))
             (let ((cwp (do-calc cw calc-width))
                   (chp (do-calc ch calc-height))
-                  (clp (do-calc cl calc-left))
-                  (ctp (do-calc ct calc-top)))
+                  (clp (do-calc-alt cw ch cl calc-left))
+                  (ctp (do-calc-alt cw ch ct calc-top)))
 
               ;; If any of the area was not-calculated, update internal area
               (unless cwp
@@ -226,8 +260,8 @@ internal calc-* slots."
                 (setf (slot-value child-internal 'top) ct))
               
               ;; Handle options
-              (let ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
-                    options)
+              (let* ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
+                     options)
                 (when (consp co)
                   (setq options (rest co)))
                 ;; Does it have options?
@@ -311,8 +345,8 @@ area allocated to them, whether they choose to use it or not."
             ;; Reset child to orignal state
             (reset-area child)
           
-            ;; Allow it to be re-layed out
-            (calc-area child object)))
+            ;; Re-layout
+            (calc-area object)))
         
         ;; The layout that owns us changed
         (progn

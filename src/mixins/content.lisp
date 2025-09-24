@@ -31,7 +31,7 @@
       ;; If child has content
       (when (typep co 'content-mixin)
         (v:debug :layout "[setf content] {content-mixin} calc-area for ~a" co)
-        (calc-area co obj))))
+        (calc-area obj))))
 
   (my-next-method))
 

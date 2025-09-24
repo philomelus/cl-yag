@@ -6,7 +6,91 @@
 
 (defgeneric bottom (object))
 
-(defgeneric calc-area (object parent &key &allow-other-keys))
+(defgeneric calc-area (object &key &allow-other-keys)
+  (:documentation "Called to calculate child areas. Typically called from LEFT, TOP, WIDTH, or
+HEIGHT when called first time for a widget with auto-calculated positions.
+
+Its acceptable to call directly to pre-calculate the layout before display if
+desired. There must be at some point in the hierarchy of objects an object
+with actual numerical LEFT, TOP, WIDTH, and HEIGHT. It is not possible to
+calculate the rest of the hierarchy without a starting area.
+
+Calculations are done for all immediate children of a layout. If there are
+child layouts of the layout being calculated, those layouts will be completed
+after their parent layout (the current one) is complete.
+
+Options are calculated in 2 steps: First the MIN/MAX WIDTH/HEIGHT options are
+completed to determine area of each child, then second comes the horizontal
+and vertical options, in no particular order (possibly at the same time when
+multiprocessing).
+
+Seting LEFT, TOP, WIDTH, or HEIGHT to an actual numerical value disables all
+calculations for that coordinate only. Any that do not contain a numerical
+value will still be part of the layout calculations, and will use the
+specified values for the ones set to numericqal values (for example, if you
+set WIDTH but leave LEFT, TOP, and HEIGHT as AUTO, then the width will be used
+to calculate the LEFT coordinate as if it had been calculated internally).
+Setting a numerical value will override any layout options such as MIN-WIDTH,
+etc. for their respective coordinates (so setting WIDTH, then adding MIN-WIDTH
+to layout options, will cause the MIN-WIDTH to be ignored).
+
+*** MIN-WIDTH/MAX-WIDTH OPTIONS ***
+
+- When there are both MIN-WIDTH and MAX-WIDTH in options for different
+siblings, any horizontal space released by siblings with MIN-WIDTH will be
+allocated to any siblings with MAX-WIDTH, as evenly as possible.
+
+- When there are one or more siblings with MIN-WIDTH, and no siblings with
+MAX-WIDTH, then extra horizontal space given away from MIN-WIDTH is allocated
+as evenly as possible across all children without MIN-WIDTH.
+
+- When there are one or more siblings with MAX-WIDTH, and no siblings with
+MIN-WIDTH, the any extra horizontal space will be allocated to the siblings
+with MAX-WIDTH, as evenly as possible.
+
+*** MIN-HEIGHT/MAX-HEIGHT OPTIONS ***
+
+- When there are both MIN-HEIGHT and MAX-HEIGHT in options for different
+siblings, any vertical space released by siblings with MIN-HEIGHT will be
+allocated to any siblings with MAX-HEIGHT, as evenly as possible.
+
+- When there are one or more siblings with MIN-HEIGHT, and no siblings with
+MAX-HEIGHT, then extra vertical space given away from MIN-HEIGHT is allocated
+as evenly as possible across all children without MIN-HEIGHT.
+
+- When there are one or more siblings with MAX-HEIGHT, and no siblings with
+MIN-HEIGHT, any extra vertical space will be allocated to the siblings with
+MAX-HEIGHT, as evenly as possible.
+
+*** LEFT/CENTER/RIGHT OPTIONS ***
+
+Children with a LEFT option will be moved as far left as possible within the
+allocated space for the child.
+
+Children with a CENTER option will be moved to the horizontal center of the
+space allocated for the child.
+
+Children with a RIGHT option will be moved to the right most horizontal
+position within thier allocated space.
+
+*** TOP/MIDDLE/BOTTOM OPTIONS ***
+
+Children with a TOP option will be moved as close to the top as possible
+within the allocated space for the child.
+
+Children with a MIDDLE option will be moved to the vertical center of the
+space allocated for the child.
+
+Children with a BOTTOM option will be moved to the bottom most vertical
+position within thier allocated space.
+
+*** RETURN ***
+
+When this method returns, all siblings will have their LEFT, TOP, WIDTH, and
+HEIGHT set to numerical values. It is guaranteed that all horizontal and
+vertical space allocated to the layout will be used by the siblings or layout
+itself (for example, SPACING may use some space for the layout that won't be
+allocated to any children."))
 
 (defgeneric calc-border-left (side area object)
   (:documentation "Calculate the left position of border of object.
@@ -25,38 +109,36 @@ object = widget calculating top position for"))
 (defgeneric calc-height (type area object)
   (:documentation "Calculate height of object.
 
-type = widget specific positioning option
-area = (left top width height) within parent
+type = Widget specific positioning option
+area = %rect allocated to widget within parent area
 object = object doing height calculation for"))
 
 (defgeneric calc-layout-child-areas (object)
   (:documentation "Called when layout first needs to know area of its children."))
 
-(defgeneric calc-left (type area object)
+(defgeneric calc-left (type area width height object)
   (:documentation "Calculate the left position of object.
 
-type = widget specific positioning option
-area = (left top width height) within parent
-object = object doing left calculation for
+type   = Widget specific positioning option
+area   = %rect allocated to widget within parent area
+width  = Value returned from calc-width for this object
+height = Value returned from calc-height for this object
+object = object doing left calculation for"))
 
-At the point this is called, calculated height and width of object have
-already been calcuated and set to object."))
-
-(defgeneric calc-top (type area object)
+(defgeneric calc-top (type area width height object)
   (:documentation "Calculate the top position of object.
 
-type = widget specific positioning option
-area = (left top width height) within parent
-object = object doing top calculation for
-
-At the point this is called, calculated height and width of object have
-already been calcuated and set to object."))
+type   = Widget specific positioning option
+area   = %rect allocated to widget within parent area
+width  = Value returned from calc-width for this object
+height = Value returned from calc-height for this object
+object = object doing top calculation for"))
 
 (defgeneric calc-width (type area object)
   (:documentation "Calculate width of object.
 
-type = widget specific positioning option
-area = (left top width height) within parent
+type = Widget specific positioning option
+area = %rect allocated to widget within parent area
 object = object doing width calculation for"))
 
 (defgeneric layout-changed (layout &key parent child)
@@ -188,12 +270,8 @@ theme - Theme used to paint box title."))
 ;; types of area-cache's. Should return T/NIL for whether the cache update
 ;; succeeded."))
 
-(defgeneric update-layout-child-areas (index object)
-  (:documentation "After a child's area has been modified, call this to update the internal child
-areas as well as redistribute newly available area to siblings.
-
-index  = Index of modified child
-object = Object containing modified child"))
+;; index  = Index of modified child
+;; object = Object containing modified child"))
 
 (defgeneric within (x y obj &key &allow-other-keys))
 

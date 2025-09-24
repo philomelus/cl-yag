@@ -33,25 +33,25 @@
         (assert (equal value :auto))
         (when (not (slot-value object 'extra))
           (setf (slot-value object 'extra) t)
-          (v:info :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
+          (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
       (progn
         (assert (typep value (values 'integer 'float)))
         ;; Set to absolute or percent?
         (if (<= value 1)
             (progn
               (setf (slot-value object 'width-type) :percent)
-              (v:info :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to PERCENT")
+              (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to PERCENT")
               ;; Enable extra?
               (when (not (slot-value object 'extra))
                 (setf (slot-value object 'extra) t)
-                (v:info :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
+                (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
             (progn
               (setf (slot-value object 'width-type) :absolute)
-              (v:info :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to ABSOLUTE")
+              (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to ABSOLUTE")
               ;; Disable extra?
               (when (slot-value object 'extra)
                 (setf (slot-value object 'extra) nil)
-                (v:info :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to NIL"))))))
+                (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to NIL"))))))
   (my-next-method))
 
 ;;; %grid-layout-row -------------------------------------------------
@@ -74,25 +74,25 @@
         (assert (equal value :auto))
         (when (not (slot-value object 'extra))
           (setf (slot-value object 'extra) t)
-          (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
+          (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
       (progn
         (assert (typep value (values 'integer 'float)))
         ;; Set to absolute or percent?
         (if (<= value 1)
             (progn
               (setf (slot-value object 'height-type) :percent)
-              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to PERCENT")
+              (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to PERCENT")
               ;; Enable extra?
               (when (not (slot-value object 'extra))
                 (setf (slot-value object 'extra) t)
-                (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
+                (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
             (progn
               (setf (slot-value object 'height-type) :absolute)
-              (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to ABSOLUTE")
+              (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to ABSOLUTE")
               ;; Disable extra?
               (when (slot-value object 'extra)
                 (setf (slot-value object 'extra) nil)
-                (v:info :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL"))))))
+                (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL"))))))
   (my-next-method))
 
 ;;; grid-layout -----------------------------------------------------
@@ -147,10 +147,15 @@
 
 ;;; methods ---------------------------------------------------------
 
+(defmethod calc-area ((parent grid-layout) &key)
+  )
+
 (defmethod calc-layout-child-areas ((object grid-layout))
   "Calculate the over-all area of each child.
-Note that children may use different sizes themselves, this is just the
-area allocated to them, whether they choose to use it or not."
+Note that children may use different sizes themselves, this is just the area
+allocated to them, whether they choose to use it or not. This does default
+layout calculations, most of the option interpretation is done in CALC-AREA."
+  
   (declare (type grid-layout object))
   
   (flet ((calc-col-width (data avail-width total-width max-width col cols)
@@ -233,7 +238,7 @@ area allocated to them, whether they choose to use it or not."
 
             ;; Determine the max width and height of rows
             (loop :for row :from 0 :below rows :do
-              (v:info :layout "[c-l-c-a] {g-l} starting row ~d" row)
+              (v:debug :layout "[c-l-c-a] {g-l} starting row ~d" row)
               
               ;; Make row data available
               (with-slots ((row-height height) (row-height-type height-type)
@@ -246,14 +251,14 @@ area allocated to them, whether they choose to use it or not."
 
                 ;; For each column
                 (loop :for col :from 0 :below columns :do
-                  (v:info :layout "[c-l-c-a] {g-l} starting column ~d" col)
+                  (v:debug :layout "[c-l-c-a] {g-l} starting column ~d" col)
                   
                   ;; Make column data available
                   (with-slots ((column-width width) (column-width-type width-type)
                                (column-h-align h-align) (column-v-align v-align)
                                (column-extra extra))
                       (aref (slot-value object 'column-data) col)
-                    (v:info :layout "[c-l-c-a] {g-l} column-data: width:~a width-type:~a extra:~a h-align:~a v-align:~a"
+                    (v:debug :layout "[c-l-c-a] {g-l} column-data: width:~a width-type:~a extra:~a h-align:~a v-align:~a"
                             column-width column-width-type column-extra column-h-align column-v-align)
                       
                     ;; Calculate width and height
@@ -265,16 +270,16 @@ area allocated to them, whether they choose to use it or not."
                       ;; Calculate internal child area width
                       (assert (>= width 0))
                       (assert (>= height 0))
-                      (v:info :layout "[c-l-c-a] {g-l} column ~d calculated width:~d height:" col width height)
+                      (v:debug :layout "[c-l-c-a] {g-l} column ~d calculated width:~d height:" col width height)
                       
                       ;; Update max column width if needed
                       (when (> width (aref col-widths col))
-                        (v:info :layout "[c-l-c-a] {g-l} column ~d new max width:~d" col width)
+                        (v:debug :layout "[c-l-c-a] {g-l} column ~d new max width:~d" col width)
                         (setf (aref col-widths col) width))
 
                       ;; Update max row height if needed
                       (when (> height (aref row-heights row))
-                        (v:info :layout "[c-l-c-a] {g-l} row ~d new max height:~d" row height)
+                        (v:debug :layout "[c-l-c-a] {g-l} row ~d new max height:~d" row height)
                         (setf (aref row-heights row) height))
 
                       ;; Update horizontal position
@@ -293,7 +298,7 @@ area allocated to them, whether they choose to use it or not."
 
               ;; Is it less than available?
               (when (< row-width object-width)
-                (v:info :layout "[c-l-c-a] {g-l} left over horizontal ~d" (- object-width row-width))
+                (v:debug :layout "[c-l-c-a] {g-l} left over horizontal ~d" (- object-width row-width))
 
                 ;; Yes, make sure there is at least on column that can accept extra
                 (let ((has-extra nil))
@@ -309,7 +314,7 @@ area allocated to them, whether they choose to use it or not."
                                           :collect (extra (aref column-data col)))))
                   (let ((allowed (make-array columns :initial-contents allowed-list)))
                     (setf col-widths (distribute col-widths allowed (- object-width row-width) columns))))))
-            (v:info :layout "[C-L-C-A] {G-L} columns widths: ~a" col-widths)
+            (v:debug :layout "[C-L-C-A] {G-L} columns widths: ~a" col-widths)
 
             ;; Calculate total height used
             (let ((row-height 0))
@@ -318,7 +323,7 @@ area allocated to them, whether they choose to use it or not."
               
               ;; Is there any left over vertical space?
               (when (< row-height object-height)
-                (v:info :layout "[C-L-C-A] {G-L} left over vertical ~d" (- object-height row-height))
+                (v:debug :layout "[C-L-C-A] {G-L} left over vertical ~d" (- object-height row-height))
 
                 ;; Yes, make sure there is a least one row that accepts extra
                 (let ((has-extra nil))
@@ -334,7 +339,7 @@ area allocated to them, whether they choose to use it or not."
                                           :collect (extra (aref row-data row)))))
                   (let ((allowed (make-array rows :initial-contents allowed-list)))
                     (setf row-heights (distribute row-heights allowed (- object-height row-height) rows))))))
-            (v:info :layout "[C-L-C-A] {G-L} row heights: ~a" row-heights)
+            (v:debug :layout "[C-L-C-A] {G-L} row heights: ~a" row-heights)
             
             (let ((col-avail-widths (make-array columns :element-type 'float :initial-element 0.0))
                   (row-avail-heights (make-array rows :element-type 'float :initial-element 0.0))
@@ -378,7 +383,7 @@ area allocated to them, whether they choose to use it or not."
       (loop :for row :from 0 :below rows :do
         (loop :for col :from 0 :below columns :do
           (let ((array-offset (+ (* row columns) col)))
-            (v:info :layout "[c-l-c-a] {g-l} child ~d,~d (~d) internal area (~d ~d) @ (~d ~d)"
+            (v:debug :layout "[c-l-c-a] {g-l} child ~d,~d (~d) internal area (~d ~d) @ (~d ~d)"
                     col row array-offset
                     (width (aref child-area array-offset)) (height (aref child-area array-offset))
                     (left (aref child-area array-offset)) (top (aref child-area array-offset)))))))))
@@ -408,16 +413,6 @@ area allocated to them, whether they choose to use it or not."
 
   ;; Let base take care of children
   (my-next-method))
-
-(defmethod update-layout-child-areas (index (object grid-layout))
-  "When a child has options changing the area used within the layout, this
-recalculates the sizes of the children that are affected by it."
-  (declare (type integer index))
-  (declare (type grid-layout object))
-  (declare (ignorable index))
-  
-  (v:error :grid "[update-layout-child-area] {~a} updating child ~d"
-           (print-raw-object (nth index (content object))) index))
 
 ;;;; functions ================================================================
 

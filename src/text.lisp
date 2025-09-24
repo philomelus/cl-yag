@@ -61,23 +61,21 @@
     (v:debug :layout "[calc-height] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
-(defmethod calc-left (type (area %rect) (object text))
+(defmethod calc-left (type (area %rect) width height (object text))
   (v:debug :layout "[calc-left] {text} area: (~d ~d) @ (~d ~d) ~a" 
            (width area) (height area) (left area) (top area) (print-raw-object object))
-  (let ((rv (text-calc-left type area object)))
+  (let ((rv (text-calc-left type area width height object)))
     (v:debug :layout "[calc-left] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
-(defmethod calc-top (type (area %rect) (object text))
+(defmethod calc-top (type (area %rect) width height (object text))
   (v:debug :layout "[calc-top] {text} area: (~d ~d) @ (~d ~d) ~a"
            (width area) (height area) (left area) (top area) (print-raw-object object))
-  (let ((rv (text-calc-top type area object)))
+  (let ((rv (text-calc-top type area width height object)))
     (v:debug :layout "[calc-top] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
 (defmethod calc-width (type (area %rect) (object text))
-  (v:debug :layout "[calc-width] {text} area: (~d ~d) @ (~d ~d) ~a"
-           (width area) (height area) (left area) (top area) (print-raw-object object))
   (let ((rv (text-calc-width type area object))) 
     (v:debug :layout "[calc-width] {text} result:~d ~a" rv (print-raw-object object))
     rv))
@@ -122,26 +120,34 @@
        (assert (<= rv (height area)))))
     rv))
 
-(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-left))
-(defun text-calc-left (type area object)
+(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-left))
+(defun text-calc-left (type area width height object)
+  "For any widget that only uses a title inside its content, this will calculate
+the left coordinate. Handles spacing, borders, and padding if widgets are
+derived from appropriate mixins."
+  (declare (ignorable height))
+  
   (with-local-slots ((rv left)) area
     (ccase type
       ((:left :auto :right))
       
       (:center
-       (with-local-slots (border-left border-right
-                          padding-left padding-right
-                          spacing-left spacing-right
-                          width)
-                         object
-         (incf width spacing-left)
-         (incf width spacing-right)
-         (unless (eql border-left nil)
-           (incf width (thickness border-left))
-           (incf width padding-left))
-         (unless (eql border-right nil)
-           (incf width (thickness border-right))
-           (incf width padding-right))
+       (let ((calc-width width))
+         (when (typep object 'spacing-mixin)
+           (incf calc-width (spacing-left object))
+           (incf calc-width (spacing-right object)))
+         (when (typep object 'border-mixin)
+           (let ((local-border-left (border-left object))
+                 (local-border-right (border-right object))
+                 (paddingp (typep object 'padding-mixin)))
+             (unless (eql local-border-left nil)
+               (incf calc-width (thickness local-border-left))
+               (when paddingp
+                 (incf calc-width (padding-left object))))
+             (unless (eql local-border-right nil)
+               (incf calc-width (thickness local-border-right))
+               (when paddingp
+                 (incf calc-width (padding-right object))))))
          (let ((aw (width area)))
            (assert (>= aw width))
            (incf rv (/ (- aw width) 2))))))
@@ -232,20 +238,38 @@
          (v:debug :layout "[text-calc-title-top] aligning text bottom:~a ~a" at (print-raw-object obj))))
       at)))
 
-(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-top))
-(defun text-calc-top (type area object)
+(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-top))
+(defun text-calc-top (type area width height object)
+  "For any widget that only uses a title inside its content, this will calculate
+the top coordinate. Handles spacing, borders, and padding if widgets are
+derived from appropriate mixins."
+  (declare (ignorable width))
+  
   (with-local-slots ((rv top)) area
     (ecase type
-      ((:top :none :auto))                    ; already done
+      ((:top :none :auto))              ; already done
 
       (:middle
-       (incf rv (/ (- (height area) (height object)) 2)))
+       (incf rv (/ (- (height area) height) 2)))
 
       (:bottom
-       (with-local-slots ((h height)) object
-         (incf h (padding-top object))
-         (incf h (padding-bottom object))
-         (incf rv (- (height area) h)))))
+       (let ((calc-height height))
+         (when (typep object 'spacing-mixin)
+           (incf calc-height (spacing-top object))
+           (incf calc-height (spacing-bottom object)))
+         (when (typep object 'border-mixin)
+           (let ((local-border-top (border-top object))
+                 (local-border-bottom (border-bottom object))
+                 (paddingp (typep object 'padding-mixin)))
+             (unless (eql local-border-top nil)
+               (incf calc-height (thickness local-border-top))
+               (when paddingp
+                 (incf calc-height (padding-top object))))
+             (unless (eql local-border-bottom nil)
+               (incf calc-height (thickness local-border-bottom))
+               (when paddingp
+                 (incf calc-height (padding-bottom object))))))
+         (incf rv (- (height area) calc-height)))))
     rv))
 
 (declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-width))

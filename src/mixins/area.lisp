@@ -26,19 +26,17 @@
 
 ;;; methods ---------------------------------------------------------
 
-(defmethod bottom ((obj area-mixin))
-  (+ (top obj) (height obj)))
+(defmethod bottom ((object area-mixin))
+  (+ (top object) (height object)))
 
-(defmethod height ((obj area-mixin))
-  (with-slots ((h height)) obj
-    (when (typep h 'keyword)
-      (v:debug :layout "[height] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (typep h 'layout-height-type))
-      (calc-area obj (parent obj))
-      (assert (typep (slot-value obj 'height) 'number))
-      (setf h (slot-value obj 'height))
-      (v:debug :layout "[height] {area-mixin} result:~d ~a" h (print-raw-object obj)))
-    h))
+(defmethod height ((object area-mixin))
+  (with-local-slots ((local-height height)) object
+    (when (keywordp local-height)
+      (assert (typep local-height 'layout-height-type))
+      (calc-area (find-parent-layout object))
+      (assert (typep (slot-value object 'height) 'coordinate))
+      (setf local-height (slot-value object 'height)))
+    local-height))
 
 (defmethod initialize-instance :after ((object area-mixin) &key)
   (with-slots (left top width height) object
@@ -67,29 +65,29 @@
       ))
   (my-next-method))
 
-(defmethod left ((obj area-mixin))
-  (with-slots (left) obj
-    (when (typep left 'keyword)
-      (v:debug :layout "[left] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (typep left 'layout-left-type))
-      (calc-area obj (parent obj))
-      (assert (typep (slot-value obj 'left) 'number))
-      (setf left (slot-value obj 'left))
-      (v:debug :layout "[left] {area-mixin} result:~d ~a" left (print-raw-object obj)))
-    left))
+(defmethod left ((object area-mixin))
+  (with-local-slots ((local-left left)) object
+    (when (keywordp local-left)
+      (assert (typep local-left 'layout-left-type))
+      (calc-area (find-parent-layout object))
+      (assert (typep (slot-value object 'left) 'coordinate))
+      (setf local-left (slot-value object 'left)))
+    local-left))
 
 (defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
   ;; If we are a container, pass on to all children
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
-        (on-mouse-move x y dx dy child)))
+        (unless (eql child nil)
+         (on-mouse-move x y dx dy child))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj area-mixin) &key)
   (if (typep obj 'container-mixin)
       (dolist (child (content obj))
-        (if (on-mouse-down x y b child)
-            (return-from on-mouse-down t))))
+        (unless (eql child nil)
+            (if (on-mouse-down x y b child)
+             (return-from on-mouse-down t)))))
   (my-next-method))
 
 (defmethod on-mouse-up (x y b (obj area-mixin) &key)
@@ -98,49 +96,42 @@
         (on-mouse-up x y b child)))
   (my-next-method))
 
-(defmethod right ((obj area-mixin))
-  (let ((l (left obj))
-        (w (width obj)))
-    (+ l w)))
+(defmethod right ((object area-mixin))
+  (+ (left object) (width object)))
 
-(defmethod top ((obj area-mixin))
-  (with-slots ((top top)) obj
-    (when (typep top 'keyword)
-      (v:debug :layout "[top] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (typep top 'layout-top-type))
-      (calc-area obj (parent obj))
-      (assert (typep (slot-value obj 'top) 'number))
-      (setf top (slot-value obj 'top))
-      (v:debug :layout "[top] {area-mixin} result:~d ~a" top (print-raw-object obj)))
-    top))
+(defmethod top ((object area-mixin))
+  (with-slots ((local-top top)) object
+    (when (keywordp local-top)
+      (assert (typep local-top 'layout-top-type))
+      (calc-area (find-parent-layout object))
+      (assert (typep (slot-value object 'top) 'coordinate))
+      (setf local-top (slot-value object 'top)))
+    local-top))
 
-(defmethod width ((obj area-mixin))
-  (with-slots ((w width)) obj
-    (when (typep w 'keyword)
-      (v:debug :layout "[width] {area-mixin} calculating ~a" (print-raw-object obj))
-      (assert (typep w 'layout-width-type))
-      (calc-area obj (parent obj))
-      (assert (typep (slot-value obj 'width) 'number))
-      (setf w (slot-value obj 'width))
-      (v:debug :layout "[width] {area-mixin} result:~d ~a" w (print-raw-object obj)))
-    w))
+(defmethod width ((object area-mixin))
+  (with-slots ((local-width width)) object
+    (when (keywordp local-width)
+      (assert (typep local-width 'layout-width-type))
+      (calc-area (find-parent-layout object))
+      (assert (typep (slot-value object 'width) 'coordinate))
+      (setf local-width (slot-value object 'width)))
+    local-width))
 
-(defmethod within (x y (obj area-mixin) &key)
-  (let ((left (left obj))
-        (top (top obj))
-        (right (right obj))
-        (bottom (bottom obj)))
-    (when (typep obj 'padding-mixin)
-      (decf left (padding-left obj))
-      (incf right (padding-right obj))
-      (decf top (padding-top obj))
-      (incf bottom (padding-bottom obj)))
-    (if (and (> x left) (< x right)
-             (> y top) (< y bottom))
+(defmethod within (x y (object area-mixin) &key)
+  "Return T when x and y are within area allocated to object."
+  
+  (let ((left (left object))
+        (top (top object))
+        (right (right object))
+        (bottom (bottom object)))
+    (if (and (> x left) (<= x right)
+             (> y top) (<= y bottom))
         t
         nil)))
 
 (defmethod (setf area) (x y w h (obj area-mixin))
+  "Syntactic suger for setting left, top, width, and height in one method."
+  
   (setf (left obj) x)
   (setf (top obj) y)
   (setf (width obj) w)

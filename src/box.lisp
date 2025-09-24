@@ -46,16 +46,16 @@
   (validate-box-options object))
 
 (defmethod calc-height (type area (object box))
-  (height area))
+  (slot-value area 'height))
 
-(defmethod calc-left (type area (object box))
-  (left area))
+(defmethod calc-left (type area width height (object box))
+  (slot-value area 'left))
 
-(defmethod calc-top (type area (object box))
-  (top area))
+(defmethod calc-top (type area width height (object box))
+  (slot-value area 'top))
 
 (defmethod calc-width (type area (object box))
-  (width area))
+  (slot-value area 'width))
 
 (defmethod on-paint ((object box) &key)
   (paint-box object (find-theme object)))
