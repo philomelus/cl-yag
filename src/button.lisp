@@ -152,7 +152,7 @@
               (unless (eql bb nil)
                 (decf calc-bottom (thickness bb))
                 (decf calc-bottom (padding-bottom obj))))
-            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+            (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
               (al:draw-rectangle calc-left calc-top calc-right calc-bottom ch 1))))
 
         )))

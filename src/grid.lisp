@@ -67,7 +67,7 @@
               (setq mncv (minor-color-v theme)))))
 
         ;; Draw grid
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-DEST-COLOR+)
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (let ((right (+ left width))
                 (bottom (+ top height)))
 

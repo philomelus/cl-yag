@@ -48,7 +48,7 @@
                               (:percent (* size ex)))))
                (st start))
            (assert (= (min st en) st))
-           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
              (dolist (div (slot-value object 'period-divisions))
                (if vertical
                    (al:draw-line st div en div dc tn)
@@ -63,7 +63,7 @@
            (decf en (/ sz 2))
            (incf st (/ sz 2))
            (let ((sesz (/ (- en st 1) 2)))
-             (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+             (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
                (dolist (div (slot-value object 'period-divisions))
                  (if vertical
                      (progn
@@ -79,7 +79,7 @@
                                        (:percent (* size ex))))))
            (assert (= (min st en) st))
            (decf en)
-           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
              (dolist (div (slot-value object 'period-divisions))
                (if vertical
                    (al:draw-line st div en div dc tn)
@@ -228,7 +228,7 @@
                (:end (+ top height)))))
       ;; Paint the main line
       (with-object-and-theme ((lc line-color)) object theme
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (al:draw-line (1- left) y (right object) y lc -0.5)))
   
       ;; Paint the divisions
@@ -251,7 +251,7 @@
       ;; Paint the main line
       (with-object-and-theme ((lc line-color)) object theme
         (with-local-slots ((ltn line-thickness)) object
-          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-SRC-COLOR+)
+          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
             (al:draw-line x (1- top) x (bottom object) lc ltn))))
   
       ;; Paint the divisions

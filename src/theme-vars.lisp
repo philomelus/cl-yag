@@ -286,7 +286,7 @@
     (let ((or (+ ol ow))
           (ob (+ ot oh)))
       (with-theme ((ic interior-color)) theme
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ot tn)) (1+ (- or tn)) (1+ (- ob tn)) ic))))))
 
 (defmethod paint-box-interior ((object box) (theme theme-flat))
@@ -294,7 +294,7 @@
     (let ((or (+ ol ow))
           (ob (+ ot oh)))
       (with-theme ((ic interior-color)) theme
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (al:draw-filled-rectangle (2- (+ ol tn)) (2- (+ ot tn)) (1+ (- or tn)) (1+ (- ob tn)) ic))))))
 
 (defmethod paint-box-title ((object box) (theme theme-3d))
