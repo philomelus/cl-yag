@@ -233,13 +233,13 @@ internal calc-* slots."
                    cw ch cl ct)
         
           (macrolet ((do-calc (var func)
-                       `(if (typep ,var 'keyword)
+                       `(if (keywordp ,var)
                             (progn
                               (setf ,var (,func ,var oa child))
                               t)
                             nil))
                      (do-calc-alt (w h var func)
-                       `(if (typep ,var 'keyword)
+                       `(if (keywordp ,var)
                             (progn
                               (setf ,var (,func ,var oa ,w ,h child))
                               t)
@@ -377,10 +377,10 @@ Returns nil if not found."
                     object
 
     ;; Calculate our area if needed
-    (when (or (typep local-left 'keyword)
-              (typep local-top 'keyword)
-              (typep local-width 'keyword)
-              (typep local-height 'keyword))
+    (when (or (keywordp local-left)
+              (keywordp local-top)
+              (keywordp local-width)
+              (keywordp local-height))
       (v:debug :layout "[calc-layout-area] calculating layout area ~a" (print-raw-object object))
       
       ;; Locate first parent that's layout or has area
@@ -497,11 +497,11 @@ Generates error on failure."
           (return p))
       
       ;; If it has area
-      (if (typep p 'area-mixin)
+      (if (typep p 'area-mixin-base)
           (return p))
 
       ;; Get next parent
-      (assert (typep p 'area-mixin))
+      (assert (typep p 'parent-mixin-base))
       (setf p (parent p)))))
 
 ;; TODO: find-if works here ...
@@ -511,9 +511,9 @@ Generates error when no parent has content-mixin as a superclass."
 
   (let ((parobj (parent object)))
     (loop
-      (when (typep parobj 'content-mixin)
+      (when (typep parobj 'content-mixin-base)
         (return-from find-parent-content parobj))
-      (unless (typep parobj 'parent-mixin)
+      (unless (typep parobj 'parent-mixin-base)
         (error "no more parents, object not owned by content??? ~a" (print-raw-object object)))
       (setq parobj (parent parobj)))))
 
@@ -536,7 +536,7 @@ Generates error when no parent has content-mixin as a superclass."
 re-layed out."
 
   (macrolet ((update-value (dest src)
-               `(unless (typep (slot-value object ,dest) 'keyword)
+               `(unless (keywordp (slot-value object ,dest))
                   (let ((value (slot-value object ,src)))
                     (when value
                       (setf (slot-value object ,dest) value))))))
@@ -599,12 +599,12 @@ settings are detected."
   (a:with-gensyms (parlo block instance child)
     `(block ,block
        (let ((,instance ,object))
-         (when (typep ,instance 'parent-mixin)
+         (when (typep ,instance 'parent-mixin-base)
            (let ((,parlo (find-parent-layout ,instance)))
              (unless (eql ,parlo nil)
                (layout-changed ,parlo :child t)
                (return-from ,block))))
-         (when (typep ,instance 'content-mixin)
+         (when (typep ,instance 'content-mixin-base)
            (mapc #'(lambda (,child)
                      (when (typep ,child 'layout-base)
                        (layout-changed ,child :parent t)))
@@ -622,7 +622,7 @@ LAYOUT-CHANGED after body (even if no layout-changed calls were made)."
        (declare (ignorable ,parent ,children))
        (block ,block
          ;; Do we have a parent?
-         (when (typep ,instance 'parent-mixin)
+         (when (typep ,instance 'parent-mixin-base)
            ;; Yes, so see if we have a layout above us
            (let ((,parent-layout (find-parent-layout ,instance)))
              ;; Did we have a parent layout?
@@ -631,7 +631,7 @@ LAYOUT-CHANGED after body (even if no layout-changed calls were made)."
                (push ,parent-layout ,parent)
                (return-from ,block))))
          ;; Not a parent or no parent layout, do we have content?
-         (when (typep ,instance 'content-mixin)
+         (when (typep ,instance 'content-mixin-base)
            ;; Yes, so find any immediate child layouts
            (mapc #'(lambda (,child)
                      (when (typep ,child 'layout-base)

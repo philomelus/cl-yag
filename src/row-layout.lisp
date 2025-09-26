@@ -78,7 +78,7 @@ area allocated to them, whether they choose to use it or not."
 
             ;; Reset all child areas
             (dolist (child (content object))
-              (when (typep child 'area-mixin)
+              (when (typep child 'area-mixin-base)
                 (reset-area child)))
 
             ;; Reset our internal layout

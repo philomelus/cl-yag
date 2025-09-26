@@ -122,7 +122,7 @@ Keys aren't checked because of international support.
 Modifiers are checked."
   (dolist (sc (shortcuts object))
     (let ((mods (second sc)))
-      (if (typep mods 'cons)
+      (if (consp mods)
           (progn
             (dolist (m mods)
               (unless (member m '(:shift :control :ctrl :none :alt))

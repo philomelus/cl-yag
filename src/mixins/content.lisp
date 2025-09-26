@@ -19,7 +19,7 @@ widgets."))
   (dolist (child (content obj))
     (let ((co (foro child)))
       ;; If child has a parent
-      (when (typep co 'parent-mixin)
+      (when (typep co 'parent-mixin-base)
         (v:debug :parent "[initialize-instance] {content-mixin} setting child parent: ~a" (print-raw-object co))
         (setf (parent co) obj))))
   
@@ -30,12 +30,12 @@ widgets."))
   (dolist (child (content obj))
     (let ((co (foro child)))
       ;; If child has a parent slot
-      (when (typep co 'parent-mixin)
+      (when (typep co 'parent-mixin-base)
         (v:debug :parent "[setf content] {content-mixin} setting child parent: ~a" (print-raw-object co))
         (setf (parent co) obj))
 
       ;; If child has content
-      (when (typep co 'content-mixin)
+      (when (typep co 'content-mixin-base)
         (v:debug :layout "[setf content] {content-mixin} calc-area for ~a" co)
         (calc-area obj))))
 

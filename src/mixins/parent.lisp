@@ -29,10 +29,10 @@
   (v:debug :parent "[setf parent] {parent-mixin} updating children")
   
   ;; If we have content
-  (if (typep obj 'content-mixin)
+  (if (typep obj 'content-mixin-base)
       (dolist (child (content obj))
         (let ((co (foro child)))
-          (when (typep co 'parent-mixin)
+          (when (typep co 'parent-mixin-base)
             (v:debug :parent "[setf parent] {parent-mixin} setting child parent: ~a" (print-raw-object co))
             (setf (parent co) obj)))))
   (my-next-method))

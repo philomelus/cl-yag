@@ -56,7 +56,7 @@
 
     ;; Save original state of area
     (flet ((is-keyword (field)
-             (if (typep field 'keyword)
+             (if (keywordp field)
                  field
                  nil)))
       (setf (slot-value object 'left-calc) (is-keyword left))
@@ -77,14 +77,14 @@
 
 (defmethod on-mouse-move (x y dx dy (obj area-mixin) &key)
   ;; If we are a container, pass on to all children
-  (if (typep obj 'content-mixin)
+  (if (typep obj 'content-mixin-base)
       (dolist (child (content obj))
         (unless (eql child nil)
          (on-mouse-move x y dx dy child))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj area-mixin) &key)
-  (if (typep obj 'content-mixin)
+  (if (typep obj 'content-mixin-base)
       (dolist (child (content obj))
         (unless (eql child nil)
             (if (on-mouse-down x y b child)
@@ -92,7 +92,7 @@
   (my-next-method))
 
 (defmethod on-mouse-up (x y b (obj area-mixin) &key)
-  (if (typep obj 'content-mixin)
+  (if (typep obj 'content-mixin-base)
       (dolist (child (content obj))
         (on-mouse-up x y b child)))
   (my-next-method))
@@ -143,13 +143,13 @@
 (defun area (object)
   "Return left, top, width, and height of object as mutliple values."
   
-  (assert (typep object 'area-mixin))
+  (assert (typep object 'area-mixin-base))
   (values (left object) (top object) (width object) (height object)))
 
 (defun area-rb (object)
   "Return left, top, right, and bottom of object as multiple values."
   
-  (assert (typep object 'area-mixin))
+  (assert (typep object 'area-mixin-base))
   (values (left object) (top object) (right object) (bottom object)))
 
 (defun area-rect (object)
@@ -158,10 +158,10 @@
   (make-instance '%rect :left (left object) :top (top object) :width (width object) :height (height object)))
 
 (defun area-save-calc (object)
-  (assert (typep object 'area-mixin))
+  (assert (typep object 'area-mixin-base))
   (with-slots (left top width height) object
     (flet ((is-keyword (field)
-             (if (typep field 'keyword)
+             (if (keywordp field)
                  field
                  nil)))
       (setf (slot-value object 'left-calc) (is-keyword left))
@@ -173,7 +173,7 @@
   "Find first parent of OBJECT derived from parent-mixin. Generates error on
 failure."
   
-  (assert (typep object 'parent-mixin))
+  (assert (typep object 'parent-mixin-base))
   (let ((p (parent object)))
     (loop
       (when (typep p 'manager)
@@ -183,11 +183,11 @@ failure."
         (error "no parent when looking for area-mixin"))
       
       ;; If it has area
-      (if (typep p 'area-mixin)
+      (if (typep p 'area-mixin-base)
           (return p))
 
       ;; Get next parent
-      (assert (typep p 'area-mixin))
+      (assert (typep p 'parent-mixin-base))
       (setf p (parent p)))))
 
 (defun reset-area (object &optional original)
@@ -196,7 +196,7 @@ relayedout. When ORIGINAL provided, updates area of OBJECT based on slots of
 ORIGINAL."
 
   (macrolet ((update-value (dest src)
-               `(unless (typep (slot-value object ,dest) 'keyword)
+               `(unless (keywordp (slot-value object ,dest))
                   (let ((value (slot-value object ,src)))
                     (when value
                       (setf (slot-value object ,dest) value)))))

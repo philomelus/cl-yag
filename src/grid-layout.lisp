@@ -28,7 +28,7 @@
 ;; methods ------------------------------------------------
 
 (defmethod (setf width) :after (value (object %grid-layout-column))
-  (if (typep value 'keyword)
+  (if (keywordp value)
       (progn
         (assert (equal value :auto))
         (when (not (slot-value object 'extra))
@@ -69,7 +69,7 @@
 ;; methods ------------------------------------------------
 
 (defmethod (setf height) :after (value (object %grid-layout-row))
-  (if (typep value 'keyword)
+  (if (keywordp value)
       (progn
         (assert (equal value :auto))
         (when (not (slot-value object 'extra))
@@ -160,7 +160,7 @@ layout calculations, most of the option interpretation is done in CALC-AREA."
   
   (flet ((calc-col-width (data avail-width total-width max-width col cols)
            (with-slots (width width-type) data
-             (if (typep width 'keyword)
+             (if (keywordp width)
                  (progn
                    (assert (equal width :auto))
                    (max (truncate (/ avail-width (- cols col)))
@@ -178,7 +178,7 @@ layout calculations, most of the option interpretation is done in CALC-AREA."
          
          (calc-row-height (data avail-height total-height max-height row rows)
            (with-slots (height height-type) data
-             (if (typep height 'keyword)
+             (if (keywordp height)
                  (progn
                    (assert (equal height :auto))
                    (max (truncate (/ avail-height (- rows row))) max-height))

@@ -120,6 +120,7 @@
            ;; align
            #:h-align
            #:h-align-mixin
+           #:h-align-mixin-base
            #:h-align-type
            #:v-align
            #:v-align-mixin
@@ -128,6 +129,7 @@
            ;; area
            #:area
            #:area-mixin
+           #:area-mixin-base
            #:area-rb
            #:area-rect
            #:bottom
@@ -146,6 +148,7 @@
            #:border-h
            #:border-left
            #:border-mixin
+           #:border-mixin-base
            #:border-right
            #:border-theme-mixin
            #:border-top
@@ -173,16 +176,21 @@
            ;; color
            #:back-color
            #:back-color-mixin
+           #:back-color-mixin-base
            #:color
            #:color-3d-mixin
            #:color-mixin
+           #:color-mixin-base
            #:dark
            #:fore-color
            #:fore-color-mixin
+           #:fore-color-mixin-base
            #:frame-color
            #:frame-color-mixin
+           #:frame-color-mixin-base
            #:interior-color
            #:interior-color-mixin
+           #:interior-color-mixin-base
            #:light
            #:normal
            #:very-dark
@@ -191,14 +199,17 @@
            ;; content
            #:content
            #:content-mixin
+           #:content-mixin-base
            
            ;; font
            #:font
            #:font-mixin
+           #:font-mixin-base
            
            ;; manager
            #:manager
            #:manager-mixin
+           #:manager-mixin-base
            
            ;; padding
            #:padding
@@ -206,6 +217,7 @@
            #:padding-h
            #:padding-left
            #:padding-mixin
+           #:padding-mixin-base
            #:padding-right
            #:padding-top
            #:padding-v
@@ -214,12 +226,14 @@
            #:owner
            #:parent
            #:parent-mixin
+           #:parent-mixin-base
            
            ;; shortcuts
            #:convert-shortcuts
            #:mod2val
            #:shortcuts
            #:shortcuts-mixin
+           #:shortcuts-mixin-base
            #:val2mod
            #:validate-shortcuts
            
@@ -229,6 +243,7 @@
            #:spacing-h
            #:spacing-left
            #:spacing-mixin
+           #:spacing-mixin-base
            #:spacing-right
            #:spacing-top
            #:spacing-v
@@ -236,19 +251,23 @@
            ;; style
            #:style
            #:style-3d-mixin
+           #:style-3d-mixin-base
            #:style-3d-type
            
            ;; theme
            #:theme
            #:theme-mixin
+           #:theme-mixin-base
            
            ;; title
            #:title
            #:title-mixin
+           #:title-mixin-base
            
            ;; visible
            #:visible
            #:visible-mixin
+           #:visible-mixin-base
            
            ;; ========== Widgets ==========
            ;; box
