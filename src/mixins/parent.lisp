@@ -2,9 +2,14 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; parent-mixin =============================================================
+;;;; PARENT-MIXIN-BASE ========================================================
 
-(defclass parent-mixin ()
+(defclass parent-mixin-base ()
+  ())
+
+;;;; PARENT-MIXIN =============================================================
+
+(defclass parent-mixin (parent-mixin-base)
   ((parent :initarg :parent :initform nil :type t :accessor parent)))
 
 ;;; methods ---------------------------------------------------------

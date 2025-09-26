@@ -2,9 +2,14 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; shortcuts-mixin ==========================================================
+;;;; SHORTCUTS-MIXIN-BASE =====================================================
 
-(defclass shortcuts-mixin ()
+(defclass shortcuts-mixin-base ()
+  ())
+
+;;;; SHORTCUTS-MIXIN ==========================================================
+
+(defclass shortcuts-mixin (shortcuts-mixin-base)
   ((shortcuts :type list :initarg :shortcuts :initform nil :accessor shortcuts)
    ;; Internal
    (accels :initform nil)))

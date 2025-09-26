@@ -2,9 +2,14 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; padding-mixin ============================================================
+;;;; PADDING-MIXIN-BASE =======================================================
 
-(defclass padding-mixin ()
+(defclass padding-mixin-base ()
+  ())
+
+;;;; PADDING-MIXIN ============================================================
+
+(defclass padding-mixin (padding-mixin-base)
   ((padding-left :type thickness-type :initarg :padding-left :initform 0 :accessor padding-left)
    (padding-right :type thickness-type :initarg :padding-right :initform 0 :accessor padding-right)
    (padding-top :type thickness-type :initarg :padding-top :initform 0 :accessor padding-top)

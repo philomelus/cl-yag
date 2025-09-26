@@ -2,11 +2,16 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; style-3d-mixin ===========================================================
+;;;; STYLE-3D-MIXIN-BASE ======================================================
+
+(defclass style-3d-mixin-base ()
+  ())
+
+;;;; STYLE-3D-MIXIN ===========================================================
 
 (deftype style-3d-type () '(member nil :default :inset :outset :flat))
 
-(defclass style-3d-mixin ()
+(defclass style-3d-mixin (style-3d-mixin-base)
   ((style :initarg :style :type style-3d-type :initform nil :accessor style)))
 
 (defmethod initializa-instance :after ((object style-3d-mixin) &key)

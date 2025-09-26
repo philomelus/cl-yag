@@ -2,8 +2,14 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; content-mixin ============================================================
-;;;; Has contained objects
+;;;; CONTENT-MIXIN-BASE =======================================================
+
+(defclass content-mixin-base ()
+  ()
+  (:documentation "Any class inheriting from this class it claiming that it contains other
+widgets."))
+
+;;;; CONTENT-MIXIN ============================================================
 
 (defclass content-mixin ()
   ((content :initarg :content :initform (list) :type list :accessor content)))

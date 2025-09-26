@@ -2,9 +2,14 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; spacing-mixin ============================================================
+;;;; SPACING-MIXIN-BASE =======================================================
 
-(defclass spacing-mixin ()
+(defclass spacing-mixin-base ()
+  ())
+
+;;;; SPACING-MIXIN ============================================================
+
+(defclass spacing-mixin (spacing-mixin-base)
   ((spacing-left :type thickness-type :initarg :spacing-left :initform 0 :accessor spacing-left)
    (spacing-top :type thickness-type :initarg :spacing-top :initform 0 :accessor spacing-top)
    (spacing-right :type thickness-type :initarg :spacing-right :initform 0 :accessor spacing-right)

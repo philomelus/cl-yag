@@ -2,15 +2,16 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; area-mixin-base ==========================================================
+;;;; AREA-MIXIN-BASE ==========================================================
 
 (defclass area-mixin-base ()
   ((left :type layout-left-type :initarg :left :initform :auto :accessor left :documentation "Coordinate of left side.")
    (top :type layout-top-type :initarg :top :initform :auto :accessor top :documentation "Coordinate of top side.")
    (width :type layout-width-type :initarg :width :initform :auto :accessor width :documentation "Width of object.")
-   (height :type layout-height-type :initarg :height :initform :auto :accessor height :documentation "Height of object.")))
+   (height :type layout-height-type :initarg :height :initform :auto :accessor height :documentation "Height of object."))
+  (:documentation "Mixin that lets other objects know the derived object has display area."))
 
-;;;; area-mixin ===============================================================
+;;;; AREA-MIXIN ===============================================================
 
 ;; TODO:
 ;; minimize maximize
@@ -136,42 +137,6 @@
   (setf (top obj) y)
   (setf (width obj) w)
   (setf (height obj) h))
-
-;;;; area-cache-mixin =========================================================
-
-;; (defclass area-cache-mixin ()
-;;   ((cache-valid :initform nil :type boolean :documentation "T when rest of area cache slots are valid, nil otherwise")
-;;    (cache-left :initform nil :type (or coordinate null) :documentation "Calculated left of interior area.")
-;;    (cache-top :initform nil :type (or coordinate null) :documentation "Calculated top of interior are.")
-;;    (cache-right :initform nil :type (or coordinate null) :documentation "Calculated right of interior area.")
-;;    (cache-bottom :initform nil :type (or coordinate null) :documentation "Calculated bottom of interior area.")))
-
-;;;; area-cache-border-mixin ==================================================
-
-;; (defclass area-cache-border-mixin ()
-;;   ((cache-border-valid :initform nil :type boolean :documentation "T when rest of border cache slots are valid, nil otherwise")
-;;    (cache-border-left :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of left border.")
-;;    (cache-border-top :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of top border.")
-;;    (cache-border-right :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of right border.")
-;;    (cache-border-bottom :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of bottom border.")))
-
-;;;; area-cache-padding-mixin =================================================
-
-;; (defclass area-cache-padding-mixin ()
-;;   (cache-padding-valid :initform nil :type boolean :documentation "T when other padding slots are valid, nil otherwise.")
-;;   (cache-padding-lb :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of lower left padding.")
-;;   (cache-padding-lt :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of upper left padding.")
-;;   (cache-padding-rb :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of lower right padding.")
-;;   (cache-padding-rt :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of upper right padding."))
-
-;;;; area-cache-border-spacing-mixin ==========================================
-
-;; (defclass area-cache-spacing-mixin ()
-;;   ((cache-spacing-valid :initform nil :type boolean :documentation "T when rest of spacing cache slots are valid, nil otherwise.")
-;;    (cache-spacing-lb :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of lower left exterior.")
-;;    (cache-spacing-lt :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of upper left of exterior.")
-;;    (cache-spacing-rb :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of lower right exterior.")
-;;    (cache-spacing-rt :initform nil :type (or coordinate null) :documentation "Calculated left,top,right,bottom of upper right of exterior.")))
 
 ;;;; functions ================================================================
 

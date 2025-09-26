@@ -2,11 +2,18 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
-;;;; h-align-mixin ============================================================
+;;;; H-ALIGN-MIXIN-BASE =======================================================
+
+(defclass h-align-mixin-base ()
+  ()
+  (:documentation "Mixin that lets other objects know that the derived object has the ability to
+be aligned horizontally."))
+
+;;;; H-ALIGN-MIXIN ============================================================
 
 (deftype h-align-type () '(member :none :left :center :right))
 
-(defclass h-align-mixin ()
+(defclass h-align-mixin (h-align-mixin-base)
   ((h-align :type h-align-type :initarg :h-align :initform :none :accessor h-align)))
 
 ;; Only allow valid keywords
@@ -20,11 +27,18 @@
   (my-next-method))
 
 
-;;;; v-align-mixin ============================================================
+;;;; V-ALIGN-MIXIN-BASE =======================================================
+
+(defclass v-align-mixin-base ()
+  ()
+  (:documentation "Mixin that lets other objects know that the derived object has the ability to
+be aligned vertically."))
+
+;;;; V-ALIGN-MIXIN ============================================================
 
 (deftype v-align-type () '(member :none :top :middle :bottom))
 
-(defclass v-align-mixin ()
+(defclass v-align-mixin (v-align-mixin-base)
   ((v-align :type v-align-type :initarg :v-align :initform :none :accessor v-align)))
 
 ;; Only allow valid keywords
