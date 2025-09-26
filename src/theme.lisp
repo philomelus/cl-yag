@@ -127,23 +127,23 @@
     (declare (ignorable lto lti rbo rbi))
     (with-area-and-spacing (object-left object-top object-right object-bottom) object
       (let ((thickness (thickness border)))
-        (let ((1/4-thick (/ thickness 4))
-              (1/2-thick (/ thickness 2))
-              (others ()))
-          (when blend-top
-            (push :top others))
-          (when blend-bottom
-            (push :bottom others))
-          (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
-            (draw-side :left
-                       (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                       (+ object-right 1/4-thick) (- object-bottom 1/4-thick) 
-                       1/2-thick lto :others others)
-            (draw-side :left
-                       (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                       (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
-                       1/2-thick lti :others others :inside t)
-            ))))))
+        (when (> thickness 0)
+          (let ((1/4-thick (/ thickness 4))
+                (1/2-thick (/ thickness 2))
+                (others ()))
+            (when blend-top
+              (push :top others))
+            (when blend-bottom
+              (push :bottom others))
+            (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
+              (draw-side :left
+                         (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                         (+ object-right 1/4-thick) (- object-bottom 1/4-thick) 
+                         1/2-thick lto :others others)
+              (draw-side :left
+                         (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                         (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
+                         1/2-thick lti :others others :inside t))))))))
 
 (defmethod paint-border-left ((border border) object (theme theme-flat) &key blend-top blend-bottom)
   (declare (ignorable blend-top blend-bottom))
@@ -165,20 +165,21 @@
     (declare (ignorable lto lti rbo rbi))
     (with-area-and-spacing (object-left object-top object-right object-bottom) object
       (let ((thickness (thickness border)))
-        (let ((1/4-thick (/ thickness 4))
-              (1/2-thick (/ thickness 2))
-              (others ()))
-          (when blend-top
-            (push :top others))
-          (when blend-bottom
-            (push :bottom others))
-          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
-            (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
-                       (- object-right 1/4-thick) (- object-bottom 1/4-thick)
-                       1/2-thick rbo :others others)
-            (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
-                       (- object-right 3/4-thick) (- object-bottom 3/4-thick)
-                       1/2-thick rbi :others others :inside t)))))))
+        (when (> thickness 0)
+          (let ((1/4-thick (/ thickness 4))
+                (1/2-thick (/ thickness 2))
+                (others ()))
+            (when blend-top
+              (push :top others))
+            (when blend-bottom
+              (push :bottom others))
+            (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
+              (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
+                         (- object-right 1/4-thick) (- object-bottom 1/4-thick)
+                         1/2-thick rbo :others others)
+              (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
+                         (- object-right 3/4-thick) (- object-bottom 3/4-thick)
+                         1/2-thick rbi :others others :inside t))))))))
 
 (defmethod paint-border-right ((border border) object (theme theme-flat) &key blend-top blend-bottom)
   (declare (ignorable blend-top blend-bottom))
@@ -198,20 +199,21 @@
     (declare (ignorable lto lti rbo rbi))
     (with-area-and-spacing (object-left object-top object-right object-bottom) object
       (let ((thickness (thickness border)))
-        (let ((1/4-thick (/ thickness 4))
-              (1/2-thick (/ thickness 2))
-              (others ()))
-          (when blend-left
-            (push :left others))
-          (when blend-right
-            (push :right others))
-          (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
-            (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                       object-right (+ object-bottom 1/4-thick)
-                       1/2-thick lto :others others)
-            (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                       object-right (+ object-bottom 3/4-thick)
-                       1/2-thick lti :others others :inside t)))))))
+        (when (> thickness 0)
+          (let ((1/4-thick (/ thickness 4))
+                (1/2-thick (/ thickness 2))
+                (others ()))
+            (when blend-left
+              (push :left others))
+            (when blend-right
+              (push :right others))
+            (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
+              (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
+                         object-right (+ object-bottom 1/4-thick)
+                         1/2-thick lto :others others)
+              (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
+                         object-right (+ object-bottom 3/4-thick)
+                         1/2-thick lti :others others :inside t))))))))
 
 (defmethod paint-border-top ((border border) object (theme theme-flat) &key blend-left blend-right)
   (declare (ignorable blend-left blend-right))
