@@ -1,10 +1,96 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
-;;;; generics =================================================================
+;;;; GENERICS =================================================================
+
+;;; AREA ------------------------------------------------------------
+
+(defgeneric (setf area) (x y w h object))
 
 (defgeneric bottom (object))
+
+(defgeneric right (object))
+
+(defgeneric within (x y obj &key &allow-other-keys))
+
+;;; BORDER ----------------------------------------------------------
+
+(defgeneric (setf border) (border-object object)
+  (:documentation "Sets all borders of OBJECT to BORDER-OBJECT."))
+
+(defgeneric (setf border-h) (border-object object)
+  (:documentation "Sets horizontal borders of OBJECT to BORDER-OBJECT."))
+
+(defgeneric (setf border-v) (border-object object)
+  (:documentation "Sets vertical borders of OBJECT to BORDER-OBJECT."))
+
+(defgeneric paint-border (object theme)
+  (:documentation "Paint borders for object.
+
+Default implementation calls the paint-border-* generics with apropriate
+keywords."))
+
+(defgeneric paint-border-bottom (border object theme &key blend-left blend-right)
+  (:documentation "Paint bottom border.
+
+BLEND-LEFT is T when the left border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-RIGHT is T when the right border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-left (border object theme &key blend-top blend-bottom)
+  (:documentation "Paint left border.
+
+BLEND-TOP is T when the top border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-right (border object theme &key blend-top blend-bottom)
+  (:documentation "Paint right border.
+
+BLEND-TOP is T when the top border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side.
+
+BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+(defgeneric paint-border-top (border object theme &key blend-left blend-right)
+  (:documentation "Paint top border.
+
+BLEND-LEFT is T when the left border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint the full side.
+
+BLEND-RIGHT is T when the right border will also be painted, so perform any
+required blending to make it look correct. NIL means to paint full side."))
+
+;;; BOX -------------------------------------------------------------
+
+(defgeneric paint-box (box theme)
+  (:documentation "Called to paint a box. Unless custom drawing is desired, just call
+PAINT-BOX-FRAME, PAINT-BOX-INTERIOR, and PAINT-BOX-TITLE.
+
+theme - Theme used for painting box."))
+
+(defgeneric paint-box-frame (box theme)
+  (:documentation "Called to paint the frame of a box.
+
+theme  - Theme used to paint box frame."))
+
+(defgeneric paint-box-interior (box theme)
+  (:documentation "Called to paint the interior of a box.
+
+theme - Theme used to paint box interior."))
+
+(defgeneric paint-box-title (box theme)
+  (:documentation "Called to paint the title of a box.
+
+theme - Theme used to paint box title."))
+
+;;; LAYOUT ----------------------------------------------------------
 
 (defgeneric calc-area (object &key &allow-other-keys)
   (:documentation "Called to calculate child areas. Typically called from LEFT, TOP, WIDTH, or
@@ -187,7 +273,7 @@ location informationm."))
 (defgeneric layout-row-options (layout &key &allow-other-keys)
   (:documentation "Allows setting all slots of a LAYOUT-ROW-DATA in a single method."))
 
-(defgeneric must-init (test desc))
+;;; MANAGER ---------------------------------------------------------
 
 (defgeneric on-char (key mods object &key &allow-other-keys)
   (:method (key mods object &Key)
@@ -231,104 +317,19 @@ location informationm."))
     (on-paint obj)
     (my-next-method)))
 
-(defgeneric paint-border (object theme)
-  (:documentation "Paint borders for object.
-
-Default implementation calls the paint-border-* generics with apropriate
-keywords."))
-
-(defgeneric paint-border-bottom (border object theme &key blend-left blend-right)
-  (:documentation "Paint bottom border.
-
-BLEND-LEFT is T when the left border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side.
-
-BLEND-RIGHT is T when the right border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side."))
-
-(defgeneric paint-border-left (border object theme &key blend-top blend-bottom)
-  (:documentation "Paint left border.
-
-BLEND-TOP is T when the top border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side.
-
-BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side."))
-
-(defgeneric paint-border-right (border object theme &key blend-top blend-bottom)
-  (:documentation "Paint right border.
-
-BLEND-TOP is T when the top border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side.
-
-BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side."))
-
-(defgeneric paint-border-top (border object theme &key blend-left blend-right)
-  (:documentation "Paint top border.
-
-BLEND-LEFT is T when the left border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint the full side.
-
-BLEND-RIGHT is T when the right border will also be painted, so perform any
-required blending to make it look correct. NIL means to paint full side."))
-
-(defgeneric paint-box (box theme)
-  (:documentation "Called to paint a box. Unless custom drawing is desired, just call
-PAINT-BOX-FRAME, PAINT-BOX-INTERIOR, and PAINT-BOX-TITLE.
-
-theme - Theme used for painting box."))
-
-(defgeneric paint-box-frame (box theme)
-  (:documentation "Called to paint the frame of a box.
-
-theme  - Theme used to paint box frame."))
-
-(defgeneric paint-box-interior (box theme)
-  (:documentation "Called to paint the interior of a box.
-
-theme - Theme used to paint box interior."))
-
-(defgeneric paint-box-title (box theme)
-  (:documentation "Called to paint the title of a box.
-
-theme - Theme used to paint box title."))
-
 (defgeneric process-events (queue object &key &allow-other-keys))
-
-(defgeneric right (object))
 
 (defgeneric unhandled-event (event object) (:method (e o)))
 
-;; (defgeneric update-area-cache (object)
-;;   (:documentation "Called to update the area cache of object. This is called for all derived
-;; types of area-cache's. Should return T/NIL for whether the cache update
-;; succeeded."))
-
-;; index  = Index of modified child
-;; object = Object containing modified child"))
-
-(defgeneric within (x y obj &key &allow-other-keys))
-
-;;;; setf =====================================================================
-
-(defgeneric (setf area) (x y w h object))
-
-(defgeneric (setf border) (border-object object)
-  (:documentation "Sets BORDER-LEFT, BORDER-RIGHT, BORDER-TOP, and BORDER-BOTTOM of OBJECT to
-BORDER-OBJECT."))
-
-(defgeneric (setf border-h) (border-object object)
-  (:documentation "Sets BORDER-LEFT and BORDER-RIGHT of OBJECT to BORDER-OBJECT."))
-
-(defgeneric (setf border-v) (border-object object)
-  (:documentation "Sets BORDER-ROP and BORDER-BOTTOM of OBJECT to BORDER-OBJECT."))
+;;; PADDING ---------------------------------------------------------
 
 (defgeneric (setf padding) (value object))
 
 (defgeneric (setf padding-h) (value object))
 
 (defgeneric (setf padding-v) (value object))
+
+;;; SPACING ---------------------------------------------------------
 
 (defgeneric (setf spacing) (value object))
 
