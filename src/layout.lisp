@@ -1,36 +1,8 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
-;; TODO:
-;; Since we only have columns, rows, and cells, make all layouts use them.
-;; layout only uses cell options
-;; row-layout uses row and cell options
-;; column-layout uses column and cell options
-;; grid-layout uses  grid column and cell options
-;; new classes:
-;;    layout-cell-data
-;;    layout-column-data
-;;    layout-row-data
-;;
-;; Then have all the common needed generics for them, like:
-;;
-;; layout-column-cells returns all cells for a column
-;; layout-column-children returns all children for a column
-;; layout-row-cells returns all cells for a row
-;; layout-row-children returns all children for a row
-;; layout-cell returns cell for column and row
-;; layout-cells returns all cells
-;; layout-child returns child widget for column and row
-;; layout-children would be same as content
-;; layout-column-options allows setting all layout-column-options as keywords to support
-;;    deflayout initialization of rows and columns
-;; layout-row-options allows setting all layout-row-options as keywords to support
-;;    deflayout initialization of rows and columns
-;; layout-cell-options allows setting all layout-cell-options as keywords to support
-;;    deflayout initialization of cells
-
-;;;; layout-base ==============================================================
+;;;; LAYOUT-BASE ==============================================================
 
 ;; These can be combined with widgets in the content list to change the way
 ;; the widget is layed out (for example
@@ -69,7 +41,7 @@
    (original-top :type layout-original-width-type :initform nil :documentation "Holds original TOP slot value. Used when re-layout is required.")
    (original-width :type layout-original-height-type :initform nil :documentation "Holds original WIDTH slot value. Used when re-layout is required.")))
 
-;;; methods ---------------------------------------------------------
+;;; METHODS ---------------------------------------------------------
 
 (defmethod calc-area :around ((object layout-base) &key)
   "Initialize our size, setup internal CHILD-AREA, call derived object's
@@ -201,11 +173,107 @@ internal calc-* slots."
       (setf local-width (slot-value object 'width)))
     local-width))
 
-;;;; layout ===================================================================
+;;;; LAYOUT-CELL-DATA =========================================================
+
+(defclass layout-cell-data (border-mixin
+                            h-align-mixin ; when area is < col/row size, how to position horizontally
+                            padding-mixin ; border to content
+                            spacing-mixin ; edge to border
+                            v-align-mixin) ; When area is < col/row size, how to position vertically
+  ()
+  (:documentation "Data used for layout of a specific CELL within a layout."))
+
+;;;; LAYOUT-COLUMN-DATA =======================================================
+
+(deftype layout-column-width-type () '(member :absolute :percent :percent-all))
+
+(defclass layout-column-data (extra-mixin
+                              h-align-mixin
+                              v-align-mixin)
+  ((width :type layout-width-type :initarg :width :initform :auto :accessor width)
+   (width-type :type layout-column-width-type :initform :percent :accessor width-type)
+   (h-align :initform :center)  ; Applies to column, unless specified in cell
+   (v-align :initform :middle)) ;  Applies to column, unless specified in cell
+  (:documentation "Data used for layout calculations of a column in a LAYOUT with columns. CELL
+options override options here."))
+
+;; METHODS ------------------------------------------------
+
+(defmethod (setf width) :after (value (object layout-column-data))
+  (if (keywordp value)
+      (progn
+        (assert (equal value :auto))
+        (when (not (slot-value object 'extra))
+          (setf (slot-value object 'extra) t)
+          (v:debug :layout "[SETF WIDTH] {LAYOUT-COLUMN-DATA} automatically set EXTRA to T")))
+      (progn
+        (assert (typep value 'coordinate))
+        ;; Set to absolute or percent?
+        (if (<= value 1)
+            (progn
+              (setf (slot-value object 'width-type) :percent)
+              (v:debug :layout "[SETF WIDTH] {LAYOUT-COLUMN-DATA} automatically set WIDTH-TYPE to PERCENT")
+              ;; Enable extra?
+              (when (not (slot-value object 'extra))
+                (setf (slot-value object 'extra) t)
+                (v:debug :layout "[SETF WIDTH] {LAYOUT-COLUMN-DATA} automatically set EXTRA to T")))
+            (progn
+              (setf (slot-value object 'width-type) :absolute)
+              (v:debug :layout "[SETF WIDTH] {LAYOUT-COLUMN-DATA} automatically set WIDTH-TYPE to ABSOLUTE")
+              ;; Disable extra?
+              (when (slot-value object 'extra)
+                (setf (slot-value object 'extra) nil)
+                (v:debug :layout "[SETF WIDTH] {LAYOUT-COLUMN-DATA} automatically set EXTRA to NIL"))))))
+  (my-next-method))
+
+;;;; LAYOUT-ROW-DATA ==========================================================
+
+(deftype layout-row-height-type () '(member :absolute :percent :percent-all))
+
+(defclass layout-row-data (extra-mixin
+                           h-align-mixin
+                           v-align-mixin)
+  ((height :type layout-height-type :initarg :height :initform :auto :accessor height)
+   (height-type :type layout-row-height-type :initform :percent :accessor height-type)
+   (h-align :initform :center)
+   (v-align :initform :middle))
+  (:documentation "Data used for layout calculations of a row in a LAYOUT that uses rows. CELL
+options override options here."))
+
+;; METHODS ------------------------------------------------
+
+(defmethod (setf height) :after (value (object layout-row-data))
+  (if (keywordp value)
+      (progn
+        (assert (equal value :auto))
+        (when (not (slot-value object 'extra))
+          (setf (slot-value object 'extra) t)
+          (v:debug :layout "[SETF HEIGHT] {LAYOUT-ROW-DATA} automatically set EXTRA to T")))
+      (progn
+        (assert (typep value (values 'integer 'float)))
+        ;; Set to absolute or percent?
+        (if (<= value 1)
+            (progn
+              (setf (slot-value object 'height-type) :percent)
+              (v:debug :layout "[SETF HEIGHT] {LAYOUT-ROW-DATA} automatically set HEIGHT-TYPE to PERCENT")
+              ;; Enable extra?
+              (when (not (slot-value object 'extra))
+                (setf (slot-value object 'extra) t)
+                (v:debug :layout "[SETF HEIGHT] {LAYOUT-ROW-DATA} automatically set EXTRA to T")))
+            (progn
+              (setf (slot-value object 'height-type) :absolute)
+              (v:debug :layout "[SETF HEIGHT] {LAYOUT-ROW-DATA} automatically set HEIGHT-TYPE to ABSOLUTE")
+              ;; Disable extra?
+              (when (slot-value object 'extra)
+                (setf (slot-value object 'extra) nil)
+                (v:debug :layout "[SETF HEIGHT] {LAYOUT-ROW-DATA} automatically set EXTRA to NIL"))))))
+  (my-next-method))
+
+;;;; LAYOUT ===================================================================
 ;; Simple layout allowing single child object that can be use auto area
 
 (defclass layout (layout-base)
-  ())
+  ((cell :type layout-cell-data :initform (make-instance 'layout-cell-data))))
 
 (defmacro deflayout (&rest rest &key &allow-other-keys)
   `(make-instance 'layout ,@rest))
@@ -228,20 +296,20 @@ internal calc-* slots."
       (let* ((child-internal (aref child-area cp))
              (oa (make-instance '%rect :left (left child-internal) :top (top child-internal) :width (width child-internal) :height (height child-internal))))
       
-        (with-slots ((cl left) (ct top) (cw width) (ch height)) child
+        (with-slots ((cl left) (ct top) (cw width) (ch height)) (foro child)
           (v:debug :layout "[calc-area] {layout} child calculating (~a ~a) @ (~a ~a)"
                    cw ch cl ct)
         
           (macrolet ((do-calc (var func)
                        `(if (keywordp ,var)
                             (progn
-                              (setf ,var (,func ,var oa child))
+                              (setf ,var (,func ,var oa (foro child)))
                               t)
                             nil))
                      (do-calc-alt (w h var func)
                        `(if (keywordp ,var)
                             (progn
-                              (setf ,var (,func ,var oa ,w ,h child))
+                              (setf ,var (,func ,var oa ,w ,h (foro child)))
                               t)
                             nil)))
             (let ((cwp (do-calc cw calc-width))
@@ -260,7 +328,7 @@ internal calc-* slots."
                 (setf (slot-value child-internal 'top) ct))
               
               ;; Handle options
-              (let* ((co (find-if #'(lambda (o) (eql (foro o) child)) content))
+              (let* ((co (find-if #'(lambda (o) (eql (foro o) (foro child))) content))
                      options)
                 (when (consp co)
                   (setq options (rest co)))
@@ -270,28 +338,28 @@ internal calc-* slots."
                     (case option
                       (:bottom
                        (with-local-slots ((ci-top top) (ci-height height)) child-internal
-                         (with-local-slots ((ch-top top) (ch-height height)) child
+                         (with-local-slots ((ch-top top) (ch-height height)) (foro child)
                            (let ((ci-bottom (+ ci-top ci-height))
                                  (ch-bottom (+ ch-top ch-height)))
                              (if (> ci-bottom ch-bottom)
-                                 (setf (slot-value child 'top) (- ci-bottom ch-height)))))))
+                                 (setf (slot-value (foro child) 'top) (- ci-bottom ch-height)))))))
                       (:center
                        ;; Move object to horizontal center
-                       (if (> (slot-value child-internal 'width) (slot-value child 'width))
-                           (setf (slot-value child 'left) (+ (slot-value child-internal 'left)
-                                                             (/ (- (slot-value child-internal 'width)
-                                                                   (slot-value child 'width))
-                                                                2)))))
+                       (if (> (slot-value child-internal 'width) (slot-value (foro child) 'width))
+                           (setf (slot-value (foro child) 'left) (+ (slot-value child-internal 'left)
+                                                                    (/ (- (slot-value child-internal 'width)
+                                                                          (slot-value (foro child) 'width))
+                                                                       2)))))
                       (:left
                        ;; Move child to left edge
-                       (if (< (slot-value child-internal 'left) (slot-value child 'left))
-                           (setf (slot-value child 'left) (slot-value child-internal 'left))))
+                       (if (< (slot-value child-internal 'left) (slot-value (foro child) 'left))
+                           (setf (slot-value (foro child) 'left) (slot-value child-internal 'left))))
                       (:middle
                        (with-local-slots ((ci-height height)) child-internal
-                         (with-local-slots ((ch-height height)) child
+                         (with-local-slots ((ch-height height)) (foro child)
                            (if (> ci-height ch-height)
-                               (setf (slot-value child 'top) (+ (slot-value child-internal 'top)
-                                                                (/ (- ci-height ch-height) 2)))))))
+                               (setf (slot-value (foro child) 'top) (+ (slot-value child-internal 'top)
+                                                                       (/ (- ci-height ch-height) 2)))))))
                       (:min-height) ; nothing to do when there are no siblings
                       (:min-width)  ; nothing to do when there are no siblings
                       (:max-height) ; nothing to do when there are no siblings
@@ -299,13 +367,13 @@ internal calc-* slots."
                       (:right
                        ;; Move child to right edge
                        (let ((ca-right (+ (slot-value child-internal 'left) (slot-value child-internal 'width)))
-                             (ch-right (+ (slot-value child 'left) (slot-value child 'width))))
+                             (ch-right (+ (slot-value (foro child) 'left) (slot-value (foro child) 'width))))
                          (if (> ca-right ch-right)
-                             (setf (slot-value child 'left) (- ca-right (slot-value child 'width))))))
+                             (setf (slot-value (foro child) 'left) (- ca-right (slot-value (foro child) 'width))))))
                       (:top
                        ;; Move child to top edge
-                       (if (< (slot-value child-internal 'top) (slot-value child 'top))
-                           (setf (slot-value child 'top) (slot-value child-internal 'top))))))))
+                       (if (< (slot-value child-internal 'top) (slot-value (foro child) 'top))
+                           (setf (slot-value (foro child) 'top) (slot-value child-internal 'top))))))))
 
               ;; Log updated/changed area
               (v:debug :layout "[calc-area] {layout} child area (~d ~d) @ (~d ~d) ~a"
@@ -328,8 +396,13 @@ area allocated to them, whether they choose to use it or not."
                                                           :width width :height height))
 
           (let ((child (aref child-area 0)))
-            (v:debug :layout "[calc-layout-child-areas] {layout} child internal area (~d ~d) @ (~d ~d)"
+            (v:debug :layout "[CALC-LAYOUT-CHILD-AREAS] {LAYOUT} child internal area (~d ~d) @ (~d ~d)"
                     (width child) (height child) (left child) (top child))))))))
+
+(defmethod layout-cell ((object layout) &key)
+  "Return LAYOUT-DATA-CELL for LAYOUT."
+  
+  (slot-value object 'cell))
 
 (defmethod layout-changed ((object layout) &key (parent nil parentp) (child nil childp))
   (declare (ignorable parent parentp child childp))
@@ -350,11 +423,51 @@ area allocated to them, whether they choose to use it or not."
         
         ;; The layout that owns us changed
         (progn
-          (v:warn :layout "[layout-changed] {layout} parent layout changed")
+          (v:warn :layout "[LAYOUT-CHANGED] {LAYOUT} parent layout changed")
           (error "not implemented")
           )))
   
   (my-next-method))
+
+(defmethod on-paint ((object layout) &key)
+  "Draw LAYOUT, which means take care of LAYOUT-CELL-DATA and then pass on to LAYOUT-BASE."
+
+  ;; Draw borders if they exist
+  (with-slots (cell) (foro object)
+    (with-borders (bl br bt bb) cell
+      (let ((blp (eql bl nil)) (brp (eql br nil))
+            (btp (eql bt nil)) (bbp (eql bb nil)))
+        (unless (and blp brp btp bbp)
+          (let ((theme (find-theme (foro object))))
+            (unless blp
+              (paint-border-left bl (foro object) theme :blend-top btp :blend-bottom bbp))
+            (unless brp
+              (paint-border-right br (foro object) theme :blend-top btp :blend-bottom bbp))
+            (unless btp
+              (paint-border-top bt (foro object) theme :blend-left blp :blend-right brp))
+            (unless bbp
+              (paint-border-bottom bb (foro object) theme :blend-left blp :blend-right brp)))))))
+
+  ;; Let layout-base paint the child
+  (my-next-method))
+
+(defmethod left ((object layout))
+  (slot-value object 'left))
+
+(defmethod top ((object layout))
+  (slot-value object 'top))
+
+(defmethod right ((object layout))
+  (+ (left object) (width object)))
+
+(defmethod bottom ((object layout))
+  (+ (top object) (height object)))
+
+(defmethod height ((object layout))
+  (slot-value object 'height))
+
+(defmethod width ((object layout))
+  (slot-value object 'width))
 
 ;;;; functions ================================================================
 
@@ -479,18 +592,23 @@ Returns nil if not found."
             (when (typep child 'layout-base)
               (dump-layout child (concatenate 'string indent "  ")))))))))
 
-(defun find-parent-area-or-layout (object)
+(defun find-parent-area-or-layout (object &key (failp t))
   "Locate first parent that either has area or is has layout-base as a superclass.
 Generates error on failure."
   
-  (assert (typep object 'parent-mixin))
+  (assert (typep object 'parent-mixin-base))
+  
   (let ((p (parent object)))
     (loop
       (when (typep p 'manager)
-        (error "found manager when looking for area-mixin"))
+        (if failp
+            (error "found MANAGER when looking for AREA-MIXIN-BASE or LAYOUT-BASE")
+            (return-from find-parent-area-or-layout nil)))
       
       (when (eql p nil)
-        (error "no parent when looking for area-mixin"))
+        (if failp
+            (error "no parent when looking for AREA-MIXIN-BASE or LAYOUT-BASE")
+            (return-from find-parent-area-or-layout nil)))
 
       ;; If its a layout
       (if (typep p 'layout-base)
@@ -504,31 +622,66 @@ Generates error on failure."
       (assert (typep p 'parent-mixin-base))
       (setf p (parent p)))))
 
-;; TODO: find-if works here ...
-(defun find-parent-content (object)
+(defun find-parent-content (object &key (failp t))
   "Return the first parent of object with type content-mixin.
 Generates error when no parent has content-mixin as a superclass."
 
+  (assert (typep object 'parent-mixin-base))
+  
   (let ((parobj (parent object)))
     (loop
       (when (typep parobj 'content-mixin-base)
         (return-from find-parent-content parobj))
       (unless (typep parobj 'parent-mixin-base)
-        (error "no more parents, object not owned by content??? ~a" (print-raw-object object)))
+        (if failp
+            (error "no more parents when looking for CONTENT-MIXIN")
+            (return-from find-parent-content nil)))
       (setq parobj (parent parobj)))))
 
-(defun find-parent-layout (object)
+(defun find-parent-layout (object &key (failp nil))
   "Ascend parents until a layout-base is found, then return it.  If none are found will return NIL."
 
+  (assert (typep object 'parent-mixin-base))
+  
   (let ((mod (parent object)))
     (loop
       (when (eql mod nil)
-        (return-from find-parent-layout nil))
+        (if failp
+            (error "no more parents while looking for LAYOUT-BASE")
+            (return-from find-parent-layout nil)))
       (when (typep mod 'layout-base)
         (return-from find-parent-layout mod))
       (if (typep mod 'parent-mixin)
           (setf mod (parent mod))
-          (return-from find-parent-layout nil)))))
+          (if failp
+              (error "no more parents while looking for LAYOUT-BASE")
+              (return-from find-parent-layout nil))))))
+
+(declaim (ftype (function (layout-cell-data) null) layout-reset-cell))
+(defun layout-reset-cell (object)
+  "Update LAYOUT-CELL-DATA slots to default state."
+  
+  (with-slots (border-left border-right border-top border-bottom
+               h-align
+               padding-left padding-right padding-top padding-bottom
+               spacing-left spacing-right spacing-top spacing-bottom
+               v-align)
+      object
+    (setf border-left nil border-right nil border-top nil border-bottom nil)
+    (setf h-align :none)
+    (setf padding-left 0 padding-right 0 padding-top 0 padding-bottom 0)
+    (setf spacing-left 0 spacing-right 0 spacing-top 0 spacing-bottom 0)
+    (setf v-align :none)))
+
+(declaim (ftype (function (layout-column-data) null) layout-reset-column))
+(defun layout-reset-column (object)
+  "Return LAYOUT-COLUMN-DATA slots to default state."
+
+  (with-slots (h-align width width-type v-align) object
+    (setf width :auto)
+    (setf width-type :percent)
+    (setf h-align :center)
+    (setf v-align :middle)))
 
 (declaim (ftype (function (layout-base) null) layout-reset-original))
 (defun layout-reset-original (object)
@@ -547,6 +700,17 @@ re-layed out."
     (update-value 'top 'original-top))
   
   nil)
+
+(declaim (ftype (function (layout-row-data) null) layout-reset-row))
+(defun layout-reset-row (object)
+  "Return LAYOUT-ROW-DATA slots to default state."
+  (declare (type layout-row-data object))
+
+  (with-slots (h-align height height-type v-align) object
+    (setf height :auto)
+    (setf height-type :percent)
+    (setf h-align :center)
+    (setf v-align :middle)))
 
 (declaim (ftype (function (layout-base) null) layout-save-original))
 (defun layout-save-original (object)

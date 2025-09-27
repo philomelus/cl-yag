@@ -1,99 +1,6 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
-
-;;;; column-layout ============================================================
-
-;;; grid-layout-cell ------------------------------------------------
-
-(defclass %grid-layout-cell (border-mixin
-                            h-align-mixin ; when area is < col/row size, how to position horizontally
-                            padding-mixin ; border to content
-                            spacing-mixin ; edge to border
-                            v-align-mixin) ; When area is < col/row size, how to position vertically
-  ())
-
-;;; %grid-layout-column ----------------------------------------------
-
-(deftype grid-layout-column-width-type () '(member :absolute :percent :percent-all))
-
-(defclass %grid-layout-column (h-align-mixin
-                              v-align-mixin)
-  ((extra :initform t :accessor extra)
-   (width :initform :auto :accessor width)
-   (width-type :initform :percent :type grid-layout-column-width-type :accessor width-type)
-   (h-align :initform :center)
-   (v-align :initform :middle)))
-
-;; methods ------------------------------------------------
-
-(defmethod (setf width) :after (value (object %grid-layout-column))
-  (if (keywordp value)
-      (progn
-        (assert (equal value :auto))
-        (when (not (slot-value object 'extra))
-          (setf (slot-value object 'extra) t)
-          (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
-      (progn
-        (assert (typep value (values 'integer 'float)))
-        ;; Set to absolute or percent?
-        (if (<= value 1)
-            (progn
-              (setf (slot-value object 'width-type) :percent)
-              (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to PERCENT")
-              ;; Enable extra?
-              (when (not (slot-value object 'extra))
-                (setf (slot-value object 'extra) t)
-                (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to T")))
-            (progn
-              (setf (slot-value object 'width-type) :absolute)
-              (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set WIDTH-TYPE to ABSOLUTE")
-              ;; Disable extra?
-              (when (slot-value object 'extra)
-                (setf (slot-value object 'extra) nil)
-                (v:debug :layout "[SETF WIDTH] {%grid-layout-column} auto-set EXTRA to NIL"))))))
-  (my-next-method))
-
-;;; %grid-layout-row -------------------------------------------------
-
-(deftype grid-layout-row-height-type () '(member :absolute :percent :percent-all))
-
-(defclass %grid-layout-row (h-align-mixin
-                           v-align-mixin)
-  ((extra :initarg :extra :initform t :accessor extra)
-   (height :initarg :height :initform :auto :accessor height)
-   (height-type :initform :percent :type grid-layout-row-height-type :accessor height-type)
-   (h-align :initform :center)
-   (v-align :initform :middle)))
-
-;; methods ------------------------------------------------
-
-(defmethod (setf height) :after (value (object %grid-layout-row))
-  (if (keywordp value)
-      (progn
-        (assert (equal value :auto))
-        (when (not (slot-value object 'extra))
-          (setf (slot-value object 'extra) t)
-          (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
-      (progn
-        (assert (typep value (values 'integer 'float)))
-        ;; Set to absolute or percent?
-        (if (<= value 1)
-            (progn
-              (setf (slot-value object 'height-type) :percent)
-              (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to PERCENT")
-              ;; Enable extra?
-              (when (not (slot-value object 'extra))
-                (setf (slot-value object 'extra) t)
-                (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to T")))
-            (progn
-              (setf (slot-value object 'height-type) :absolute)
-              (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set HEIGHT-TYPE to ABSOLUTE")
-              ;; Disable extra?
-              (when (slot-value object 'extra)
-                (setf (slot-value object 'extra) nil)
-                (v:debug :layout "[SETF HEIGHT] {%grid-layout-row} auto-set EXTRA to NIL"))))))
-  (my-next-method))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
 ;;; grid-layout -----------------------------------------------------
 
@@ -110,9 +17,9 @@
 (defmacro defgrid-layout (columns rows &rest rest &key &allow-other-keys)
   `(make-instance 'grid-layout :columns ,columns :rows ,rows ,@rest))
 
-;; TODO: Allow :columns to specify %GRID-LAYOUT-COLUMN data
-;; TODO: Allow :rows to specify %GRID-LAYOUT-ROW data
-;; TODO: Allow :cells to specify %GRID-LAYOUT-CELL data
+;; TODO: Allow :columns to specify LAYOUT-COLUMN-DATA
+;; TODO: Allow :rows to specify LAYOUT-ROW-DATA
+;; TODO: Allow :cells to specify LAYOUT-CELL-DATA
 ;; For all of the above, there must be exactly the number items in argument
 ;; list as as there are columns, rows, and (* columns rows).
 
@@ -126,18 +33,18 @@
       ;; Allocate cells
       (loop :for v :from 0 :below rows :do
         (loop :for h :from 0 :below columns :do
-          (push (make-instance '%grid-layout-cell) cell-data)))
+          (push (make-instance 'layout-cell-data) cell-data)))
       (assert (= (length cell-data) (* columns rows)))
       
       ;; Allocate colums
-      (setf column-data (make-array columns :element-type (or '%grid-layout-column nil)))
+      (setf column-data (make-array columns :element-type (or 'layout-column-data nil)))
       (loop :for h :from 0 :below columns :do
-        (setf (aref column-data h) (make-instance '%grid-layout-column)))
+        (setf (aref column-data h) (make-instance 'layout-column-data)))
       
       ;; Allocate rows
-      (setf row-data (make-array rows :element-type (or '%grid-layout-row nil)))
+      (setf row-data (make-array rows :element-type (or 'layout-row-data nil)))
       (loop :for v :from 0 :below rows :do
-        (setf (aref row-data v) (make-instance '%grid-layout-row))))))
+        (setf (aref row-data v) (make-instance 'layout-row-data))))))
 
 (defmethod (setf columns) :after (value (object grid-layout))
   (grid-layout-reset-cells object))
@@ -388,71 +295,43 @@ layout calculations, most of the option interpretation is done in CALC-AREA."
                     (width (aref child-area array-offset)) (height (aref child-area array-offset))
                     (left (aref child-area array-offset)) (top (aref child-area array-offset)))))))))
 
-(defmethod on-paint ((object grid-layout) &key &allow-other-keys)
-  ;; Make sure we have layout complete
-  (when (eql (slot-value object 'child-area) nil)
-    (v:debug :layout "[on-paint] {grid-layut} Forcing layout ~a" (print-raw-object object))
-    (calc-layout-area object)
-    (calc-layout-child-areas object))
+(defmethod layout-cell ((object grid-layout) &key (column nil columnp) (row nil rowp))
+  "Return LAYOUT-CELL-DATA for child of GRID-LAYOUT at COLUMN,ROW"
 
-  ;; Paint borders
-  (with-local-slots (columns rows) object
-    (loop :for v :from 0 :below rows :do
-      (loop :for h :from 0 :below columns :do
-        (with-borders (bl br bt bb) (grid-layout-cell h v object)
-          (when (or (eql bl nil) (eql br nil) (eql bt nil) (eql bb nil))
-            (let ((theme (find-theme object)))
-              (unless (eql bl nil)
-                (paint-border-left bl (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
-              (unless (eql br nil)
-                (paint-border-right br (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
-              (unless (eql bt nil)
-                (paint-border-top bt (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
-              (unless (eql bb nil)
-                (paint-border-bottom bb (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))))))))
-
-  ;; Let base take care of children
-  (my-next-method))
-
-;;;; functions ================================================================
-
-;; (declaim (ftype (function (integer integer grid-layout) %grid-layout-cell) grid-layout-cell))
-(defun grid-layout-cell (column row object)
-  "Return %GRID-LAYOUT-CELL for child of GRID-LAYOUT at COLUMN,ROW"
+  (assert (and columnp rowp))
+  (assert (typep column 'coordinate))
+  (assert (typep row 'coordinate))
   
   (with-slots (columns cell-data) object
     (nth (+ (* row columns) column) cell-data)))
 
-(defclass %grid-layout-cell (border-mixin
-                            h-align-mixin ; when area is < col/row size, how to position horizontally
-                            padding-mixin ; border to content
-                            spacing-mixin ; edge to border
-                            v-align-mixin) ; When area is < col/row size, how to position vertically
-  ())
-(defun grid-layout-cell-options (column row object &key (border nil borderp)
-                                                     (border-h nil border-hp)
-                                                     (border-v nil border-bp)
-                                                     (border-left nil border-leftp)
-                                                     (border-right nil border-rightp)
-                                                     (border-top nil border-topp)
-                                                     (border-bottom nil border-bottomp)
-                                                     (h-align nil h-alignp)
-                                                     (padding nil paddingp)
-                                                     (padding-h nil padding-hp)
-                                                     (padding-v nil padding-vp)
-                                                     (padding-left nil padding-leftp)
-                                                     (padding-right nil padding-rightp)
-                                                     (padding-top nil padding-topp)
-                                                     (padding-bottom nil padding-bottomp)
-                                                     (spacing nil spacingp)
-                                                     (spacing-h nil spacing-hp)
-                                                     (spacing-v nil spacing-vp)
-                                                     (spacing-left nil spacing-leftp)
-                                                     (spacing-right nil spacing-rightp)
-                                                     (spacing-top nil spacing-topp)
-                                                     (spacing-bottom nil spacing-bottomp)
-                                                     (v-align nil v-alignp))
-  "Set options for a specific %GRID-LAYOUT-CELL.
+(defmethod layout-cell-options ((object grid-layout)
+                                &key (column nil columnp)
+                                  (row nil rowp)
+                                  (border nil borderp)
+                                  (border-h nil border-hp)
+                                  (border-v nil border-bp)
+                                  (border-left nil border-leftp)
+                                  (border-right nil border-rightp)
+                                  (border-top nil border-topp)
+                                  (border-bottom nil border-bottomp)
+                                  (h-align nil h-alignp)
+                                  (padding nil paddingp)
+                                  (padding-h nil padding-hp)
+                                  (padding-v nil padding-vp)
+                                  (padding-left nil padding-leftp)
+                                  (padding-right nil padding-rightp)
+                                  (padding-top nil padding-topp)
+                                  (padding-bottom nil padding-bottomp)
+                                  (spacing nil spacingp)
+                                  (spacing-h nil spacing-hp)
+                                  (spacing-v nil spacing-vp)
+                                  (spacing-left nil spacing-leftp)
+                                  (spacing-right nil spacing-rightp)
+                                  (spacing-top nil spacing-topp)
+                                  (spacing-bottom nil spacing-bottomp)
+                                  (v-align nil v-alignp))
+  "Set options for a specific LAYOUT-CELL-DATA within a GRID-LAYOUT.
 
 For BORDER, PADDING, and SPACING, you can use the names directly to affect all
 4 sides, or with -H to affect -LEFT and -LEFT, or -V to affect -TOP and
@@ -464,8 +343,8 @@ For example, you could use BORDER and BORDER-LEFT to set the BORDER-RIGHT,
 BORDER-TOP, and BORDER-BOTTOM to the same BORDER while setting BORDER-LEFT to
 a different BORDER:
 
-    (grid-layout-cell-options 0 0 object :BORDER other-border :BORDER-LEFT
-                              left-border)
+    (layout-cell-options :column 0 :row 0 object :BORDER other-border :BORDER-LEFT
+                         left-border)
 
 Also note that in the above case, BORDER-LEFT would get set twice: Once for
 the original BORDER, then again for the BORDER-LEFT.
@@ -473,6 +352,10 @@ the original BORDER, then again for the BORDER-LEFT.
 This is the function used internally to initialize a new GRID-LAYOUT from
 keyword options when provided to DEFGRID-LAYOUT."
 
+  (assert (and columnp rowp))
+  (assert (typep column 'coordinate))
+  (assert (typep row 'coordinate))
+  
   (macrolet ((set-field (field value)
                `(setf (slot-value cell ',field) ,value))
              (set-area-fields (name value)
@@ -485,7 +368,7 @@ keyword options when provided to DEFGRID-LAYOUT."
     ;; TODO:  Should be able to make a macro for the big ones ...
     ;;        I failed to get one to work...
     
-    (let ((cell (grid-layout-cell column row object)))
+    (let ((cell (layout-cell object :column column :row row)))
       ;; borders
       (when borderp
         (set-area-fields border border))
@@ -548,98 +431,38 @@ keyword options when provided to DEFGRID-LAYOUT."
       (when spacing-bottomp
         (set-field spacing-bottom spacing-bottom)))))
 
-;; (declaim (ftype (function (T (or symbol list) integer integer grid-layout &key (:recalc boolean)) null) grid-layout-cell-set))
-(defun grid-layout-cell-set (value field-or-fields column row object &key recalc)
-  "Update the slots named in field-or-fields to value for the %GRID-LAYOUT-CELL at
-column,row within the GRID-LAYOUT in object."
-  (if recalc
-      (let ((cell (grid-layout-cell column row object))
-            (updated nil))
-        (if (atom field-or-fields)
-            (unless (equal (slot-value cell field-or-fields) value)
-              (setf (slot-value cell field-or-fields) value
-                    updated t))
-            (mapc #'(lambda (field)
-                      (unless (equal (slot-value cell field) value)
-                        (setf (slot-value cell field) value
-                              updated t)))
-                  field-or-fields))
-        (when (and updated (slot-value object 'child-area))
-          (setf (slot-value object 'child-area) nil)
-          (calc-layout-child-areas object)))
-      (if (atom field-or-fields)
-          (setf (slot-value (grid-layout-cell column row object) field-or-fields) value)
-          (let ((cell (grid-layout-cell column row object))) 
-            (mapc #'(lambda (field)
-                      (unless (equal (slot-value cell field) value)
-                        (setf (slot-value cell field) value)))
-                  field-or-fields))))
-  nil)
-
-;; (declaim (ftype (function (integer integer grid-layout) t) grid-layout-child))
-(defun grid-layout-child (column row object)
+(defmethod layout-child ((object grid-layout) &key (column nil columnp) (row nil rowp))
   "Return child object of GRID-LAYOUT at COLUMN,ROW"
 
+  (assert (and columnp rowp))
+  (assert (typep column 'coordinate))
+  (assert (typep row 'coordinate))
+  
   (with-slots (columns content) object
     (nth (+ (* row columns) column) content)))
 
-;; (declaim (ftype (function (integer grid-layout) %grid-layout-column) grid-layout-column))
-(defun grid-layout-column (column object)
-  "Return %GRID-LAYOUT-COLUMN for specified column of specified GRID-LAYOUT object."
-  
+(defmethod layout-column ((object grid-layout) &key (column nil columnp))
+  "Return LAYOUT-COLUMN-DATA for specified column of specified GRID-LAYOUT object."
+
+  (assert columnp)
+  (assert (typep column 'coordinate))
   (aref (slot-value object 'column-data) column))
 
-;; (declaim (ftype (function (integer grid-layout) list) grid-layout-column-cells))
-(defun grid-layout-column-cells (column object)
-  "Return all %GRID-LAYOUT-CELL's for a column withn GRID-LAYOUT."
+(defmethod layout-column-cells ((object grid-layout) &key (column nil columnp))
+  "Return all LAYOUT-CELL-DATA's for a column within GRID-LAYOUT."
 
+  (assert columnp)
+  (assert (typep column 'coordinate))
+  
   (with-local-slots (rows) object
     (loop :for v :from 0 :below rows
-          :collect (grid-layout-cell column v object))))
+          :collect (layout-cell object :column column :row v))))
 
-;; (declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-column-cells-set))
-(defun grid-layout-column-cells-set (value field-or-fields column object &key recalc)
-  "Update the slot(s) named in field-or-fields to value for all
-%GRID-LAYOUT-CELL's in the specified row within the GRID-LAYOUT in object."
-
-  (let ((cells (grid-layout-column-cells column object)))
-    (if recalc
-        (let ((updated nil))
-          (mapc #'(lambda (cell)
-                    (if (atom field-or-fields)
-                        (unless (equal (slot-value cell field-or-fields) value)
-                          (setf (slot-value cell field-or-fields) value
-                                updated t))
-                        (mapc #'(lambda (field)
-                                  (unless (eql (slot-value cell field) value)
-                                    (setf (slot-value cell field) value
-                                          updated t)))
-                              field-or-fields)))
-                cells)
-          (when (and updated (slot-value object 'child-area))
-            (setf (slot-value object 'child-area) nil)
-            (calc-layout-child-areas object)))
-        
-        ;; Update the field(s)
-        (mapc #'(lambda (cell)
-                  ;; field or list of fields?
-                  (if (atom field-or-fields)
-                      ;; If the field is different
-                      (unless (equal (slot-value cell field-or-fields) value)
-                        (setf (slot-value cell field-or-fields) value))
-                      ;; Update all the fields
-                      (mapc #'(lambda (field)
-                                ;; If the field is different
-                                (unless (equal (slot-value cell field) value)
-                                  (setf (slot-value cell field) value)))
-                            field-or-fields)))
-              cells)))
-  nil)
-
-(defun grid-layout-column-options (column object &key (width nil widthp) (type nil typep)
-                                                   (extra nil extrap) (h-align nil h-alignp)
-                                                   (v-align nil v-alignp))
-  "Set options for a specific %GRID-LAYOUT-COLUMN.
+(defmethod layout-column-options ((object grid-layout) &key (column nil columnp)
+                                                         (width nil widthp) (type nil typep)
+                                                         (extra nil extrap) (h-align nil h-alignp)
+                                                         (v-align nil v-alignp))
+  "Set options for a specific LAYOUT-COLUMN-DATA.
 
 If you specify WIDTH but do not specify TYPE, the WIDTH-TYPE will be set to
 :PERCENT if WIDTH is <= 1.0, and :PERCENT-ALL otherwise. If you specify both
@@ -647,8 +470,11 @@ WIDTH and TYPE, your option will be used.
 
 This is the function used internally to initialize a new GRID-LAYOUT from
 keyword options when provided to DEFGRID-LAYOUT."
+
+  (assert columnp)
+  (assert (typep column 'coordinate))
   
-  (let ((col-obj (grid-layout-column column object)))
+  (let ((col-obj (layout-column object :column column)))
     (when widthp
       (setf (slot-value col-obj 'width) width))
     (if typep
@@ -664,25 +490,89 @@ keyword options when provided to DEFGRID-LAYOUT."
     (when v-alignp
       (setf (slot-value col-obj 'v-align) v-align))))
 
-(defun grid-layout-reset-cell (object)
-  "Return %GRID-LAYOUT-CELL slots to default state."
-  (declare (type %grid-layout-cell object))
-  
-  (with-slots (border-left border-right border-top border-bottom
-               h-align
-               padding-left padding-right padding-top padding-bottom
-               spacing-left spacing-right spacing-top spacing-bottom
-               v-align)
-      object
-    (setf border-left nil border-right nil border-top nil border-bottom nil)
-    (setf h-align :none)
-    (setf padding-left 0 padding-right 0 padding-top 0 padding-bottom 0)
-    (setf spacing-left 0 spacing-right 0 spacing-top 0 spacing-bottom 0)
-    (setf v-align :none)))
+(defmethod on-paint ((object grid-layout) &key &allow-other-keys)
+  ;; Make sure we have layout complete
+  (when (eql (slot-value object 'child-area) nil)
+    (v:debug :layout "[on-paint] {grid-layut} Forcing layout ~a" (print-raw-object object))
+    (calc-layout-area object)
+    (calc-layout-child-areas object))
 
-;; (declaim (ftype (function (grid-layout) null) grid-layout-reset-cells))
+  ;; Paint borders
+  (with-local-slots (columns rows) object
+    (loop :for v :from 0 :below rows :do
+      (loop :for h :from 0 :below columns :do
+        (with-borders (bl br bt bb) (layout-cell object :column h :row v)
+          (unless (and (eql bl nil) (eql br nil) (eql bt nil) (eql bb nil))
+            (let ((theme (find-theme object)))
+              (unless (eql bl nil)
+                (paint-border-left bl (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+              (unless (eql br nil)
+                (paint-border-right br (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+              (unless (eql bt nil)
+                (paint-border-top bt (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+              (unless (eql bb nil)
+                (paint-border-bottom bb (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))))))))
+
+  ;; Let base take care of children
+  (my-next-method))
+
+(defmethod layout-row ((object grid-layout) &key (row nil rowp))
+  "Return LAYOUT-ROW-DATA for specified row of specified GRID-LAYOUT object."
+
+  (assert rowp)
+  (assert (typep row 'coordinate))
+  
+  (aref (slot-value object 'row-data) row))
+
+(defmethod layout-row-cells ((object grid-layout) &key (row nil rowp))
+  "Return all LAYOUT-CELL-DATA's for a row within GRID-LAYOUT."
+
+  (assert rowp)
+  (assert (typep row 'coordinate))
+  
+  (with-local-slots (columns) object
+    (loop :for h :from 0 :below columns
+          :collect (layout-cell object :column h :row row))))
+
+
+(defmethod layout-row-options ((object grid-layout) &key (row nil rowp)
+                                                      (height nil heightp) (type nil typep)
+                                                      (extra nil extrap) (h-align nil h-alignp)
+                                                      (v-align nil v-alignp))
+  "Set options for a specific LAYOUT-ROW-DATA.
+
+If you specify HEIGHT but do not specify TYPE, the HEIGHT-TYPE will be set to
+:PERCENT if HEIGHT is <= 1.0, and :PERCENT-ALL otherwise. If you specify both
+HEIGHT and TYPE, your option will be used.
+
+This is the function used internally to initialize a new GRID-LAYOUT from
+keyword options when provided to DEFGRID-LAYOUT."
+
+  (assert rowp)
+  (assert (typep row 'coordinate))
+  
+  (let ((row-obj (layout-row object :row row)))
+    (when heightp
+      (setf (slot-value row-obj 'height) height))
+    (if typep
+        (setf (slot-value row-obj 'height-type) type)
+        (when heightp
+          (if (> height 1.0)
+              (setf (slot-value row-obj 'height-type) :absolute)
+              (setf (slot-value row-obj 'height-type) :percent-all))))
+    (when extrap
+      (setf (slot-value row-obj 'extra) extra))
+    (when h-alignp
+      (setf (slot-value row-obj 'h-align) h-align))
+    (when v-alignp
+      (setf (slot-value row-obj 'v-align) v-align))))
+
+;;;; FUNCTIONS ================================================================
+
+(declaim (ftype (function (grid-layout) null) grid-layout-reset-cells))
 (defun grid-layout-reset-cells (object)
-  "Update CELLS of GRID-LAYOUT according to current COLUMNS and ROWS."
+  "Update LAYOUT-CELL-DATA's of GRID-LAYOUT according to current COLUMNS and
+ROWS."
 
   ;; Reset/update cells
   (with-slots (cell-data column-data columns row-data rows) object
@@ -698,134 +588,36 @@ keyword options when provided to DEFGRID-LAYOUT."
                   (pop cell-data))
                   
                 ;; Reset current cells
-                (mapc #'grid-layout-reset-cell cell-data))
+                (mapc #'layout-reset-cell cell-data))
                 
               ;; Allocate new cells
               (progn
                 ;; Reset current cells
-                (mapc #'grid-layout-reset-cell cell-data)
+                (mapc #'layout-reset-cell cell-data)
                 
                 ;; Make up difference
                 (loop :for c :from 0 :below (- needed-cells num-cells) :do
-                  (push (make-instance '%grid-layout-cell) cell-data))))
+                  (push (make-instance 'layout-cell-data) cell-data))))
           
           ;; Rest current cells
-          (mapc #'grid-layout-reset-cell cell-data)))
+          (mapc #'layout-reset-cell cell-data)))
 
     ;; Reset/update columns
     (let ((num-columns (length column-data)))
       (if (/= num-columns columns)
           (progn
-            (setf column-data (make-array columns :element-type (or '%grid-layout-column nil)))
+            (setf column-data (make-array columns :element-type (or 'layout-column-data nil)))
             (loop :for h :from 0 :below columns :do
-              (setf (aref column-data h) (make-instance '%grid-layout-column))))
-          (mapc #'grid-layout-reset-column column-data)))
+              (setf (aref column-data h) (make-instance 'layout-column-data))))
+          (mapc #'layout-reset-column column-data)))
 
     ;; Reset/update rows
     (let ((num-rows (length row-data)))
       (if (/= num-rows rows)
           (progn
-            (setf row-data (make-array rows :element-type (or '%grid-layout-row nil)))
+            (setf row-data (make-array rows :element-type (or 'layout-row-data nil)))
             (loop :for v :from 0 :below rows :do
-              (setf (aref row-data v) (make-instance '%grid-layout-row))))
-          (mapc #'grid-layout-reset-row row-data))))
+              (setf (aref row-data v) (make-instance 'layout-row-data))))
+          (mapc #'layout-reset-row row-data))))
   nil)
-
-(defun grid-layout-reset-column (object)
-  "Return %GRID-LAYOUT-COLUMN slots to default state."
-  (declare (type %grid-layout-column object))
-
-  (with-slots (h-align width width-type v-align) object
-    (setf width :auto)
-    (setf width-type :percent)
-    (setf h-align :center)
-    (setf v-align :middle)))
-
-(defun grid-layout-reset-row (object)
-  "Return %GRID-LAYOUT-ROW slots to default state."
-  (declare (type %grid-layout-row object))
-
-  (with-slots (h-align height height-type v-align) object
-    (setf height :auto)
-    (setf height-type :percent)
-    (setf h-align :center)
-    (setf v-align :middle)))
-
-;; (declaim (ftype (function (integer grid-layout) %grid-layout-row) grid-layout-row))
-(defun grid-layout-row (row object)
-  "Return %GRID-LAYOUT-ROW for specified row of specified GRID-LAYOUT object."
-  (aref (slot-value object 'row-data) row))
-
-;; (declaim (ftype (function (integer grid-layout) list) grid-layout-row-cells))
-(defun grid-layout-row-cells (row object)
-  "Return all %GRID-LAYOUT-CELL's for a row within GRID-LAYOUT."
-
-  (with-local-slots (columns) object
-    (loop :for h :from 0 :below columns
-          :collect (grid-layout-cell h row object))))
-
-;; (declaim (ftype (function (T (or symbol list) integer grid-layout &key (:recalc boolean)) null) grid-layout-row-cells-set))
-(defun grid-layout-row-cells-set (value field-or-fields row object &key recalc)
-  "Update the slots named in field-or-fields to value for all %GRID-LAYOUT-CELL's
-in the specified column within the GRID-LAYOUT in object."
-  
-  (let ((cells (grid-layout-row-cells row object)))
-    (if recalc
-        (let ((updated nil))
-          (if (atom field-or-fields)
-              (mapc #'(lambda (cell)
-                        (unless (equal (slot-value cell field-or-fields) value)
-                          (setf (slot-value cell field-or-fields) value
-                                updated t)))
-                    cells)
-              (mapc #'(lambda (cell)
-                        (mapc #'(lambda (field)
-                                  (unless (equal (slot-value cell field) value)
-                                    (setf (slot-value cell field) value
-                                          updated t)))
-                              field-or-fields))
-                    cells))
-          (when (and updated (slot-value object 'child-area))
-            (setf (slot-value object 'child-area) nil)
-            (calc-layout-child-areas object)))
-        (if (atom field-or-fields)
-            (mapc #'(lambda (cell)
-                      (unless (equal (slot-value cell field-or-fields) value)
-                        (setf (slot-value cell field-or-fields) value)))
-                  cells)
-            (mapc #'(lambda (cell)
-                      (mapc #'(lambda (field)
-                                (unless (equal (slot-value cell field) value)
-                                  (setf (slot-value cell field) value)))
-                            field-or-fields))
-                  cells))))
-  nil)
-
-(defun grid-layout-row-options (row object &key (height nil heightp) (type nil typep)
-                                             (extra nil extrap) (h-align nil h-alignp)
-                                             (v-align nil v-alignp))
-  "Set options for a specific %GRID-LAYOUT-ROW.
-
-If you specify HEIGHT but do not specify TYPE, the HEIGHT-TYPE will be set to
-:PERCENT if HEIGHT is <= 1.0, and :PERCENT-ALL otherwise. If you specify both
-HEIGHT and TYPE, your option will be used.
-
-This is the function used internally to initialize a new GRID-LAYOUT from
-keyword options when provided to DEFGRID-LAYOUT."
-  
-  (let ((row-obj (grid-layout-row row object)))
-    (when heightp
-      (setf (slot-value row-obj 'height) height))
-    (if typep
-        (setf (slot-value row-obj 'height-type) type)
-        (when heightp
-          (if (> height 1.0)
-              (setf (slot-value row-obj 'height-type) :absolute)
-              (setf (slot-value row-obj 'height-type) :percent-all))))
-    (when extrap
-      (setf (slot-value row-obj 'extra) extra))
-    (when h-alignp
-      (setf (slot-value row-obj 'h-align) h-align))
-    (when v-alignp
-      (setf (slot-value row-obj 'v-align) v-align))))
 

@@ -123,10 +123,10 @@
         (setf layout1 (defgrid-layout 3 3 :content (list nil nil nil
                                                          nil layout2 nil
                                                          nil nil nil)))
-        (grid-layout-row-options 0 layout1 :height 0.10 :type :percent-all :extra nil)
-        (grid-layout-row-options 2 layout1 :height 0.10 :type :percent-all :extra nil)
-        (grid-layout-column-options 0 layout1 :width 0.33 :type :percent-all :extra nil)
-        (grid-layout-column-options 2 layout1 :width 0.33 :type :percent-all :extra nil)
+        (layout-row-options layout1 :row 0 :height 0.10 :type :percent-all :extra nil)
+        (layout-row-options layout1 :row 2 :height 0.10 :type :percent-all :extra nil)
+        (layout-column-options layout1 :column 0 :width 0.33 :type :percent-all :extra nil)
+        (layout-column-options layout1 :column 2 :width 0.33 :type :percent-all :extra nil)
         
         (setf window (defwindow +MW-WL+ +MW-WT+ +MW-WW+ +MW-WH+ :content (list layout1)))
         (push window widgets)

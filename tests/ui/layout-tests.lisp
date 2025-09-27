@@ -4,7 +4,7 @@
 
 (defstruct (layout-tests-data (:include tests-data)
                               (:conc-name layout-tests-))
-  b1 t1 l1 st11 st12 st13 st14 st15
+  b11 b12 t1 l1 st11 st12 st13 st14 st15 th1 tr1
   b2 t2 l2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
   b3 bt3 l3 st31 st32 st33 st34
   w1 w2 w3 w4
@@ -15,7 +15,7 @@
 (defmethod tests-create ((data (eql *layout-data*)))
   (let (widgets)
     (with-slots (manager
-                 b1 t1 l1 st11 st12 st13 st14 st15
+                 b11 b12 t1 l1 st11 st12 st13 st14 st15 th1 tr1
                  b2 t2 l2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
                  b3 bt3 l3 st31 st32 st33 st34
                  w1 w2 w3 w4
@@ -23,13 +23,17 @@
         data
 
       ;; Test 1
-      (setf b1 (defborder :thickness 10))
+      (setf b11 (defborder :thickness 10))
       (setf t1 (deftext :title "One" :h-align :center :v-align :middle))
-      (setf (border t1) b1)
+      (setf (border t1) b11)
       (setf (spacing t1) 10)
       (setf (padding t1) 10)
       (setf l1 (deflayout :content `(,t1)))
-      (setf w1 (deftests-window :wide 1 :content `(,l1)))
+      (setf b12 (defborder :thickness 0))
+      (setf (border (layout-cell l1)) b12)
+      (setf th1 (deftheme-flat-all :color (al:map-rgb-f 1 0 0)))
+      (setf tr1 (defthemer th1 l1))
+      (setf w1 (deftests-window :wide 1 :content `(,tr1)))
       (push w1 widgets)
 
       ;; Test 2
@@ -352,14 +356,14 @@
     t)
   
   (defmethod tests-command-update ((data (eql layout-data)))
-    (with-slots (b1 t1 st11 st12 st13 st14 st15
+    (with-slots (b11 b12 t1 st11 st12 st13 st14 st15
                  l2 t2 st21 st22 st23 st24 st25 st26 st27 st28 st29 st210
                  bt3 st31 st32 st33 st34)
         data
 
       (tests-status-update "P: ~4d" st11 (padding-left t1))
       (tests-status-update "S: ~4d" st12 (spacing-left t1))
-      (tests-status-update "B: ~4d" st13 (thickness b1))
+      (tests-status-update "B: ~4d" st13 (thickness b11))
       (tests-status-update "H: ~a" st14 (h-align t1))
       (tests-status-update "V: ~a" st15 (v-align t1))
       (tests-status-update-keywords "LH: ~a" st21 '(:left :center :right) (first (content l2)))
@@ -386,19 +390,19 @@
       (values (list w1 w2 w3) nil)))
 
   (defmethod tests-get-padding ((data (eql layout-data)))
-    (with-slots (t1 t2 bt3) data
-      (values (list t1 t2 bt3) t)))
+    (with-slots (l1 t1 t2 bt3) data
+      (values (list (layout-cell l1) t1 t2 bt3) t)))
 
   (defmethod tests-get-rulers ((data (eql layout-data)))
     (tests-list-rulers data))
 
   (defmethod tests-get-spacing ((data (eql layout-data)))
-    (with-slots (t1 t2 bt3) data
-      (values (list t1 t2 bt3) t)))
+    (with-slots (l1 t1 t2 bt3) data
+      (values (list (layout-cell l1) t1 t2 bt3) t)))
 
   (defmethod tests-get-thickness ((data (eql layout-data)))
-    (with-slots (b1 b2 b3) data
-      (values (list b1 b2 b3) t)))
+    (with-slots (b11 b12 b2 b3) data
+      (values (list b11 b12 b2 b3) t)))
 
   (defmethod tests-get-v-align ((data (eql layout-data)))
     (with-slots (t1 t2 bt3) data

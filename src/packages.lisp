@@ -75,12 +75,20 @@
            #:layout
            #:layout-base
            #:layout-cell
+           #:layout-cell
            #:layout-cell-reset
            #:layout-change
+           #:layout-child
            #:layout-child-type
+           #:layout-column
+           #:layout-column-options
+           #:layout-column-type
            #:layout-coordinate-option-type
            #:layout-height-type
            #:layout-left-type
+           #:layout-row
+           #:layout-row-height-type
+           #:layout-row-options
            #:layout-top-type
            #:layout-width-type
            #:left
@@ -97,20 +105,9 @@
            #:columns
            #:defgrid-layout
            #:grid-layout
-           #:grid-layout-cell
-           #:grid-layout-cell-set
-           #:grid-layout-child
-           #:grid-layout-column
-           #:grid-layout-column-cells-set
-           #:grid-layout-column-options
-           #:grid-layout-column-type
-           #:grid-layout-row
-           #:grid-layout-row-cells-set
-           #:grid-layout-row-height-type
-           #:grid-layout-row-options
            #:height-type
-           #:rows
            #:width-type
+           #:rows
 
            ;; row-layout
            #:row-layout
@@ -200,6 +197,11 @@
            #:content
            #:content-mixin
            #:content-mixin-base
+
+           ;; extra
+           #:extra
+           #:extra-mixin
+           #:extra-mixin-base
            
            ;; font
            #:font
@@ -388,6 +390,10 @@
            #:text-calc-top
            #:text-calc-width
            #:text-theme-mixin
+
+           ;; themer
+           #:themer
+           #:defthemer
            
            ;; window
            #:defwindow

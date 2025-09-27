@@ -141,6 +141,17 @@ type = Widget specific positioning option
 area = %rect allocated to widget within parent area
 object = object doing width calculation for"))
 
+(defgeneric layout-cell (layout &key &allow-other-keys)
+  (:documentation "Returns a LAYOUT-CELL-DATA. Keywords are used to specify LAYOUT specific
+location informationm."))
+
+(defgeneric layout-cell-options (layout &key &allow-other-keys)
+  (:documentation "Allows setting all slots of a LAYOUT-CELL-DATA in a single method."))
+
+(defgeneric layout-cells (layout &key &allow-other-keys)
+  (:documentation "Returns a list of all LAYOUT-CELL-DATA for a LAYOUT. The exact composition of
+the return value is specific to the type of layout."))
+
 (defgeneric layout-changed (layout &key parent child)
   (:documentation "Called to notify a layout that either a parent's or a child's layout has
 changed. The layout will then take whatever action is needed to update its own
@@ -151,6 +162,30 @@ otherwise.
 
 When a child is notifying its parent layout, PARENT must be T, and NIL
 otherwise."))
+
+(defgeneric layout-child (layout &key &allow-other-keys)
+  (:documentation "Returns the child (widget) for a LAYOUT. Keywords specific to the LAYOUT are
+used for child location."))
+
+(defgeneric layout-column (layout &key &allow-other-keys)
+  (:documentation "Returns a LAYOUT-COLMN-DATA. Keywords are used to specify LAYOUT specific
+location informationm."))
+
+(defgeneric layout-column-cells (layout &key &allow-other-keys)
+  (:documentation "Returns a list of all LAYOUT-CELL-DATA for a column within a LAYOUT."))
+
+(defgeneric layout-column-options (layout &key &allow-other-keys)
+  (:documentation "Allows setting all slots of a LAYOUT-COLUMN-DATA in a single method."))
+
+(defgeneric layout-row (layout &key &allow-other-keys)
+  (:documentation "Returns a LAYOUT-ROW-DATA. Keywords are used to specify LAYOUT specific
+location informationm."))
+
+(defgeneric layout-row-cells (layout &key &allow-other-keys)
+  (:documentation "Returns a list of all LAYOUT-CELL-DATA for a row within a LAYOUT."))
+
+(defgeneric layout-row-options (layout &key &allow-other-keys)
+  (:documentation "Allows setting all slots of a LAYOUT-ROW-DATA in a single method."))
 
 (defgeneric must-init (test desc))
 

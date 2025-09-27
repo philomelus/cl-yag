@@ -114,7 +114,7 @@
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) object
+        (with-area-and-spacing (asl ast asr asb) (foro object)
           (let ((c color)
                 (w2 (/ tn 2)))
             (if (eql c nil)
@@ -150,7 +150,7 @@
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) object
+        (with-area-and-spacing (asl ast asr asb) (foro object)
           (let ((c color)
                 (w tn)
                 (w2 (/ tn 2)))
@@ -186,7 +186,7 @@
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) object
+        (with-area-and-spacing (asl ast asr asb) (foro object)
           (let ((c color)
                 (w2 (/ tn 2)))
             (if (eql c nil)
@@ -220,7 +220,7 @@
   (let ((color (color theme)))
     (with-accessors ((tn thickness)) border
       (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) object
+        (with-area-and-spacing (asl ast asr asb) (foro object)
           (let ((c color)
                 (w2 (/ tn 2)))
             (if (eql c nil)
@@ -250,6 +250,10 @@ left-top-inside right-bottom-outside right-bottom-inside)."
        (values very-dark dark very-dark dark)))))
 
 (defun find-theme (o)
+  "Return first valid THEME for OBJECT. If no THEME is found within widget
+hierarchy, uses *DEFAULT-THEME*. Returns bothe the THEME and the object theme
+was IN (which will be NIL when *DEFAULT-THEME* is used)."
+
   ;; Does object have theme?
   (if (typep o 'theme-mixin)
       ;; Yes, is it valid?
@@ -285,7 +289,7 @@ left-top-inside right-bottom-outside right-bottom-inside)."
                     ;; Yes, so loop
                     (progn
                       (setf p (parent p))
-                      (incf count 1))
+                      (incf count))
                     ;; No valid theme and no parent, use default
                     (progn
                       (v:debug :theme "find-theme: invalid parent theme, no parent, use default.")
@@ -295,7 +299,7 @@ left-top-inside right-bottom-outside right-bottom-inside)."
                   ;; Doesn't have a theme, but has a parent
                   (progn
                     (setf p (parent p))
-                    (incf count 1))
+                    (incf count))
                   ;; Doesn't have a theme and has no parent, use default
                   (progn
                     (v:debug :theme "find-theme: no contained theme, no parent, use default.")
