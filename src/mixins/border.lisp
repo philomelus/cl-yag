@@ -1,26 +1,6 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
-
-
-;;;; THEME-MIXIN  ==============================================================
-
-(defclass border-theme-mixin ()
-  ((thickness :initarg :thickness :accessor thickness)))
-
-(defclass border-theme-3d-mixin (color-3d-mixin
-                                 style-3d-mixin)
-  ((thickness :initform 2.0)
-   (style :accessor border-style)))
-
-(defclass border-theme-flat-mixin (color-mixin)
-  ())
-
-(defclass border (border-theme-mixin)
-  ((thickness :initform 1.0)))
-
-(defmacro defborder (&rest rest &key &allow-other-keys)
-  `(make-instance 'border ,@rest))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
 ;;;; BORDER-MIXIN-BASE ========================================================
 
@@ -31,11 +11,14 @@ border somewhere."))
 
 ;;;; BORDER-MIXIN =============================================================
 
-(defclass border-mixin (border-mixin-base)
-  ((border-left :initarg :border-left :initform nil :accessor border-left)
-   (border-right :initarg :border-right :initform nil :accessor border-right)
-   (border-top :initarg :border-top :initform nil :accessor border-top)
-   (border-bottom :initarg :border-bottom :initform nil :accessor border-bottom)))
+(defclass border-mixin (border-mixin-base
+                        theme-mixin)
+  ((border-left :type (or null border) :initarg :border-left :initform nil :accessor border-left)
+   (border-right :type (or null border) :initarg :border-right :initform nil :accessor border-right)
+   (border-top :type (or null border) :initarg :border-top :initform nil :accessor border-top)
+   (border-bottom :type (or null border) :initarg :border-bottom :initform nil :accessor border-bottom)))
+
+;;; METHODS ---------------------------------------------------------
 
 (defmethod (setf border) ((value border) (object border-mixin))
   (setf (border-h object) value)
@@ -52,17 +35,19 @@ border somewhere."))
   (setf (border-bottom object) value)
   (my-next-method))
 
-;;;; MACROS ===================================================================
-
-(deftype border-thickness-type () '(thickness-type))
-
-(defmacro with-borders ((left right top bottom) object &body body)
-  (a:with-gensyms (instance)
-    `(let ((,instance ,object))
-       (let ((,left (border-left ,instance))
-             (,right (border-right ,instance))
-             (,top (border-top ,instance))
-             (,bottom (border-bottom ,instance)))
-         (declare (ignorable ,left ,right, top ,bottom))
-         ,@body))))
+(defmethod paint-border ((object border-mixin))
+  (with-borders (bl br bt bb) object
+    (let ((style (get-theme-style object))
+          (blp (not (eql bl nil)))
+          (brp (not (eql br nil)))
+          (btp (not (eql bt nil)))
+          (bbp (not (eql bb nil))))
+      (when blp
+        (paint-border-left bl style object :blend-top btp :blend-bottom bbp))
+      (when btp
+        (paint-border-top bt style object :blend-left blp :blend-right brp))
+      (when brp
+        (paint-border-right br style object :blend-top btp :blend-bottom bbp))
+      (when bbp
+        (paint-border-bottom bb style object :blend-left blp :blend-right brp)))))
 

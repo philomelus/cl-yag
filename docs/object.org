@@ -8,42 +8,10 @@ you don't want to forget:
   
 - Update the theme-flat-all and theme-3d-all code, or add :after
   methods to update them
-
-- Objects should NOT be named for flat/3d. They should only use a
-  theme to determine when to paint as flat or 3d. This means that
-  there should almost always be 3 theme mixins:
-  
-  (defclass my-object-theme-mixin () ())
-  (defclass my-object-3d-theme-mixin (my-object-theme-mixin) ())
-  (defclass my-object-flat-theme-mixn (my-object-theme-mixin) ())
-
-  So that the main object can use the base theme as a base, then in
-  method on-paint determine HOW/WHAT to paint based on derived theme.
-  
-- This was originally what I thought. Now I think its a waste of
-  effort, but I'm not going to remove it quite yet.
-
-  Crate the following methods, to make it easy for end users to use themes:
-  (defmethod (setf theme) ((theme theme-flat) (object -your-object-)))
-  (defmethod (setf theme) ((theme theme-3d) (object -your-object-)))
-  (defmethod (setf theme) ((theme -your-theme-mixin-) (object -your-object-)))
-
-  They should configure their drawing parameters from the specified
-  theme objects. For the 3d and flat versions, the point is to make
-  them usable when no other colors have been defined. End users can
-  override as needed for the real world, but its nice to have
-  something that just works when first starting new projects. For
-  example, for a button, using the frame color from a flat theme for
-  showing the button pressing. If you used the interior color, nothing
-  would appear and could be annoying/frustrating to a new user (or
-  worse, make them think it doesn't work or they've done something
-  wrong!).
-
-  
-
-  
+ 
 
 
+Border
 Box
 Button
 BitmapButton

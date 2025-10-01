@@ -22,53 +22,70 @@
                  r41 r42
                  w1 w2 w3 w4 w5 w6 w7 w8)
         data
-      (let ((c1 (al:map-rgb-f 0 0.75 0))
-            (c2 (al:map-rgb-f 0 0 1)))
+      (let (;; (c1 (al:map-rgb-f 0 0.75 0))
+            ;; (c2 (al:map-rgb-f 0 0 1))
+            )
         ;; Test 1
         (setf r11 (ruler-10-2 :left (+ +W1L+ 10) :top (+ +W1T+ 10) :height 10 :width (- +W1W+ 20)
-                              :div-10-color c1 :div-10-extent 1
-                              :div-2-color c2
-                              :line-color c1 :visible t))
+                              ;; :div-10-color c1
+                              :div-10-extent 1
+                              ;; :div-2-color c2
+                              ;; :line-color c1
+                              :visible t))
         (setf r12 (ruler-10-2 :left (+ +W1L+ 10) :top (+ +W1T+ 50) :height 25 :width (- +W1W+ 20)
-                              :div-10-color c1 :div-10-extent 1
-                              :div-2-color c2
-                              :line-color c1 :visible t))
+                              ;; :div-10-color c1
+                              :div-10-extent 1
+                              ;; :div-2-color c2
+                              ;; :line-color c1
+                              :visible t))
         (setf w1 (deftests-window :standard 1 :content `(,r11 ,r12)))
         (push w1 widgets)
       
         ;; Test 2
         (setf r21 (ruler-10-2 :left (+ +W2L+ 10) :top (+ +W2T+ 10) :height (- +W2H+ 20) :width 10
-                              :div-10-color c1 :div-10-extent 1
-                              :div-2-color c2
-                              :line-color c1 :visible t :vertical t))
+                              ;; :div-10-color c1
+                              :div-10-extent 1
+                              ;; :div-2-color c2
+                              ;; :line-color c1
+                              :visible t :vertical t))
         (setf r22 (ruler-10-2 :left (+ +W2L+ 50) :top (+ +W2T+ 10) :height (- +W2H+ 20) :width 25
-                              :div-10-color c1 :div-10-extent 1
-                              :div-2-color c2
-                              :line-color c1 :visible t :vertical t))
+                              ;; :div-10-color c1
+                              :div-10-extent 1
+                              ;; :div-2-color c2
+                              ;; :line-color c1
+                              :visible t :vertical t))
         (setf w2 (deftests-window :standard 2 :content `(,r21 ,r22)))
         (push w2 widgets)
       
         ;; Test 3
         (setf r31 (ruler-25-5 :left (+ +W3L+ 10) :top (+ +W3T+ 10) :height 10 :width (- +W3W+ 20)
-                              :div-25-color c1 :div-25-extent 1
-                              :div-5-color c2
-                              :line-color c1 :visible t))
+                              ;; :div-25-color c1
+                              :div-25-extent 1
+                              ;; :div-5-color c2
+                              ;; :line-color c1
+                              :visible t))
         (setf r32 (ruler-25-5 :left (+ +W3L+ 10) :top (+ +W3T+ 50) :height 25 :width (- +W3W+ 20)
-                              :div-25-color c1 :div-25-extent 1
-                              :div-5-color c2
-                              :line-color c1 :visible t))
+                              ;; :div-25-color c1
+                              :div-25-extent 1
+                              ;; :div-5-color c2
+                              ;; :line-color c1
+                              :visible t))
         (setf w3 (deftests-window :standard 3 :content `(,r31 ,r32)))
         (push w3 widgets)
       
         ;; Test 4
         (setf r41 (ruler-25-5 :left (+ +W4L+ 10) :top (+ +W4T+ 10) :height (- +W4H+ 20) :width 10
-                              :div-25-color c1 :div-25-extent 1
-                              :div-5-color c2
-                              :line-color c1 :visible t :vertical t))
+                              ;; :div-25-color c1
+                              :div-25-extent 1
+                              ;; :div-5-color c2
+                              ;; :line-color c1
+                              :visible t :vertical t))
         (setf r42 (ruler-25-5 :left (+ +W4L+ 50) :top (+ +W4T+ 10) :height (- +W4H+ 20) :width 25
-                              :div-25-color c1 :div-25-extent 1
-                              :div-5-color c2
-                              :line-color c1 :visible t :vertical t))
+                              ;; :div-25-color c1
+                              :div-25-extent 1
+                              ;; :div-5-color c2
+                              ;; :line-color c1
+                              :visible t :vertical t))
         (setf w4 (deftests-window :standard 4 :content `(,r41 ,r42)))
         (push w4 widgets))
       

@@ -32,12 +32,14 @@
                              (:file "allegro")
 
                              ;; Contains types used in mixins
+                             (:file "border")
+                             (:file "colors")
                              (:file "layout")
 
                              ;; Composition objects
                              (:file "mixins/align")
                              (:file "mixins/area")
-                             (:file "mixins/border")
+                             (:file "mixins/border" :depends-on ("border"))
                              (:file "mixins/color")
                              (:file "mixins/content")
                              (:file "mixins/extra")
@@ -47,8 +49,8 @@
                              (:file "mixins/parent")
                              (:file "mixins/shortcuts")
                              (:file "mixins/spacing")
-                             (:file "mixins/style")
                              (:file "mixins/theme")
+                             (:file "mixins/thickness")
                              (:file "mixins/title")
                              (:file "mixins/visible")
 

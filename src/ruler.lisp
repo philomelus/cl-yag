@@ -1,19 +1,13 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
-;;; theme-mixin -----------------------------------------------------
-
-(defclass division-theme-mixin ()
-  ((division-color :initarg :division-color :initform nil :accessor division-color)))
-
-;;; division --------------------------------------------------------
+;;; DIVISION --------------------------------------------------------
 
 (deftype extent-type-type () '(member :percent :absolute))
 
-(defclass division (division-theme-mixin)
-  ((thickness :initarg :thickness :initform -1 :accessor thickness)
-   (extent :initarg :extent :initform 0.50 :accessor extent)
+(defclass division (theme-mixin)
+  ((extent :initarg :extent :initform 0.50 :accessor extent)
    (extent-type :type extent-type-type :initarg :extent-type :initform :percent :accessor extent-type)
    (period :initarg :period :initform 1 :accessor period)
    ;; Internal use
@@ -23,7 +17,15 @@
 (defmacro defdivision (&rest rest &key &allow-other-keys)
   `(make-instance 'division ,@rest))
 
-;;; methods ---------------------------------------------------------
+;;; METHODS ---------------------------------------------------------
+
+(defmethod default-theme-type ((object division))
+  'division)
+
+(defmethod initialize-instance :before ((object division) &key)
+  (unless (theme-value-defaultp 'division nil 'color)
+    (set-theme-value-default 'division nil 'color +color-red+)
+    (set-theme-value-default 'division nil 'thickness -1)))
 
 (defmethod initialize-instance :after ((object division) &key)
   (validate-division-options object))
@@ -36,11 +38,13 @@
   (setf (slot-value object 'period-divisions) nil)
   (setf (slot-value (slot-value object 'parent) 'recalc-periods) t))
 
-;;; functions -------------------------------------------------------
+;;; FUNCTIONS -------------------------------------------------------
 
-(defun paint-ruler-division (align theme object start size vertical)
-  (with-object-and-theme ((dc division-color)) object theme
-    (with-local-slots ((tn thickness) (ex extent) (et extent-type)) object
+(defun paint-ruler-division (align object start size vertical)
+  (declare (type division object))
+  
+  (with-theme-let ((dc (division nil color)) (tn (division nil thickness))) object
+    (with-local-accessors ((ex extent) (et extent-type)) object
       (case align
         (:begin
          (let ((en (+ start (case et
@@ -85,11 +89,11 @@
                    (al:draw-line st div en div dc tn)
                    (al:draw-line div st div en dc tn))))))))))
 
-(defun paint-ruler-division-horizontal (align area theme object)
-  (paint-ruler-division align theme object (top area) (height area) nil))
+(defun paint-ruler-division-horizontal (align area object)
+  (paint-ruler-division align object (top area) (height area) nil))
 
-(defun paint-ruler-division-vertical (align area theme object)
-  (paint-ruler-division align theme object (left area) (width area) t))
+(defun paint-ruler-division-vertical (align area object)
+  (paint-ruler-division align object (left area) (width area) t))
 
 (declaim (ftype (function (division) null) validate-division-options))
 (defun validate-division-options (object)
@@ -97,7 +101,7 @@
     (unless (typep extent-type 'extent-type-type)
       (error "unknown EXTENT-TYPE option: ~a" extent-type))))
 
-;;; macros ----------------------------------------------------------
+;;; MACROS ----------------------------------------------------------
 
 (defmacro division-100 (&rest rest &key &allow-other-keys)
   `(defdivision :period 100 ,@rest))
@@ -114,22 +118,14 @@
 (defmacro division-2 (&rest rest &key &allow-other-keys)
   `(defdivision :period 2 ,@rest))
 
-;;;; ruler ====================================================================
-
-;;; theme-mixin -----------------------------------------------------
-
-(defclass ruler-theme-mixin (division-theme-mixin)
-  ((line-color :initarg :line-color :initform nil :accessor line-color)
-   (line-thickness :initarg :line-thickness :initform -0.5 :accessor line-thickness)))
-
-;;; ruler -----------------------------------------------------------
+;;;; RULER ====================================================================
 
 (deftype ruler-align-type () '(member :begin :center :middle :end))
 
-(defclass ruler (ruler-theme-mixin
-                 area-mixin
+(defclass ruler (area-mixin
                  parent-mixin
                  shortcuts-mixin
+                 theme-mixin
                  visible-mixin)
   ((divisions :initarg :divisions :initform nil :accessor divisions)
    (vertical :initarg :vertical :initform nil :accessor vertical)
@@ -140,11 +136,7 @@
 (defmacro defruler (&rest rest &key &allow-other-keys)
   `(make-instance 'ruler ,@rest))
 
-(defmethod initialize-instance :after ((object ruler) &key)
-  (validate-ruler-options object)
-  
-  ;; Set divisions parent
-  (mapcar #'(lambda (o) (setf (parent o) object)) (divisions object)))
+;;; METHODS ---------------------------------------------------------
 
 (defmethod (setf align) :after (value (object ruler))
   (validate-ruler-options object))
@@ -153,7 +145,19 @@
   (mapcar #'(lambda (o) (setf (slot-value o 'parent) object)) (divisions object))
   (setf (slot-value object 'recalc-periods) t))
 
-;;; methods ---------------------------------------------------------
+(defmethod default-theme-type ((object ruler))
+  'ruler)
+
+(defmethod initialize-instance :before ((object ruler) &key)
+  (unless (theme-value-defaultp 'ruler nil 'line-color)
+    (set-theme-value-default 'ruler nil 'line-color +color-red+)
+    (set-theme-value-default 'ruler nil 'line-thickness -1)))
+
+(defmethod initialize-instance :after ((object ruler) &key)
+  (validate-ruler-options object)
+  
+  ;; Set divisions parent
+  (mapcar #'(lambda (o) (setf (parent o) object)) (divisions object)))
 
 (defmethod on-command ((object ruler) &key)
   (if (visible object)
@@ -167,11 +171,51 @@
           (paint-ruler-vertical object)
           (paint-ruler-horizontal object)))))
 
-;;; globals ---------------------------------------------------------
+(defmethod paint-ruler-horizontal ((object ruler))
+  ;; Make sure the divisions have been calculated
+  (when (slot-value object 'recalc-periods)
+    (calc-ruler-divisions object))
+
+  (with-local-accessors (left top width height align) object
+    (let ((y (case align
+               (:begin top)
+               ((:center :middle) (1- (+ top (/ height 2))))
+               (:end (+ top height)))))
+      ;; Paint the main line
+      (with-theme-let ((lc (ruler nil line-color)) (ltn (ruler nil line-thickness))) object
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+          (al:draw-line (1- left) y (right object) y lc ltn)))
+  
+      ;; Paint the divisions
+      (let ((area-rect (make-instance '%rect :left left :top top :width width :height height)))
+        (dolist (div (divisions object))
+          (paint-ruler-division-horizontal align area-rect div))))))
+
+(defmethod paint-ruler-vertical ((object ruler))
+  ;; Make sure the divisions have been calculated
+  (when (slot-value object 'recalc-periods)
+    (calc-ruler-divisions object))
+
+  (with-local-accessors (left top width height align) object
+    (let ((x (case align
+               (:begin left)
+               ((:center :middle) (1- (+ left (/ width 2))))
+               (:end (+ left width)))))
+      ;; Paint the main line
+      (with-theme-let ((lc (ruler nil line-color)) (ltn (ruler nil line-thickness))) object
+        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
+          (al:draw-line x (1- top) x (bottom object) lc ltn)))
+  
+      ;; Paint the divisions
+      (let ((area-rect (make-instance '%rect :left left :top top :width width :height height)))
+        (dolist (div (divisions object))
+          (paint-ruler-division-vertical align area-rect div))))))
+
+;;; GLOBALS ---------------------------------------------------------
 
 (defvar *ruler-custom-class-counter* 0 "Used to make unique class names for rulers.")
 
-;;; functions -------------------------------------------------------
+;;; FUNCTIONS -------------------------------------------------------
 
 (declaim (ftype (function (ruler) null) calc-ruler-divisions))
 (defun calc-ruler-divisions (object)
@@ -214,51 +258,6 @@
   (incf *ruler-custom-class-counter*)
   (intern (format nil "~a-CLASS-~8,'0d" (string-upcase base-name) *ruler-custom-class-counter*)))
 
-(declaim (ftype (function (ruler) null) paint-ruler-horizontal))
-(defun paint-ruler-horizontal (object)
-  ;; Make sure the divisions have been calculated
-  (when (slot-value object 'recalc-periods)
-    (calc-ruler-divisions object))
-
-  (with-local-accessors (left top width height align) object
-    (let ((theme (find-theme object))
-          (y (case align
-               (:begin top)
-               ((:center :middle) (1- (+ top (/ height 2))))
-               (:end (+ top height)))))
-      ;; Paint the main line
-      (with-object-and-theme ((lc line-color)) object theme
-        (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-          (al:draw-line (1- left) y (right object) y lc -0.5)))
-  
-      ;; Paint the divisions
-      (let ((area-rect (make-instance '%rect :left left :top top :width width :height height)))
-        (dolist (div (divisions object))
-          (paint-ruler-division-horizontal align area-rect theme div))))))
-
-(declaim (ftype (function (ruler) null) paint-ruler-vertical))
-(defun paint-ruler-vertical (object)
-  ;; Make sure the divisions have been calculated
-  (when (slot-value object 'recalc-periods)
-    (calc-ruler-divisions object))
-
-  (with-local-accessors (left top width height align) object
-    (let ((theme (find-theme object))
-          (x (case align
-               (:begin left)
-               ((:center :middle) (1- (+ left (/ width 2))))
-               (:end (+ left width)))))
-      ;; Paint the main line
-      (with-object-and-theme ((lc line-color)) object theme
-        (with-local-slots ((ltn line-thickness)) object
-          (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
-            (al:draw-line x (1- top) x (bottom object) lc ltn))))
-  
-      ;; Paint the divisions
-      (let ((area-rect (make-instance '%rect :left left :top top :width width :height height)))
-        (dolist (div (divisions object))
-          (paint-ruler-division-vertical align area-rect theme div))))))
-
 (declaim (ftype (function (ruler) null) validate-ruler-options))
 (defun validate-ruler-options (object)
   (with-local-slots (align) object
@@ -275,27 +274,27 @@
   (let ((name (make-ruler-custom-name "%ruler-25-5"))
         (object (gensym)))
     `(let ((,object))
-       (closer-mop:ensure-class ',name
-                                :direct-superclasses (list (find-class 'cl-yag::ruler))
-                                :direct-slots '((:name div-100 :readers (div-100))
-                                                (:name div-25 :readers (div-25))
-                                                (:name div-5 :readers (div-5))))
+       (mop:ensure-class ',name
+                         :direct-superclasses (list (find-class 'cl-yag::ruler))
+                         :direct-slots '((:name div-100 :readers (div-100))
+                                         (:name div-25 :readers (div-25))
+                                         (:name div-5 :readers (div-5))))
        (setf ,object (make-instance ',name ,@(remove-keyword-params rest '(:div-100-color :div-100-extent :div-100-extent-type
                                                                            :div-25-color :div-25-extent :div-25-extent-type
                                                                            :div-5-color :div-5-extent :div-5-extent-type))))
        (setf (slot-value ,object 'div-100) (division-100))
        ,(if div-100-colorp
-            `(setf (division-color (slot-value ,object 'div-100)) ,div-100-color))
+            `(set-theme-value (slot-value ,object 'div-100) 'division 'color ,div-100-color))
        ,(if div-100-extentp
             `(setf (extent (slot-value ,object 'div-100)) ,div-100-extent))
        (setf (slot-value ,object 'div-25) (division-25))
        ,(if div-25-colorp
-            `(setf (division-color (slot-value ,object 'div-25)) ,div-25-color))
+            `(set-theme-value (slot-value ,object 'div-25) 'division 'color ,div-25-color))
        ,(if div-25-extentp
             `(setf (extent (slot-value ,object 'div-25)) ,div-25-extent))
        (setf (slot-value ,object 'div-5) (division-5))
        ,(if div-5-colorp
-            `(setf (division-color (slot-value ,object 'div-5)) ,div-5-color))
+            `(set-theme-value (slot-value ,object 'div-5) 'division 'color ,div-5-color))
        ,(if div-5-extentp
             `(setf (extent (slot-value ,object 'div-5)) ,div-5-extent))
        (setf (divisions ,object) (list (slot-value ,object 'div-100)
@@ -318,12 +317,12 @@
                                                                            :div-2-color :div-2-extent :div-2-extent-type))))
        (setf (slot-value ,object 'div-10) (division-10))
        ,(if div-10-colorp
-            `(setf (division-color (slot-value ,object 'div-10)) ,div-10-color))
+            `(set-theme-value (slot-value ,object 'div-10) 'division 'color ,div-10-color))
        ,(if div-10-extentp
             `(setf (extent (slot-value ,object 'div-10)) ,div-10-extent))
        (setf (slot-value ,object 'div-2) (division-2))
        ,(if div-2-colorp
-            `(setf (division-color (slot-value ,object 'div-2)) ,div-2-color))
+            `(set-theme-value (slot-value ,object 'div-2) 'division 'color ,div-2-color))
        ,(if div-2-extentp
             `(setf (extent (slot-value ,object 'div-2)) ,div-2-extent))
        (setf (divisions ,object) (list (slot-value ,object 'div-10)
@@ -345,12 +344,12 @@
                                                                            :div-5-color :div-5-extent :div-5-extent-type))))
        (setf (slot-value ,object 'div-25) (division-25))
        ,(if div-25-colorp
-            `(setf (division-color (slot-value ,object 'div-25)) ,div-25-color))
+            `(set-theme-value (slot-value ,object 'div-25) 'division 'color ,div-25-color))
        ,(if div-25-extentp
             `(setf (extent (slot-value ,object 'div-25)) ,div-25-extent))
        (setf (slot-value ,object 'div-5) (division-5))
        ,(if div-5-colorp
-            `(setf (division-color (slot-value ,object 'div-5)) ,div-5-color))
+            `(set-theme-value (slot-value ,object 'div-5) 'division 'color ,div-5-color))
        ,(if div-5-extentp
             `(setf (extent (slot-value ,object 'div-5)) ,div-5-extent))
        (setf (divisions ,object) (list (slot-value ,object 'div-25)

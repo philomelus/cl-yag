@@ -221,7 +221,7 @@ field  = character of desired field, as follows:
 
 (defgeneric tests-get-spacing (data) (:documentation "Called to get list of windows/widgets to affect with spacing changes."))
 
-(defgeneric tests-get-theme (data) (:documentation "Called to get list of windows/widgets to affect with theme changes."))
+(defgeneric tests-get-theme (data) (:documentation "Called to get list of windows/widgets to affect with theme styles."))
 
 (defgeneric tests-get-thickness (data) (:documentation "Called to get list of windws/widgets to affect with thickness changes."))
 
@@ -246,8 +246,9 @@ regardless of result."))
                  `(let ((,u ,used))
                     (when ,u
                       ,(if is-left
-                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5 :font mono-font))
-                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5 :font mono-font))))
+                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5))
+                           `(setf ,field (deftext :title ,title :height :auto-min :width :auto :spacing-left 5)))
+                      (set-theme-value ,field 'text 'font mono-font))
                     ,u))))
     
     (with-slots (iw1 iw2 icl1 icl2 it1 it2 it3 it4 it5 it6 it7 it8 mono-font) data
@@ -297,12 +298,14 @@ sized according to type and window number, just add to manager."
   (a:with-gensyms (l-type l-number l-vertical l-left l-top l-width l-height generator)
     `(flet ((,generator (l t_ w h &optional (v nil) (r100-25-5 nil))
               (if r100-25-5
-                  (ruler-100-25-5 :visible nil :line-color (al:map-rgb-f 1 0 0) :vertical v
+                  (ruler-100-25-5 :visible nil :vertical v
                                   :div-100-color (al:map-rgb-f 1 0 0) :div-100-extent 1
                                   :div-25-color (al:map-rgb-f 0.8 0 0) :div-25-extent 0.6667
                                   :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.3333
                                   :left l :top t_ :width w :height h ,@rest)
-                  (ruler-25-5 :visible nil :line-color (al:map-rgb-f 1 0 0) :vertical v
+                  
+                  
+                  (ruler-25-5 :visible nil :vertical v
                               :div-25-color (al:map-rgb-f 1 0 0) :div-25-extent 1
                               :div-5-color (al:map-rgb-f 0.6 0 0) :div-5-extent 0.5
                               :left l :top t_ :width w :height h ,@rest))))
@@ -324,12 +327,14 @@ sized according to type and window number, just add to manager."
                (progn
                  (setq ,l-height 10)
                  (decf ,l-top 10)))
-           (ccase ,l-type
-             (:full (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))
-             (:standard (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
-             (:tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical ,l-vertical))
-             (:wide (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
-             (:wide-tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))))))))
+           (let ((r (ccase ,l-type
+                      (:full (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t))
+                      (:standard (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+                      (:tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical ,l-vertical))
+                      (:wide (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical))
+                      (:wide-tall (,generator ,l-left ,l-top ,l-width ,l-height ,l-vertical t)))))
+             (set-theme-value r 'ruler 'line-color (al:map-rgb-f 1 0 0))
+             r))))))
 
 (defstruct (tests-rulers-data (:include tests-instructions-data)
                               (:conc-name tests-rulers-))
@@ -343,7 +348,7 @@ sized according to type and window number, just add to manager."
         data
       (let (rulers)
         (dolist (o (list rv1 rv2 rh1 rh2 rh3 rh4 rh5 rh6 rh7 rh8))
-          (unless (eql o nil)
+          (unless (null o)
             (push o rulers)))
         rulers)))
 
@@ -473,16 +478,3 @@ accessor      = How to access the field that contains a keyword"
        (when (eql ,name nil)
          (setq ,name "NONE"))
        (setf (title ,object) (format nil ,format-string ,name)))))
-
-;;;; TESTS-THEME ==============================================================
-
-(defstruct (tests-theme-data (:include tests-rulers-data)
-                             (:conc-name tests-theme-))
-  theme1 theme2)
-
-(defun tests-toggle-theme (data)
-  (with-slots (manager theme1 theme2) data
-    (if (eql (theme manager) theme1)
-        (setf (theme manager) theme2)
-        (setf (theme manager) theme1))))
-

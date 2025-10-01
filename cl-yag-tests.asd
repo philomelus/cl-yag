@@ -29,7 +29,9 @@
                                            (:file "row-layout-tests" :depends-on ("api" "tests-main"))
                                            (:file "ruler-tests" :depends-on ("api" "tests-main"))
                                            (:file "text-tests" :depends-on ("api" "tests-main"))
+                                           (:file "theme-tests" :depends-on ("api" "tests-main"))
                                            (:file "window-tests" :depends-on ("api" "tests-main"))))
                              
                              (:module "auto"
-                              :components ((:file "grid-layout")))))))
+                              :components ((:file "grid-layout")
+                                           (:file "theme")))))))

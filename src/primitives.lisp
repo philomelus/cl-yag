@@ -20,19 +20,15 @@
 
 ;;;; line =====================================================================
 
-(defclass line-theme-mixin ()
-  ())
+(defparameter *LINE-THEME-DATA* `((line flat color)
+                                  (line 3d style)
+                                  (line 3d color)
+                                  (line 3d dark-color)
+                                  (line 3d light-color)
+                                  (line 3d very-dark-color)
+                                  (line 3d very-light-color)))
 
-(defclass line-theme-flat-mixin (line-theme-mixin
-                                 color-mixin)
-  ())
-
-(defclass line-theme-3d-mixin (line-theme-mixin
-                               color-3d-mixin
-                               style-3d-mixin)
-  ())
-
-(defclass line (line-theme-mixin)
+(defclass line ()
   ((start :initarg :start :type %point2 :accessor start)
    (end :initarg :end :type %point2 :accessor end)
    (width :initarg :width :initform 1.0 :accessor width))
@@ -42,14 +38,8 @@
   `(make-instance 'line ,@rest))
 
 (defmethod on-paint ((object line) &key)
-  (let ((theme (find-theme object)))
-    (typecase theme
-      (line-theme-flat-mixin
-       (error "not implemented"))
-      (line-theme-3d-mixin
-       (error "not implemented"))
-      (t
-       (error "unknown line theme, got: ~a" (type-of theme))))))
+  ;; TODO:
+  (declare (ignorable object)))
 
 ;;;; pixel ====================================================================
 
@@ -57,20 +47,17 @@
 
 ;;;; rectangle ================================================================
 
-(defclass rectangle-theme-mixin ()
-  ((filled :initarg :filled :initform nil :accessor filled)
-   (fill-color :initarg :fill-color :initform nil :accessor fill-color)))
+(defparameter *RECTANGLE-THEME-DATA* `((rectangle nil filled)
+                                       (rectangle nil fill-color)
+                                       (rectangle flat frame-color)
+                                       (rectangle 3d style)
+                                       (rectangle 3d color)
+                                       (rectangle 3d dark-color)
+                                       (rectangle 3d light-color)
+                                       (rectangle 3d very-dark-color)
+                                       (rectangle 3d very-light-color)))
 
-(defclass rectangle-theme-flat-mixin (rectangle-theme-mixin
-                                    color-mixin)
-  ())
-
-(defclass rectangle-theme-3d-mixin (rectangle-theme-mixin
-                                    color-3d-mixin
-                                    style-3d-mixin)
-  ())
-
-(defclass rectangle (rectangle-theme-mixin)
+(defclass rectangle ()
   ((p1 :initarg :p1 :type %point2 :accessor p1)
    (p2 :initarg :p2 :type %point2 :accessor p2)))
 
@@ -78,14 +65,8 @@
   `(make-instance 'rectangle ,@rest))
 
 (defmethod on-paint ((object rectangle) &key)
-  (let ((theme (find-theme object)))
-    (typecase theme
-      (rectangle-theme-flat-mixin
-       (error "not implemented"))
-      (rectangle-theme-3d-mixin
-       (error "not implemented"))
-      (t
-       (error "unknown rectangle theme, got: ~a" (type-of theme))))))
+  ;; TODO:
+  (declare (ignorable object)))
 
 ;;;; spline ===================================================================
 

@@ -25,13 +25,15 @@
 (defgeneric (setf border-v) (border-object object)
   (:documentation "Sets vertical borders of OBJECT to BORDER-OBJECT."))
 
-(defgeneric paint-border (object theme)
+(defgeneric paint-border (object)
   (:documentation "Paint borders for object.
 
-Default implementation calls the paint-border-* generics with apropriate
-keywords."))
+For BORDER-MIXIN classes this calls the PAINT-BORDER-* generics with the
+correct keywords specified for multiple borders.
 
-(defgeneric paint-border-bottom (border object theme &key blend-left blend-right)
+For all others, this actually draws the border."))
+
+(defgeneric paint-border-bottom (border style object &key blend-left blend-right)
   (:documentation "Paint bottom border.
 
 BLEND-LEFT is T when the left border will also be painted, so perform any
@@ -40,7 +42,7 @@ required blending to make it look correct. NIL means to paint full side.
 BLEND-RIGHT is T when the right border will also be painted, so perform any
 required blending to make it look correct. NIL means to paint full side."))
 
-(defgeneric paint-border-left (border object theme &key blend-top blend-bottom)
+(defgeneric paint-border-left (border style object &key blend-top blend-bottom)
   (:documentation "Paint left border.
 
 BLEND-TOP is T when the top border will also be painted, so perform any
@@ -49,7 +51,7 @@ required blending to make it look correct. NIL means to paint full side.
 BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
 required blending to make it look correct. NIL means to paint full side."))
 
-(defgeneric paint-border-right (border object theme &key blend-top blend-bottom)
+(defgeneric paint-border-right (border style object &key blend-top blend-bottom)
   (:documentation "Paint right border.
 
 BLEND-TOP is T when the top border will also be painted, so perform any
@@ -58,7 +60,7 @@ required blending to make it look correct. NIL means to paint full side.
 BLEND-BOTTOM is T when the bottom border will also be painted, so perform any
 required blending to make it look correct. NIL means to paint full side."))
 
-(defgeneric paint-border-top (border object theme &key blend-left blend-right)
+(defgeneric paint-border-top (border style object &key blend-left blend-right)
   (:documentation "Paint top border.
 
 BLEND-LEFT is T when the left border will also be painted, so perform any
@@ -69,23 +71,23 @@ required blending to make it look correct. NIL means to paint full side."))
 
 ;;; BOX -------------------------------------------------------------
 
-(defgeneric paint-box (box theme)
+(defgeneric paint-box (box)
   (:documentation "Called to paint a box. Unless custom drawing is desired, just call
 PAINT-BOX-FRAME, PAINT-BOX-INTERIOR, and PAINT-BOX-TITLE.
 
 theme - Theme used for painting box."))
 
-(defgeneric paint-box-frame (box theme)
+(defgeneric paint-box-frame (box)
   (:documentation "Called to paint the frame of a box.
 
 theme  - Theme used to paint box frame."))
 
-(defgeneric paint-box-interior (box theme)
+(defgeneric paint-box-interior (box)
   (:documentation "Called to paint the interior of a box.
 
 theme - Theme used to paint box interior."))
 
-(defgeneric paint-box-title (box theme)
+(defgeneric paint-box-title (box)
   (:documentation "Called to paint the title of a box.
 
 theme - Theme used to paint box title."))
@@ -310,30 +312,100 @@ location informationm."))
   (:method (timer count object &key)
     (my-next-method)))
 
-(defgeneric owner (obj))
+(defgeneric owner (object)
+  (:documentation "Returns the MANAGER (or MANAGER derived) object that owns OBJECT."))
 
 (defgeneric paint (obj &key &allow-other-keys)
-  (:method (obj &key)
-    (on-paint obj)
+  (:method (object &key)
+    (unless (eql object nil)
+      (on-paint object))
     (my-next-method)))
 
-(defgeneric process-events (queue object &key &allow-other-keys))
+(defgeneric process-events (queue object &key &allow-other-keys)
+  (:documentation "Process events until told not too. In the case of MANAGER, that means until
+slot PROCESS is set to NIL.
 
-(defgeneric unhandled-event (event object) (:method (e o)))
+While events are being processed, any MOUSE-DOWN handlers should call
+ON-MOUSE-DOWN-ACCEPT when they are claiming the mouse button event.
+
+While this method is executing, any events not handled/dispatched internally
+are passed to any UNHANDLED-EVENT methods that area specialized on
+OBJECT (which is normally a MANGER)."))
+
+(defgeneric unhandled-event (event object) (:method (e o))
+  (:documentation "While PROCESS-EVENTS is executing, any events received that it doesn't handle
+itself (even if through method dispatch), will be passed to this method when
+the method is specialized on the same OBJECT."))
 
 ;;; PADDING ---------------------------------------------------------
 
-(defgeneric (setf padding) (value object))
+(defgeneric (setf padding) (value object)
+  (:documentation "Sets all PADDING for OBJECT to VALUE."))
 
-(defgeneric (setf padding-h) (value object))
+(defgeneric (setf padding-h) (value object)
+  (:documentation "Sets all horizontal PADDING for OBJECT to VALUE."))
 
-(defgeneric (setf padding-v) (value object))
+(defgeneric (setf padding-v) (value object)
+  (:documentation "Sets all vertical PADDING for OBJECT to VALUE."))
 
 ;;; SPACING ---------------------------------------------------------
 
-(defgeneric (setf spacing) (value object))
+(defgeneric (setf spacing) (value object)
+  (:documentation "Sets all SPACING for OBJECT to VALUE."))
 
-(defgeneric (setf spacing-h) (value object))
+(defgeneric (setf spacing-h) (value object)
+  (:documentation "Sets all horizontal SPACING for OBJECT to VALUE."))
 
-(defgeneric (setf spacing-v) (value object))
+(defgeneric (setf spacing-v) (value object)
+  (:documentation "Sets all vertical SPACING for OBJECT to VALUE."))
+
+;;; RULER -----------------------------------------------------------
+
+(defgeneric paint-ruler-horizontal (ruler)
+  (:documentation "Called from RULER's ON-PAINT method to draw a horizontal ruler."))
+
+(defgeneric paint-ruler-vertical (ruler)
+  (:documentation "Called from RULER's ON-PAINT method to draw a vertical ruler."))
+
+;;; THEME -----------------------------------------------------------
+
+(defgeneric default-theme-style (object)
+  (:documentation "Returns the default value for the STYLE of theme data based on OBJECT. Default
+implementations use the THEME-STYLE (from THEME-MIXIN) from OBJECT or its
+parent(s)."))
+
+(defgeneric default-theme-type (object)
+  (:documentation "Returns the default value for the TYPE of theme data base on OBJECT."))
+
+(defgeneric get-theme-value (object type id &key style)
+  (:documentation "Returns first theme data of TYPE, STYLE, and ID. This will walk the object
+heirarcy as needed until it finds a THEME that contains the required daa. If
+its unable to find an object that provides the needed data, it will request it
+from *THEME-DEFAULT, and then *THEME-ALL-DATA*.
+
+TYPE, STYLE, and ID should be SYMBOLP, KEYWORDP, or NIL."))
+
+(defgeneric get-theme-value-default (type style id)
+  (:documentation "Returns the theme data of TYPE, STYLE, and ID from *THEME-ALL-DATA*."))
+
+(defgeneric set-theme-value (object type id value &key style)
+  (:documentation "Adds theme data of TYPE, STYLE, and ID to OBJECT with data VALUE.
+
+TYPE, STYLE, and ID should be symbols (preferred), keywords, or strings.
+
+If STYLE is not provided, it will use the THEME-STYLE (from THEME-MIXIN) from
+the OBJECT or its parent(s)."))
+
+(defgeneric set-theme-value-default (type style id value)
+  (:documentation "Adds theme data of TYPE, STYLE, and ID to *THEME-ALL-DATA* with data VALUE."))
+
+(defgeneric theme-valuep (object type id &key style)
+  (:documentation "Returns T if the OBJECT contains the theme-data TYPE, STYLE, and ID.
+
+If STYLE is not provided, it will use the THEME-STYLE (from THEME-MIXIN) from
+the OBJECT or its parent(s)."))
+
+(defgeneric theme-value-defaultp (type style id)
+  (:documentation "Returns T if the *THEME-ALL-DATA* contains the theme-data TYPE, STYLE, and ID."))
+
 

@@ -51,7 +51,7 @@
           
           ;; Get initial area of children
           (loop :for row :from 0 :below child-count :do
-            (let ((child (foro (nth row content))))
+            (let ((child (a:ensure-car (nth row content))))
               (with-slots ((child-left left) (child-top top) (child-width width) (child-height height))
                   child
                 (let (new-left new-top new-width new-height)
@@ -230,7 +230,7 @@
           
           ;; Update the children
           (loop :for row :from 0 :below child-count :do
-            (let ((child-object (foro (nth row content))))
+            (let ((child-object (a:ensure-car (nth row content))))
               (unless (eql child-object nil)
                 (setf (slot-value child-object 'width) (slot-value (aref requested-areas row) 'width))
                 (setf (slot-value child-object 'height) (slot-value (aref requested-areas row) 'height))

@@ -14,25 +14,6 @@ If :where is specified it should be the type of method (:before, :after, etc.)
 
   `(remove-method #',func (find-method #',func () ,args)))
 
-(defmacro foro (object)
-  "Returns object or first object.
-
-If object is an atom, returns it.
-If object is an atom, and is a symbol, returns value of symbol.
-If object is list, and first item in list is object, returns it.
-If object is list, and first tiem is symbol, returns value of it."
-  
-  (a:with-gensyms (lobject cobject)
-    `(let ((,lobject ,object))
-       (if (consp ,lobject)
-           (let ((,cobject (first ,lobject)))
-             (when (symbolp ,cobject)
-               (setq ,cobject (symbol-value ,cobject)))
-             ,cobject)
-           (if (symbolp ,lobject)
-               (symbol-value ,lobject)
-               ,lobject)))))
-
 (defmacro my-next-method ()
   `(if (next-method-p) (call-next-method)))
 
@@ -215,60 +196,59 @@ saving all the slot access overhead."
                    fields)
          ,@body))))
 
-;; BUGBUG: TODO:  Args evaluated more than one time
-(defmacro with-object-or-theme ((&rest fields) object &body body)
-  "Create local instances of theme related slots from object.  If the object's
-slot value is nil, locate the active theme for object and get the value from it."
+;; (defmacro with-object-or-theme ((&rest fields) object &body body)
+;;   "Create local instances of theme related slots from object.  If the object's
+;; slot value is nil, locate the active theme for object and get the value from it."
   
-  (a:with-gensyms (instance theme)
-    `(let ((,instance ,object))
-       (let (,@(mapcar #'(lambda (f)
-                           `(,(first f) (,(second f) ,instance)))
-                       fields))
-         (when (or ,@(mapcar #'(lambda (f)
-                                 `(eql ,(first f) nil))
-                             fields))
-           (let ((,theme (find-theme ,instance)))
-             ,@(mapcar #'(lambda (f)
-                           `(when (not ,(first f))
-                              (setq ,(first f) (,(second f) ,theme))))
-                       fields)))
-         ,@(mapcar #'(lambda (f)
-                       `(assert (not (eql ,(first f) nil))))
-                   fields)
-         ,@body))))
+;;   (a:with-gensyms (instance theme)
+;;     `(let ((,instance ,object))
+;;        (let (,@(mapcar #'(lambda (f)
+;;                            `(,(first f) (,(second f) ,instance)))
+;;                        fields))
+;;          (when (or ,@(mapcar #'(lambda (f)
+;;                                  `(eql ,(first f) nil))
+;;                              fields))
+;;            (let ((,theme (find-theme ,instance)))
+;;              ,@(mapcar #'(lambda (f)
+;;                            `(when (not ,(first f))
+;;                               (setq ,(first f) (,(second f) ,theme))))
+;;                        fields)))
+;;          ,@(mapcar #'(lambda (f)
+;;                        `(assert (not (eql ,(first f) nil))))
+;;                    fields)
+;;          ,@body))))
 
 ;; BUGBUG: TODO: fields evaluated more than once
-(defmacro with-object-and-theme ((&rest fields) object theme &body body)
-  "Create local instances of theme related slots from object.  If the object's
-slot value is nil, use the slot from the theme."
+;; (defmacro with-object-and-theme ((&rest fields) object theme &body body)
+;;   "Create local instances of theme related slots from object.  If the object's
+;; slot value is nil, use the slot from the theme."
   
-  (a:with-gensyms (instance theme-obj)
-    `(let ((,instance ,object))
-       (let (,@(mapcar #'(lambda (f)
-                           (if (atom f)
-                               `(,f (,f ,instance))
-                               `(,(first f) (,(second f) ,instance))))
-                       fields))
-         (when (or ,@(mapcar #'(lambda (f)
-                                 (if (atom f)
-                                     `(eql ,f nil)
-                                     `(eql ,(first f) nil)))
-                             fields))
-           (let ((,theme-obj ,theme))
-             ,@(mapcar #'(lambda (f)
-                           (if (atom f)
-                               `(when (eql ,f nil)
-                                  (setq ,f (,f ,theme-obj)))
-                               `(when (eql ,(first f) nil)
-                                  (setq ,(first f) (,(second f) ,theme-obj)))))
-                       fields)))
-         ,@(mapcar #'(lambda (f)
-                       (if (atom f)
-                           `(assert (not (eql ,f nil)))
-                           `(assert (not (eql ,(first f) nil)))))
-                   fields)
-         ,@body))))
+;;   (a:with-gensyms (instance theme-obj)
+;;     `(let ((,instance ,object))
+;;        (let (,@(mapcar #'(lambda (f)
+;;                            (if (atom f)
+;;                                `(,f (,f ,instance))
+;;                                `(,(first f) (,(second f) ,instance))))
+;;                        fields))
+;;          (when (or ,@(mapcar #'(lambda (f)
+;;                                  (if (atom f)
+;;                                      `(eql ,f nil)
+;;                                      `(eql ,(first f) nil)))
+;;                              fields))
+;;            (let ((,theme-obj ,theme))
+;;              ,@(mapcar #'(lambda (f)
+;;                            (if (atom f)
+;;                                `(when (eql ,f nil)
+;;                                   (setq ,f (,f ,theme-obj)))
+;;                                `(when (eql ,(first f) nil)
+;;                                   (setq ,(first f) (,(second f) ,theme-obj)))))
+;;                        fields)))
+;;          ,@(mapcar #'(lambda (f)
+;;                        (if (atom f)
+;;                            `(assert (not (eql ,f nil)))
+;;                            `(assert (not (eql ,(first f) nil)))))
+;;                    fields)
+;;          ,@body))))
 
 (defmacro with-parent-area (name object &body body)
   "Create binding NAME for first parent of OBJECT that is derived from

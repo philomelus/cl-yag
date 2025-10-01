@@ -94,7 +94,7 @@ area allocated to them, whether they choose to use it or not."
 
           ;; Reset children
           (dolist (child (content object))
-            (reset-area (foro child)))
+            (reset-area (a:ensure-car child)))
 
           ;; Re-layout children
           (dolist (child (content object))

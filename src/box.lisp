@@ -2,30 +2,26 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; box ======================================================================
+;;;; BOX-THEME-DATA -----------------------------------------------------
 
-;;; theme-mixin -----------------------------------------------------
+(defparameter *BOX-THEME-DATA* '((box flat frame-color)
+                                 (box flat interior-color)
+                                 (box nil text-title)
+                                 (box nil text-font)
+                                 (box 3d style)
+                                 (box 3d color)
+                                 (box 3d dark-color)
+                                 (box 3d light-color)
+                                 (box 3d very-dark-color)
+                                 (box 3d very-light-color)))
 
-(defclass box-theme-mixin (font-mixin
-                           fore-color-mixin
-                           interior-color-mixin)
-  ())
-
-(defclass box-theme-3d-mixin (color-3d-mixin
-                              style-3d-mixin)
-  ())
-
-(defclass box-theme-flat-mixin (frame-color-mixin)
-  ())
-
-;;; box ---- --------------------------------------------------------
+;;;; BOX ======================================================================
 
 (deftype box-title-position-type () '(member :left-top :left-middle :left-bottom
                                       :center-top :center-middle :center-bottom
                                       :right-top :right-middle :right-bottom nil))
 
-(defclass box (box-theme-mixin
-               area-mixin
+(defclass box (area-mixin
                parent-mixin
                theme-mixin
                title-mixin
@@ -58,7 +54,7 @@
   (slot-value area 'width))
 
 (defmethod on-paint ((object box) &key)
-  (paint-box object (find-theme object)))
+  (paint-box object))
 
 ;;; functions -------------------------------------------------------
 

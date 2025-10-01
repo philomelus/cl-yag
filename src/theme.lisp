@@ -1,312 +1,269 @@
 (in-package #:cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 0) (compilation-speed 0)))
 
-;;;; macros ==================================================================
+;;;; FORWARDS =================================================================
 
-(defmacro with-theme-3d-colors ((n d l vd vl) theme &body body)
-  (a:with-gensyms (instance)
-    `(let ((,instance ,theme))
-       (let ((,n (normal-color ,instance))
-             (,d (dark-color ,instance))
-             (,l (light-color ,instance))
-             (,vd (very-dark-color ,instance))
-             (,vl (very-light-color ,instance)))
-         (declare (ignorable ,n ,d ,l ,vd ,vl))
-         (assert (not (eql ,n nil)))
-         (assert (not (eql ,d nil)))
-         (assert (not (eql ,l nil)))
-         (assert (not (eql ,vd nil)))
-         (assert (not (eql ,vl nil)))
-         ,@body))))
+(declaim (ftype (function ((or null keyword string symbol) (or null keyword string symbol) (or keyword string symbol)) string) theme-data-hash-key))
+(declaim (inline theme-data-hash-key))
 
-;;;; forward declaration =====================================================
+(declaim (inline theme-data-style))
 
-(defvar *theme-default*)
+(defvar *theme-all-data* nil "Contains hash-table of all possible theme data.")
+(defvar *theme-all-data-initialized* nil "When NIL causes MAKE-INSTANCE 'THEME to add default non-type specific theme
+data to *THEME-ALL-DATA*.")
 
-;;;; theme-base ===============================================================
+(defvar *theme-default* nil "Default theme.")
 
-(defclass theme-base (back-color-mixin
-                      fore-color-mixin)
-  ())
+;; Needed before it'd be in correct section
+(defun theme-data-hash-key (type style id)
+  (let (hash-type hash-style hash-id)
+    (typecase type
+      (null
+       (setq hash-type "NONE"))
+      ((or keyword symbol)
+       (setq hash-type (symbol-name type)))
+      (string
+       (setq hash-type (string-upcase type))))
+    
+    (typecase style
+      (null
+       (setq hash-style "NONE"))
+      ((or keyword symbol)
+       (setq hash-style (symbol-name style)))
+      (string
+       (setq hash-style (string-upcase style))))
+    
+    (typecase id
+      (string
+       (setq hash-id (string-upcase id)))
+      ((or symbol keyword)
+       (setq hash-id (symbol-name id))))
+    
+    (concatenate 'string hash-type "-" hash-style "-" hash-id)))
 
-(defmethod paint-border ((object border-mixin) (theme theme-base))
-  (with-borders (bl br bt bb) object
-    (let ((blp (not (eql bl nil)))
-          (brp (not (eql br nil)))
-          (btp (not (eql bt nil)))
-          (bbp (not (eql bb nil))))
-      (when blp
-        (paint-border-left bl object theme :blend-top btp :blend-bottom bbp))
-      (when btp
-        (paint-border-top bt object theme :blend-left blp :blend-right brp))
-      (when brp
-        (paint-border-right br object theme :blend-top btp :blend-bottom bbp))
-      (when bbp
-        (paint-border-bottom bb object theme :blend-left blp :blend-right brp)))))
+(defun theme-data-style (style)
+  (if (member style '(:unset))
+      nil
+      style))
 
-;;;; theme-flat ===============================================================
+(defun get-theme-style (object)
+  ;; Find first non-unset theme
+  (let ((local-object object)
+        style)
+    (loop
+      (assert (not (null local-object)))
+      ;; From object?
+      (when (typep local-object 'theme-mixin)
+        (setf style (theme-style local-object))
+        (unless (eql style :unset)
+          (return-from get-theme-style style)))
 
-(defclass theme-flat (theme-base)
-  ((frame-color :initarg :frame-color :initform nil :accessor frame-color)
-   (interior-color :initarg :interior-color :initform nil :accessor interior-color)))
+      ;; No, from object's theme?
+      (when (typep local-object 'theme-base)
+        (setf style (theme-style local-object))
+        (unless (eql style :unset)
+          (return-from get-theme-style style)))
 
-(defmacro deftheme-flat (&rest rest &key &allow-other-keys)
-  `(make-instance 'theme-flat ,@rest))
+      ;; No, did we get to manager?
+      (when (typep local-object 'manager)
+        (let ((local-theme (theme local-object)))
+          ;; Yes, does it have a valid theme?
+          (unless (null local-theme)
+            ;; Yes so get its style
+            (setf style (theme-style local-theme)))
+          ;; Find good theme?
+          (when (eql style :unset)
+            ;; No, so et global theme style
+            (setf style (theme-style *theme-default*)))
+          ;; Now did we get a good theme?
+          (when (eql style :unset)
+            ;; No, so use FLAT
+            (setf style :flat)
+            (v:debug :theme "[GET-THEME-STYLE] no THEME-STYLE set, using FLAT."))
+          ;; Theme is valid now!
+          (return-from get-theme-style style)))
 
-;;; methods ---------------------------------------------------------
+      ;; No, check next parent
+      (unless (typep local-object 'parent-mixin)
+        (error "failed to locate MANAGER or valid THEME-STTLE when no more PARENT's"))
+      (setf local-object (parent local-object)))))
 
-;;;; theme-3d =================================================================
+;;;; THEME-BASE ===============================================================
 
-(defclass theme-3d (theme-base
-                    color-3d-mixin)
-  ())
+(defclass theme-base ()
+  ()
+  (:documentation "Base class for all THEME's. Any derived class will be assumed to be able to
+have GET-THEME-VALUE and SET-THEME-VALUE work with them."))
 
-(defmacro deftheme-3d (&rest rest &key &allow-other-keys)
-  `(make-instance 'theme-3d ,@rest))
+;;;; THEME ====================================================================
 
-;;;; methods ==================================================================
+(deftype theme-style () '(member :unset :flat :3d-out :3d-in :3d-flat))
 
-(macrolet ((theme-read-field (name field)
-             `(progn
-                (defmethod ,name (object)
-                  (let ((th (find-theme object)))
-                    (assert (not (eql th nil)))
-                    (slot-value th ,field)))
-                (defmethod ,name ((object theme-mixin))
-                  (with-slots (theme) object
-                    (assert (typep theme 'theme-3d))
-                    (slot-value theme ,field))))))
-  (theme-read-field theme-3d-d 'dark)
-  (theme-read-field theme-3d-l 'light)
-  (theme-read-field theme-3d-n 'normal)
-  (theme-read-field theme-3d-vd 'very-dark)
-  (theme-read-field theme-3d-vl 'very-light))
+(defclass theme (theme-base)
+  ((theme-data :initform nil)
+   (theme-style :type theme-style :initarg :theme-style :initform :unset :accessor theme-style))
+  (:documentation "Contains theme data. Any widget below the object in widget hierarchy with the
+THEME will use the theme-data from the THEME, unless overridden in inidivual
+widgets themselves."))
 
-;;;; common methods ===========================================================
+(defmacro deftheme (&rest rest &key &allow-other-keys)
+  `(make-instance 'theme ,@rest))
 
-(defmethod paint-border-bottom ((border border) object (theme theme-3d) &key blend-left blend-right)
-  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-    (declare (ignorable lto lti rbo rbi))
-    (with-area-and-spacing (object-left object-top object-right object-bottom) object
-      (assert (< object-left object-right))
-      (assert (< object-top object-bottom))
-      (let ((thickness (thickness border)))
-        (let ((1/4-thick (/ thickness 4))
-              (1/2-thick (/ thickness 2))
-              (others ()))
-          (when blend-left
-            (push :left others))
-          (when blend-right
-            (push :right others))
-          (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
-            (draw-side :bottom
-                       (+ object-left 3/4-thick) (- object-top 1/4-thick)
-                       (- object-right 3/4-thick) (- object-bottom 1/4-thick)
-                       1/2-thick rbo :others others)
-            (draw-side :bottom
-                       (+ object-left 3/4-thick) (- object-top 3/4-thick)
-                       (- object-right 3/4-thick) (- object-bottom 3/4-thick)
-                       1/2-thick rbi :others others :inside t)))))))
+;;; METHODS ---------------------------------------------------------
 
-(defmethod paint-border-bottom ((border border) object (theme theme-flat) &key blend-left blend-right)
-  (declare (ignorable blend-left blend-right))
-  (let ((color (color theme)))
-    (with-accessors ((tn thickness)) border
-      (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) (foro object)
-          (let ((c color)
-                (w2 (/ tn 2)))
-            (if (eql c nil)
-                (setq c (frame-color theme)))
-            (let ((yy (+ asb (- tn) w2)))
-              (al:draw-line asl yy asr yy c tn))))))))
+(defmethod default-theme-style (object)
+  (unless (a:starts-with (type-of object) '%RULER)
+   (v:warn :theme "[DEFAULT-THEME-STYLE] {} missing for type ~a" (type-of object))))
 
-(defmethod paint-border-left ((border border) object (theme theme-3d) &key blend-top blend-bottom)
-  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-    (declare (ignorable lto lti rbo rbi))
-    (with-area-and-spacing (object-left object-top object-right object-bottom) object
-      (let ((thickness (thickness border)))
-        (when (> thickness 0)
-          (let ((1/4-thick (/ thickness 4))
-                (1/2-thick (/ thickness 2))
-                (others ()))
-            (when blend-top
-              (push :top others))
-            (when blend-bottom
-              (push :bottom others))
-            (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
-              (draw-side :left
-                         (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                         (+ object-right 1/4-thick) (- object-bottom 1/4-thick) 
-                         1/2-thick lto :others others)
-              (draw-side :left
-                         (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                         (+ object-right 3/4-thick) (- object-bottom 3/4-thick)
-                         1/2-thick lti :others others :inside t))))))))
+(defmethod default-theme-type (object)
+  (unless (a:starts-with (type-of object) '%RULER)
+    (v:warn :theme "[DEFAULT-THEME-TYPE] {} missing for type ~a" (type-of object))))
 
-(defmethod paint-border-left ((border border) object (theme theme-flat) &key blend-top blend-bottom)
-  (declare (ignorable blend-top blend-bottom))
-  (let ((color (color theme)))
-    (with-accessors ((tn thickness)) border
-      (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) (foro object)
-          (let ((c color)
-                (w tn)
-                (w2 (/ tn 2)))
-            (if (eql c nil)
-                (setq c (frame-color theme)))
-            (let ((xx (+ asl w2)))
-              (assert (not (eql c nil)))
-              (al:draw-line xx ast xx asb c w))))))))
+(defmethod get-theme-value-default (type style id)
+  (let ((hash-key (theme-data-hash-key type style id)))
+    (multiple-value-bind (value present) (gethash hash-key *theme-all-data*)
+      (unless present
+        (error "[GET-THEME-VALUE] {} missing default value for ~a/~a/~a" type style id))
+      (v:debug :theme "[GET-THEME-VALUE-DEFAULT] ~a/~a/~a returned ~a" type style id value)
+      value)))
 
-(defmethod paint-border-right ((border border) object (theme theme-3d) &key blend-top blend-bottom)
-  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-    (declare (ignorable lto lti rbo rbi))
-    (with-area-and-spacing (object-left object-top object-right object-bottom) object
-      (let ((thickness (thickness border)))
-        (when (> thickness 0)
-          (let ((1/4-thick (/ thickness 4))
-                (1/2-thick (/ thickness 2))
-                (others ()))
-            (when blend-top
-              (push :top others))
-            (when blend-bottom
-              (push :bottom others))
-            (let ((3/4-thick (+ 1/2-thick 1/4-thick)))
-              (draw-side :right (- object-left 1/4-thick) (+ object-top 3/4-thick)
-                         (- object-right 1/4-thick) (- object-bottom 1/4-thick)
-                         1/2-thick rbo :others others)
-              (draw-side :right (- object-left 3/4-thick) (+ object-top 3/4-thick)
-                         (- object-right 3/4-thick) (- object-bottom 3/4-thick)
-                         1/2-thick rbi :others others :inside t))))))))
+(defparameter *theme-all-data* (make-hash-table :test 'equalp))
+(defmethod initialize-instance :before ((object theme) &key)
+  "Add default non-type specific theme data to *THEME-ALL-DATA*"
 
-(defmethod paint-border-right ((border border) object (theme theme-flat) &key blend-top blend-bottom)
-  (declare (ignorable blend-top blend-bottom))
-  (let ((color (color theme)))
-    (with-accessors ((tn thickness)) border
-      (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) (foro object)
-          (let ((c color)
-                (w2 (/ tn 2)))
-            (if (eql c nil)
-                (setq c (frame-color theme)))
-            (let ((xx (+ asr (- tn) w2)))
-              (al:draw-line xx ast xx asb c tn))))))))
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-gray+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-gray+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-gray+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-gray+)
+    (set-theme-value-default nil nil 'light-color +color-light-gray+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-gray+)
+    (set-theme-value-default nil nil 'very-light-color +color-very-light-gray+)))
 
-(defmethod paint-border-top ((border border) object (theme theme-3d) &key blend-left blend-right)
-  (multiple-value-bind (lto lti rbo rbi) (theme-3d-style-colors theme)
-    (declare (ignorable lto lti rbo rbi))
-    (with-area-and-spacing (object-left object-top object-right object-bottom) object
-      (let ((thickness (thickness border)))
-        (when (> thickness 0)
-          (let ((1/4-thick (/ thickness 4))
-                (1/2-thick (/ thickness 2))
-                (others ()))
-            (when blend-left
-              (push :left others))
-            (when blend-right
-              (push :right others))
-            (let ((3/4-thick (+ 1/4-thick 1/2-thick)))
-              (draw-side :top (+ object-left 1/4-thick) (+ object-top 1/4-thick)
-                         object-right (+ object-bottom 1/4-thick)
-                         1/2-thick lto :others others)
-              (draw-side :top (+ object-left 3/4-thick) (+ object-top 3/4-thick)
-                         object-right (+ object-bottom 3/4-thick)
-                         1/2-thick lti :others others :inside t))))))))
+(defmethod set-theme-value-default (type style id value)
+  (let ((hash-key (theme-data-hash-key type style id)))
+    (setf (gethash hash-key *theme-all-data*) value)
+    (v:debug :theme "[SET-THEME-VALUE-DEFAULT] {} value set for ~a / ~a / ~a" type style id)))
 
-(defmethod paint-border-top ((border border) object (theme theme-flat) &key blend-left blend-right)
-  (declare (ignorable blend-left blend-right))
-  (let ((color (color theme)))
-    (with-accessors ((tn thickness)) border
-      (when (> tn 0)
-        (with-area-and-spacing (asl ast asr asb) (foro object)
-          (let ((c color)
-                (w2 (/ tn 2)))
-            (if (eql c nil)
-                (setq c (frame-color theme)))
-            (let ((yy (+ ast w2)))
-              (al:draw-line asl yy asr yy c tn))))))))
+(defmethod theme-value-defaultp (type style id)
+  (let ((hash-key (theme-data-hash-key type (theme-data-style style) id)))
+    (multiple-value-bind (value present) (gethash hash-key *theme-all-data*)
+      (declare (ignore value))
+      present)))
 
-;;;; functions ================================================================
+;;;; GLOBALS ==================================================================
 
-(defun theme-3d-style-colors (theme)
+(defparameter *theme-default* (make-instance 'theme))
+
+;;;; FUNCTIONS ================================================================
+
+(defun theme-3d-style-colors (type style object)
   "Return 3d drawing colors from 3d drawing style (left-top-outside
 left-top-inside right-bottom-outside right-bottom-inside)."
-  
-  (with-theme-3d-colors (normal dark light very-dark very-light) theme
-    (assert (not (eql normal nil)))
-    (assert (not (eql dark nil)))
-    (assert (not (eql light nil)))
-    (assert (not (eql very-dark nil)))
-    (assert (not (eql very-light nil)))
-    (assert (member (style theme) '(:inset :outset :default :flat)))
-    (case (style theme)
-      (:inset
-       (values very-dark dark light very-light))
-      ((:outset :default)
-       (values light very-light very-dark dark))
-      (:flat
-       (values very-dark dark very-dark dark)))))
 
-(defun find-theme (o)
-  "Return first valid THEME for OBJECT. If no THEME is found within widget
-hierarchy, uses *DEFAULT-THEME*. Returns bothe the THEME and the object theme
-was IN (which will be NIL when *DEFAULT-THEME* is used)."
+  (let ((color (get-theme-value object type 'color :style style))
+        (dark-color (get-theme-value object type 'dark-color :style style))
+        (light-color (get-theme-value object type 'light-color :style style))
+        (very-dark-color (get-theme-value object type 'very-dark-color :style style))
+        (very-light-color (get-theme-value object type 'very-light-color :style style)))
+    (assert (not (eql color nil)))
+    (assert (not (eql dark-color nil)))
+    (assert (not (eql light-color nil)))
+    (assert (not (eql very-dark-color nil)))
+    (assert (not (eql very-light-color nil)))
+    (ecase style
+      (:3d-in
+       (values very-dark-color dark-color light-color very-light-color))
+      (:3d-out
+       (values light-color very-light-color very-dark-color dark-color))
+      ((:flat :3d-flat :unset)
+       (values very-dark-color dark-color very-dark-color dark-color)))))
 
-  ;; Does object have theme?
-  (if (typep o 'theme-mixin)
-      ;; Yes, is it valid?
-      (if (not (eq nil (theme o)))
-          ;; Yes, so use it
-          (progn
-            (v:debug :theme "find-theme: using object: ~a" (print-raw-object o))
-            (return-from find-theme (theme o)))))
+;;;; GLOBAL THEMES ============================================================
 
-  ;; No theme, does it have a parent?
-  (unless (typep o 'parent-mixin)
-    ;; No parent and no theme so use default
-    (v:debug :theme "find-theme: no theme, no parent, using default.")
-    (return-from find-theme *theme-default*))
+(defun theme-aqua ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-aqua+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-aqua+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-aqua+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-aqua+)
+    (set-theme-value-default nil nil 'light-color +color-light-aqua+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-aqua+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-aqua+)))
 
-  ;; Object has parent, so a parent with a theme
-  (let ((count 0)
-        (p (parent o)))
-    (loop
-      ;; Valid parent?
-      (if (not (eq nil p))
-          ;; yes, does parent have theme?
-          (if (typep p 'theme-mixin)
-              ;; Yes, is it valid?
-              (progn
-                (unless (eq nil (theme p))
-                  ;; Yes, so use it
-                  (v:debug :theme "find-theme: using parent ~d: ~a" count (print-raw-object p))
-                  (return-from find-theme (theme p)))
+(defun theme-blue ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-blue+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-blue+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-blue+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-blue+)
+    (set-theme-value-default nil nil 'light-color +color-light-blue+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-blue+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-blue+)))
 
-                ;; Parent has invalid theme, does it have a parent?
-                (if (typep p 'parent-mixin)
-                    ;; Yes, so loop
-                    (progn
-                      (setf p (parent p))
-                      (incf count))
-                    ;; No valid theme and no parent, use default
-                    (progn
-                      (v:debug :theme "find-theme: invalid parent theme, no parent, use default.")
-                      (return-from find-theme *theme-default*))))
-              ;; No, so does it have a parent?
-              (if (typep p 'parent-mixin)
-                  ;; Doesn't have a theme, but has a parent
-                  (progn
-                    (setf p (parent p))
-                    (incf count))
-                  ;; Doesn't have a theme and has no parent, use default
-                  (progn
-                    (v:debug :theme "find-theme: no contained theme, no parent, use default.")
-                    (return-from find-theme *theme-default*))))
+(defun theme-gray ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-gray+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-gray+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-gray+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-gray+)
+    (set-theme-value-default nil nil 'light-color +color-light-gray+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-gray+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-gray+)))
 
-          ;; Parent not valid, so use default
-          (progn
-            (v:debug :theme "find-theme: no theme, no parent, use default.")
-            (return-from find-theme *theme-default*))))))
+(defun theme-green ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-green+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-green+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-green+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-green+)
+    (set-theme-value-default nil nil 'light-color +color-light-green+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-green+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-green+)))
 
+(defun theme-purple ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-purple+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-purple+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-purple+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-purple+)
+    (set-theme-value-default nil nil 'light-color +color-light-purple+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-purple+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-purple+)))
+
+(defun theme-red ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-red+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-red+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-red+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-red+)
+    (set-theme-value-default nil nil 'light-color +color-light-red+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-red+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-red+)))
+
+(defun theme-yellow ()
+  (unless (theme-value-defaultp nil nil 'interior-color)
+    (set-theme-value-default nil nil 'interior-color +color-yellow+)
+    (set-theme-value-default nil nil 'frame-color +color-very-dark-yellow+)
+    (set-theme-value-default nil nil 'text-color +color-black+)
+    (set-theme-value-default nil nil 'text-font (default-font -24))
+    (set-theme-value-default nil nil 'color +color-yellow+)
+    (set-theme-value-default nil nil 'dark-color +color-dark-yellow+)
+    (set-theme-value-default nil nil 'light-color +color-light-yellow+)
+    (set-theme-value-default nil nil 'very-dark-color +color-very-dark-yellow+)
+    (set-theme-value-default nil nil 'very-lightcolor +color-very-light-yellow+)))

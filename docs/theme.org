@@ -1,0 +1,55 @@
+
+Themes now work as described below. This took a lot of trial and error
+to get the exact way to do this correct, but it seems to work well
+now.
+
+At start, a global *THEME-ALL-DATA* is populated with the default
+theme data for all widgets, as well as default global values. For
+example, if a particular widgets needs a "text-color", there will be a
+default "text-color" with no other identifying data.
+
+Theme data is stored as a hash table of strings to values. The key is
+made up of 3 values:
+
+- Type
+- Style
+- ID
+
+Type is either NIL or a type specific to a widget (i.e. BUTTON for
+BUTTON widgets).
+
+Style is either NIL or a style that is supported by the widget. There
+are 3 possible options by default, and those are NIL, FLAT, and 3D.
+
+ID is a specific value type that is required by the widget. For
+example, if the widget has ability to draw text, they may need
+TEXT-COLOR and TEXT-FONT ID's.
+
+The basic way this default data is created is by overiding
+MAKE-INSTANCE with a :BEFORE method that checks to see if the data has
+been initialized and initializes it if not. Every widget as well as
+THEME itself does this.
+
+The THEME-MIXIN object adds a THEME-DATA field to a widget. This
+allows a widgets theme to be set independtly from any other widget or
+THEME if desired.
+
+When a widgets need to draw itself, it requests the needed value by
+calling GET-THEME-VALUE, passing itself and the desired type, style,
+and id.
+
+GET-THEME-VALUE will check every widget starting with the passed in
+OBJECT for a THEME-DATA that contains the desired value, and return it
+if found. If its unable to find it, it will then ask for it from the
+MANAGER object if the MANAGER object has a THEME object, and return
+that value if found. If still not found, the value will then be
+retreived from *THEME-ALL-DATA*.
+
+At this point it is an error if *THEME-ALL-DATA* does NOT have the
+needed value, and an error condition will be raised.
+
+In the end its a pretty simple and straight forward process, but it
+was complicated to get here (isn't that always the case, start
+complicated and simplify until it can no longer be simplified?).
+
+--> Russ Gibson, 2025/09/28

@@ -1,6 +1,6 @@
 (in-package :cl-yag-tests)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 1) (compilation-speed 0)))
 
 ;;;; stubs ====================================================================
 
@@ -75,7 +75,7 @@
 
 ;; structs ====================================================================
 
-(defstruct (tests-data (:include tests-theme-data)
+(defstruct (tests-data (:include tests-rulers-data)
                        (:conc-name tests-))
   
   manager event queue timer
@@ -103,6 +103,8 @@ Default event processing watches for :display-close event as well."
   (al:set-new-display-option :samples 0 :require)
   (al:set-blender +OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
 
+  (slime-init)
+  
   (let ((screen (al:create-display (+ +WHS+ +WW+ +WHS+ +WW+ +WHS+ +WW+ +WHS+ +WW+ +WHS+)
                                    (+ +WWS+ +WH+ +WWS+ +WH+ +WWS+ +IH+ +WWS+)))
         (timer (al:create-timer (/ 1 60.0)))
@@ -120,19 +122,10 @@ Default event processing watches for :display-close event as well."
            (al:register-event-source queue (al:get-timer-event-source timer))
            (al:register-event-source queue (al:get-mouse-event-source))
 
-           ;; Set up themes
-           (let ((fnt (default-font -24)))
-             (setf (font *theme-default*) fnt)
-             (setf (tests-theme1 data) (theme-flat-gray))
-             (setf (font (tests-theme1 data)) fnt)
-             (setf (tests-theme2 data) (theme-3d-gray))
-             (setf (font (tests-theme2 data)) fnt))
-           
            ;; Let test set up window/objects
            (tests-create data)
 
            ;; Set initial theme
-           (setf (theme (tests-manager data)) (tests-theme1 data))
            (setf (tests-mono-font data) (default-mono-font -24))
            
            ;; Final preparations
@@ -197,15 +190,20 @@ Default event processing watches for :display-close event as well."
              (multiple-value-bind (widgets update) (tests-get-interior-color data)
                (unless (eql widgets nil)
                  (with-slots (manager theme1) data
-                   (let ((ic1 (interior-color theme1))
-                         (ic2 (al:map-rgb-f 1 0 0)))
+                   (let ((ic1 (get-theme-value-default nil nil 'interior-color))
+                         (ic2 +COLOR-RED+))
                      (mapc #'(lambda (w)
-                               (unless (eql w nil)
-                                 (with-local-slots ((ic interior-color)) w
+                               (unless (null w)
+                                 (with-theme-let ((ic (window nil interior-color))) w
+                                   (v:info :tests "[ON-CHAR] {:c} color: ~a" ic)
                                    (if (or (equal ic ic1)
                                            (equal ic nil))
-                                       (setf (interior-color w) ic2)
-                                       (setf (interior-color w) ic1)))))
+                                       (progn
+                                         (set-theme-value w (type-of w) 'interior-color ic2 :style nil)
+                                         (v:info :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to +COLOR-RED+"))
+                                       (progn
+                                         (set-theme-value w (type-of w) 'interior-color ic1 :style nil)
+                                         (v:info :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to theme default"))))))
                            widgets)))
                  (when update
                    (tests-command-update data)))))
@@ -301,13 +299,36 @@ Default event processing watches for :display-close event as well."
                    (tests-command-update data)))))
            
            (defmethod cl-yag::on-char ((key (eql :t)) mods (object (eql (tests-manager data))) &key)
-             (tests-toggle-theme data))
+             (multiple-value-bind (widgets update) (tests-get-theme data)
+               (unless (null widgets)
+                 (mapc #'(lambda (w)
+                           (unless (null w)
+                             (with-accessors ((theme-style theme-style)) w
+                               (ecase theme-style
+                                 (:unset
+                                  (setf theme-style :flat)
+                                  (v:debug :tests "[ON-CHAR] {:t} set THEME-STYLE to :FLAT"))
+                                 (:flat
+                                  (setf theme-style :3d-out)
+                                  (v:debug :tests "[ON-CHAR] {:t} set THEME-STYLE to :3D-OUT"))
+                                 (:3d-out
+                                  (setf theme-style :3d-in)
+                                  (v:debug :tests "[ON-CHAR] {:t} set THEME-STYLE to :3D-IN"))
+                                 (:3d-in
+                                  (setf theme-style :3d-flat)
+                                  (v:debug :tests "[ON-CHAR] {:t} set THEME-STYLE to :3D-FLAT"))
+                                 (:3d-flat
+                                  (setf theme-style :flat)
+                                  (v:debug :tests "[ON-CHAR] {:t} set THEME-STYLE to FLAT"))))))
+                       widgets)
+                 (when update
+                   (tests-command-update data)))))
            
            (defmethod cl-yag::on-char ((key (eql :v)) mods (object (eql (tests-manager data))) &key)
              (multiple-value-bind (widgets update) (tests-get-h-align data)
                (unless (eql widgets nil)
                  (mapc #'(lambda (w)
-                           (unless (eql w nil)
+                           (unless (null w)
                              (with-slots (v-align) w
                                (ecase v-align
                                  (:top (setf v-align :middle))

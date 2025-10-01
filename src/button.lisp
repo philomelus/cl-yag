@@ -7,26 +7,23 @@
 ;; Default hover location is in spacing between border and object egdge. Thus,
 ;; you'd probably want a spacing of at least 3 for it to show up good.
 
-(defclass button-theme-mixin (font-mixin
-                              fore-color-mixin
-                              interior-color-mixin)
-  ((down-color :initarg :down-color :initform nil :accessor down-color :documentation "Color for title when button commanded by click.")
-   (borderp :type boolean :initarg :borderp :initform t :accessor borderp :documentation "When T border is drawn around button, and moved down and to the right when commanded via click.")
-   (border-thickness :type border-thickness-type :initarg :border-thickness :accessor border-thickness :documentation "Thickness of the border around the button.  Different themes require different minimums.")
-   (hover-color :initarg :hover-color :initform (al:map-rgb-f 0.5 0.5 0.5) :accessor hover-color :documentation "Color of hover outline and title when widget is active (mouse is over).")
-   (hover-inside-borderp :type boolean :initarg :hover-inside-borderp :initform t :accessor hover-inside-borderp :documentation "When T hover is draw between title and start of border padding.")
-   (hover-inside-paddingp :type boolean :initarg :hover-inside-paddingp :initform nil :accessor hover-inside-paddingp :documentation "When T hover is drawn inside border padding.")
-   (hover-thickness :type thickness-type :initarg :hover-thickness :accessor hover-thickness :documentation "Thickness of hover line.")
-   (up-color :initarg :up-color :initform nil :accessor up-color :documentation "Deprecated.")))
-
-(defclass button-theme-3d-mixin (button-theme-mixin)
-  ((border-thickness :initform 2)
-   (hover-thickness :initform 2)))
-
-(defclass button-theme-flat-mixin (button-theme-mixin
-                                   color-3d-mixin)
-  ((border-thickness :initform 1)
-   (hover-thickness :initform 1)))
+(defparameter *BUTTON-THEME-DATA* `((button nil text-up-color)
+                                    (button nil text-down-color)
+                                    (button nil text-hilite-color)
+                                    (button nil text-font)
+                                    (button nil hover-color)
+                                    (button nil border-p)
+                                    (button nil border-width)
+                                    (button nil hilite-color)
+                                    (button nil hilite-inside-border-p)
+                                    (button nil hilite-inside-padding-p)
+                                    (button nil hilite-width)
+                                    (button 3d color)
+                                    (button 3d dark-color)
+                                    (button 3d light-color)
+                                    (button 3d very-dark-color)
+                                    (button 3d very-light-color)
+                                    (button flat interior-color)))
 
 ;;; button -----------------------------------------------------
 
@@ -37,7 +34,6 @@
                   parent-mixin
                   spacing-mixin
                   title-mixin
-                  button-theme-mixin
                   shortcuts-mixin
                   v-align-mixin)
   
@@ -115,16 +111,16 @@
 (defmethod on-paint ((obj button) &key)
   (with-local-slots ((in inside) (down was-down)) obj
     (with-local-accessors (left top width height) obj
-      (with-object-or-theme ((cd down-color) (ch hover-color) (cu up-color)
-                             (fg fore-color) (ic interior-color)
-                             (fnt font))
-                            obj
+      (with-theme-let ((cd down-color) (ch hover-color) (cu up-color)
+                       (ic interior-color)
+                       (fnt font))
+                      obj
       
         ;; Draw background
         (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
       
         ;; Draw border
-        (paint-border obj (find-theme obj))
+        (paint-border obj)
       
         ;; Draw text
         (multiple-value-bind (x f) (text-calc-title-left obj)

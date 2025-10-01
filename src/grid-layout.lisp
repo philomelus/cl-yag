@@ -503,15 +503,15 @@ keyword options when provided to DEFGRID-LAYOUT."
       (loop :for h :from 0 :below columns :do
         (with-borders (bl br bt bb) (layout-cell object :column h :row v)
           (unless (and (eql bl nil) (eql br nil) (eql bt nil) (eql bb nil))
-            (let ((theme (find-theme object)))
+            (let ((style (get-theme-style object)))
               (unless (eql bl nil)
-                (paint-border-left bl (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+                (paint-border-left bl style (aref (slot-value object 'child-area) (+ (* v columns) h))))
               (unless (eql br nil)
-                (paint-border-right br (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+                (paint-border-right br style (aref (slot-value object 'child-area) (+ (* v columns) h))))
               (unless (eql bt nil)
-                (paint-border-top bt (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))
+                (paint-border-top bt style (aref (slot-value object 'child-area) (+ (* v columns) h))))
               (unless (eql bb nil)
-                (paint-border-bottom bb (aref (slot-value object 'child-area) (+ (* v columns) h)) theme))))))))
+                (paint-border-bottom bb style (aref (slot-value object 'child-area) (+ (* v columns) h))))))))))
 
   ;; Let base take care of children
   (my-next-method))

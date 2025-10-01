@@ -15,6 +15,19 @@
          (yag-path (asdf:system-relative-pathname "cl-yag" real-path)))
     (namestring yag-path)))
 
+(defun copy-hash-table (original &key (new-table nil new-table-p))
+  (let ((duplicate new-table))
+    (unless new-table-p
+      (setq duplicate (make-hash-table :test (hash-table-test original)
+                                       :size (hash-table-size original)
+                                       :rehash-size (hash-table-rehash-size original)
+                                       :rehash-threshold (hash-table-rehash-threshold original))))
+    
+    (maphash #'(lambda (key value)
+                 (setf (gethash key duplicate) value))
+             original)
+    duplicate))
+
 (defun print-object-as-string (object)
   (with-output-to-string (s)
     (princ object)
@@ -55,3 +68,12 @@ link to original object in new object."
         (setf (slot-value copy slot)
               (slot-value original slot))))
     copy))
+
+(defun slime-init ()
+  "When running from EMACS throuigh SLIME, some extra initialization needs to
+occur because CL-LIBALLEGRO hasn't been initialized when some special
+variables are initialized. This performs those extra initializations."
+
+  (let ((font (default-font -24)))
+    (set-theme-value-default nil nil 'text-font font)
+    (set-theme-value-default 'text nil 'text-font font)))

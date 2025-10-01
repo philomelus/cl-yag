@@ -18,7 +18,7 @@
   (v:debug :parent "[setf content] {parent-mixin} updating children")
   
   (dolist (child value)
-    (let ((co (foro child)))
+    (let ((co (a:ensure-car child)))
       (with-accessors ((p parent)) co
         (unless (eql p object)
           (v:debug :parent "[setf content] {parent-mixin} setting child parent: ~a" (print-raw-object co))
@@ -31,7 +31,7 @@
   ;; If we have content
   (if (typep obj 'content-mixin-base)
       (dolist (child (content obj))
-        (let ((co (foro child)))
+        (let ((co (a:ensure-car child)))
           (when (typep co 'parent-mixin-base)
             (v:debug :parent "[setf parent] {parent-mixin} setting child parent: ~a" (print-raw-object co))
             (setf (parent co) obj)))))

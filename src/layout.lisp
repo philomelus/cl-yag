@@ -60,7 +60,7 @@ to calculate their layout."
 
   ;; Allow any child layouts to layout as well
   (dolist (child (content object))
-    (let ((child-object (foro child)))
+    (let ((child-object (a:ensure-car child)))
       (unless (eql child-object nil)
         (when (typep child-object 'layout-base)
           (calc-area child-object))))))
@@ -103,23 +103,23 @@ internal calc-* slots."
     (let ((areas (make-array (length old) :adjustable nil :fill-pointer nil)))
       ;; Save old areas
       (dotimes (n (length old))
-        (setf (aref areas n) (area-rect (foro (nth n old)))))
+        (setf (aref areas n) (area-rect (a:ensure-car (nth n old)))))
 
       ;; Update the content
       (call-next-method)
 
       (let ((new (content object)))
-        (let ((common (intersection old new :key #'(lambda (o) (foro o)))))
+        (let ((common (intersection old new :key #'(lambda (o) (a:ensure-car o)))))
           ;; Locate objects in both old and new
           
           (dolist (child common)
             (assert (not (eql child nil)))
             ;; Reset area
-            (let ((op (position (foro child) old :key #'(lambda (o) (foro o)) :test #'eql))
-                  (np (position (foro child) new :key #'(lambda (o) (foro o)) :test #'eql)))
+            (let ((op (position (a:ensure-car child) old :key #'(lambda (o) (a:ensure-car o)) :test #'eql))
+                  (np (position (a:ensure-car child) new :key #'(lambda (o) (a:ensure-car o)) :test #'eql)))
               (assert (not (eql op nil)))
               (assert (not (eql np nil)))
-              (reset-area (foro (nth op old)) (foro (nth np new)))))))))
+              (reset-area (a:ensure-car (nth op old)) (a:ensure-car (nth np new)))))))))
 
   ;; Save area options
   (layout-save-original object)
@@ -135,32 +135,32 @@ internal calc-* slots."
 (defmethod on-char (key mods (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)
-     (when (on-char key mods (foro child))
+     (when (on-char key mods (a:ensure-car child))
        (return-from on-char t))))
   (my-next-method))
 
 (defmethod on-mouse-down (x y b (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)
-     (if (on-mouse-down x y b (foro child))
+     (if (on-mouse-down x y b (a:ensure-car child))
          (return-from on-mouse-down t))))
   nil)
 
 (defmethod on-mouse-move (x y dx dy (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)
-      (on-mouse-move x y dx dy (foro child)))))
+      (on-mouse-move x y dx dy (a:ensure-car child)))))
 
 (defmethod on-mouse-up (x y b (obj layout-base) &key)
   (dolist (child (content obj))
     (unless (eql child nil)
-      (on-mouse-up x y b (foro child)))))
+      (on-mouse-up x y b (a:ensure-car child)))))
 
 (defmethod on-paint ((object layout-base) &key)
   ;; Paint children
   (dolist (c (content object))
     (unless (eql c nil)
-      (let ((co (foro c)))
+      (let ((co (a:ensure-car c)))
         (on-paint co))))
   (my-next-method))
 
@@ -296,20 +296,20 @@ options override options here."))
       (let* ((child-internal (aref child-area cp))
              (oa (make-instance '%rect :left (left child-internal) :top (top child-internal) :width (width child-internal) :height (height child-internal))))
       
-        (with-slots ((cl left) (ct top) (cw width) (ch height)) (foro child)
+        (with-slots ((cl left) (ct top) (cw width) (ch height)) (a:ensure-car child)
           (v:debug :layout "[calc-area] {layout} child calculating (~a ~a) @ (~a ~a)"
                    cw ch cl ct)
         
           (macrolet ((do-calc (var func)
                        `(if (keywordp ,var)
                             (progn
-                              (setf ,var (,func ,var oa (foro child)))
+                              (setf ,var (,func ,var oa (a:ensure-car child)))
                               t)
                             nil))
                      (do-calc-alt (w h var func)
                        `(if (keywordp ,var)
                             (progn
-                              (setf ,var (,func ,var oa ,w ,h (foro child)))
+                              (setf ,var (,func ,var oa ,w ,h (a:ensure-car child)))
                               t)
                             nil)))
             (let ((cwp (do-calc cw calc-width))
@@ -328,7 +328,7 @@ options override options here."))
                 (setf (slot-value child-internal 'top) ct))
               
               ;; Handle options
-              (let* ((co (find-if #'(lambda (o) (eql (foro o) (foro child))) content))
+              (let* ((co (find-if #'(lambda (o) (eql (a:ensure-car o) (a:ensure-car child))) content))
                      options)
                 (when (consp co)
                   (setq options (rest co)))
@@ -338,27 +338,27 @@ options override options here."))
                     (case option
                       (:bottom
                        (with-local-slots ((ci-top top) (ci-height height)) child-internal
-                         (with-local-slots ((ch-top top) (ch-height height)) (foro child)
+                         (with-local-slots ((ch-top top) (ch-height height)) (a:ensure-car child)
                            (let ((ci-bottom (+ ci-top ci-height))
                                  (ch-bottom (+ ch-top ch-height)))
                              (if (> ci-bottom ch-bottom)
-                                 (setf (slot-value (foro child) 'top) (- ci-bottom ch-height)))))))
+                                 (setf (slot-value (a:ensure-car child) 'top) (- ci-bottom ch-height)))))))
                       (:center
                        ;; Move object to horizontal center
-                       (if (> (slot-value child-internal 'width) (slot-value (foro child) 'width))
-                           (setf (slot-value (foro child) 'left) (+ (slot-value child-internal 'left)
+                       (if (> (slot-value child-internal 'width) (slot-value (a:ensure-car child) 'width))
+                           (setf (slot-value (a:ensure-car child) 'left) (+ (slot-value child-internal 'left)
                                                                     (/ (- (slot-value child-internal 'width)
-                                                                          (slot-value (foro child) 'width))
+                                                                          (slot-value (a:ensure-car child) 'width))
                                                                        2)))))
                       (:left
                        ;; Move child to left edge
-                       (if (< (slot-value child-internal 'left) (slot-value (foro child) 'left))
-                           (setf (slot-value (foro child) 'left) (slot-value child-internal 'left))))
+                       (if (< (slot-value child-internal 'left) (slot-value (a:ensure-car child) 'left))
+                           (setf (slot-value (a:ensure-car child) 'left) (slot-value child-internal 'left))))
                       (:middle
                        (with-local-slots ((ci-height height)) child-internal
-                         (with-local-slots ((ch-height height)) (foro child)
+                         (with-local-slots ((ch-height height)) (a:ensure-car child)
                            (if (> ci-height ch-height)
-                               (setf (slot-value (foro child) 'top) (+ (slot-value child-internal 'top)
+                               (setf (slot-value (a:ensure-car child) 'top) (+ (slot-value child-internal 'top)
                                                                        (/ (- ci-height ch-height) 2)))))))
                       (:min-height) ; nothing to do when there are no siblings
                       (:min-width)  ; nothing to do when there are no siblings
@@ -367,13 +367,13 @@ options override options here."))
                       (:right
                        ;; Move child to right edge
                        (let ((ca-right (+ (slot-value child-internal 'left) (slot-value child-internal 'width)))
-                             (ch-right (+ (slot-value (foro child) 'left) (slot-value (foro child) 'width))))
+                             (ch-right (+ (slot-value (a:ensure-car child) 'left) (slot-value (a:ensure-car child) 'width))))
                          (if (> ca-right ch-right)
-                             (setf (slot-value (foro child) 'left) (- ca-right (slot-value (foro child) 'width))))))
+                             (setf (slot-value (a:ensure-car child) 'left) (- ca-right (slot-value (a:ensure-car child) 'width))))))
                       (:top
                        ;; Move child to top edge
-                       (if (< (slot-value child-internal 'top) (slot-value (foro child) 'top))
-                           (setf (slot-value (foro child) 'top) (slot-value child-internal 'top))))))))
+                       (if (< (slot-value child-internal 'top) (slot-value (a:ensure-car child) 'top))
+                           (setf (slot-value (a:ensure-car child) 'top) (slot-value child-internal 'top))))))))
 
               ;; Log updated/changed area
               (v:debug :layout "[calc-area] {layout} child area (~d ~d) @ (~d ~d) ~a"
@@ -414,7 +414,7 @@ area allocated to them, whether they choose to use it or not."
         (progn
           (assert (= (length (content object)) 1))
 
-          (let ((child (foro (first (content object)))))
+          (let ((child (a:ensure-car (first (content object)))))
             ;; Reset child to orignal state
             (reset-area child)
           
@@ -433,20 +433,20 @@ area allocated to them, whether they choose to use it or not."
   "Draw LAYOUT, which means take care of LAYOUT-CELL-DATA and then pass on to LAYOUT-BASE."
 
   ;; Draw borders if they exist
-  (with-slots (cell) (foro object)
+  (with-slots (cell) (a:ensure-car object)
     (with-borders (bl br bt bb) cell
       (let ((blp (eql bl nil)) (brp (eql br nil))
             (btp (eql bt nil)) (bbp (eql bb nil)))
         (unless (and blp brp btp bbp)
-          (let ((theme (find-theme (foro object))))
+          (let ((style (get-theme-style object)))
             (unless blp
-              (paint-border-left bl (foro object) theme :blend-top btp :blend-bottom bbp))
+              (paint-border-left bl style cell :blend-top btp :blend-bottom bbp))
             (unless brp
-              (paint-border-right br (foro object) theme :blend-top btp :blend-bottom bbp))
+              (paint-border-right br style cell :blend-top btp :blend-bottom bbp))
             (unless btp
-              (paint-border-top bt (foro object) theme :blend-left blp :blend-right brp))
+              (paint-border-top bt style cell :blend-left blp :blend-right brp))
             (unless bbp
-              (paint-border-bottom bb (foro object) theme :blend-left blp :blend-right brp)))))))
+              (paint-border-bottom bb style cell :blend-left blp :blend-right brp)))))))
 
   ;; Let layout-base paint the child
   (my-next-method))
@@ -477,7 +477,7 @@ This will be the same or larger than the widgets actual area slots.
 Returns nil if not found."
 
   (let ((owner (find-parent-content object)))
-    (let ((op (position object (content owner) :key #'(lambda (o) (foro o)))))
+    (let ((op (position object (content owner) :key #'(lambda (o) (a:ensure-car o)))))
       (unless (eql op nil)
         (return-from area-allocated (aref (slot-value owner 'child-area) op)))))
   nil)

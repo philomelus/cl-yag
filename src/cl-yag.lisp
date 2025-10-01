@@ -1,6 +1,6 @@
 (in-package :cl-yag)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3) (space 1)))
+(declaim (optimize (debug 3) (speed 0) (safety 3) (space 1) (compilation-speed 0)))
 
 ;;;; MAIN =====================================================================
 
@@ -23,11 +23,19 @@
 
 (defparameter *main-data* (make-main-data))
 
-(defmethod must-init ((test sb-sys::system-area-pointer) desc)
-  (when (null-pointer-p test)
-    (if (/= (al:get-errno) 0)
-        (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
-        (error "Couldn't initialize ~s." desc))))
+(defun must-init (test desc)
+  (typecase test
+    (sb-sys::system-area-pointer
+     (when (null-pointer-p test)
+       (if (/= (al:get-errno) 0)
+           (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
+           (error "Couldn't initialize ~s." desc))))
+    (t
+     (unless test
+       (if (>  (al:get-errno) 0)
+           (error "Couldn't initialize ~s (~d)." desc (al:get-errno))
+           (error "Couldn't initialize ~s." desc)))))
+  )
 
 (defun main-init ()
   (must-init (al:init) "allegro")
@@ -47,6 +55,9 @@
 
 (defun main ()
   (main-init)
+
+  (slime-init)
+  
   (let ((screen (main-setup-display))
         (timer (al:create-timer (/ 1 60.0)))
         (queue (al:create-event-queue))
@@ -56,12 +67,13 @@
     (unwind-protect
          (with-slots (ruler-left ruler-top ruler-right ruler-bottom grid) *main-data*
            
-           (let ((c1 (al:map-rgb-f 0.75 0 0))
-                 (c2 (al:map-rgb-f 0.50 0 0)))
+           (let (;; (c1 (al:map-rgb-f 0.75 0 0))
+                 ;; (c2 (al:map-rgb-f 0.50 0 0))
+                 )
 
              ;; left ruler
              (setf ruler-left (ruler-10-2 :left (- +MW-WL+ 10) :top +MW-WT+ :width 10 :height +MW-WH+
-                                          :line-color c1 :div-10-color c1 :div-2-color c2
+                                          ;; :line-color c1 :div-10-color c1 :div-2-color c2
                                           :div-10-extent 1 :div-2-extent 0.5
                                           :vertical t
                                           :align :end))
@@ -69,14 +81,14 @@
 
              ;; top ruler
              (setf ruler-top (ruler-10-2 :left +MW-WL+ :top (- +MW-WT+ 10) :width +MW-WW+ :height 10
-                                         :line-color c1 :div-10-color c1 :div-2-color c2
+                                         ;; :line-color c1 :div-10-color c1 :div-2-color c2
                                          :div-10-extent 1 :div-2-extent 0.5
                                          :align :end))
              (push ruler-top widgets)
 
              ;; right ruler
              (setf ruler-right (ruler-10-2 :left (+ +MW-WL+ +MW-WW+) :top +MW-WT+ :width 10 :height +MW-WH+
-                                           :line-color c1 :div-10-color c1 :div-2-color c2
+                                           ;; :line-color c1 :div-10-color c1 :div-2-color c2
                                            :div-10-extent 1 :div-2-extent 0.5
                                            :vertical t
                                            :align :begin))
@@ -84,7 +96,7 @@
            
              ;; bottom ruler
              (setf ruler-bottom (ruler-10-2 :left 200 :top 600 :width 300 :height 10
-                                            :line-color c1 :div-10-color c1 :div-2-color c2
+                                            ;; :line-color c1 :div-10-color c1 :div-2-color c2
                                             :div-10-extent 1 :div-2-extent 0.5
                                             :align :begin))
              (push ruler-bottom widgets)
@@ -114,8 +126,6 @@
                                  :left :center :top :middle :width :auto :height :auto-min
                                  :padding-left 0 :padding-right 0 :padding-top 10 :padding-bottom 10))
 
-        (setf (font *theme-default*) (default-font -24))
-           
         (setf layout3 (defcolumn-layout :content (list button1 button2 button3)))
         
         (setf layout2 (defcolumn-layout :content (list `(,text1 :min-height) layout3)))
@@ -174,6 +184,15 @@
             (al:draw-line 500.0 0 500.0 719 (al:map-rgb-f 0 1 0) 1)
             (al:draw-line 0 200.0 959 200.0 (al:map-rgb-f 0 1 0) 1)
             (al:draw-line 0 600.0 959 600.0 (al:map-rgb-f 0 1 0) 1))
+
+          
+          ;; (al::draw-filled-rectangle  25  25 225 225 +color-very-dark-gray+)
+          ;; (al::draw-filled-rectangle 225  25 425 225 +color-dark-gray+)
+          ;; (al::draw-filled-rectangle 425  25 625 225 +color-gray+)
+          ;; (al::draw-filled-rectangle  25 225 225 425 +color-light-gray+)
+          ;; (al::draw-filled-rectangle 225 225 425 425 +color-very-light-gray+)
+          ;; (al::draw-filled-rectangle 625 225 625 425 (al:map-rgb-f 1 1 1))
+          
           (paint boss)
           (al:flip-display))
 

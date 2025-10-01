@@ -3,8 +3,9 @@
   (:use #:cl)
   (:local-nicknames
    (#:a #:alexandria)
-   (#:v #:org.shirakumo.verbose)
-   (#:bt #:bordeaux-threads))
+   (#:bt #:bordeaux-threads)
+   (#:mop #:closer-mop)
+   (#:v #:org.shirakumo.verbose))
   (:import-from #:cffi
                 #:foreign-alloc
                 #:foreign-enum-value
@@ -17,43 +18,68 @@
   ;;               #:define-cobject-class)
   (:import-from #:closer-mop
                 #:class-slots
+                #:ensure-class
                 #:find-class
-                #:slot-definition-name)
+                #:slot-definition-name
+                #:slot-value-using-class)
   (:export #:main
+
+           ;; ========== COLORS ==========
+           #:+COLOR-AQUA+
+           #:+COLOR-BLACK+
+           #:+COLOR-BLUE+
+           #:+COLOR-DARK-AQUA+
+           #:+COLOR-DARK-BLUE+
+           #:+COLOR-DARK-GRAY+
+           #:+COLOR-DARK-GREEN+
+           #:+COLOR-DARK-PURPLE+
+           #:+COLOR-DARK-RED+
+           #:+COLOR-DARK-YELLOW+
+           #:+COLOR-GRAY+
+           #:+COLOR-GREEN+
+           #:+COLOR-LIGHT-AQUA+
+           #:+COLOR-LIGHT-BLUE+
+           #:+COLOR-LIGHT-GRAY+
+           #:+COLOR-LIGHT-GREEN+
+           #:+COLOR-LIGHT-PURPLE+
+           #:+COLOR-LIGHT-RED+
+           #:+COLOR-LIGHT-YELLOW+
+           #:+COLOR-PURPLE+
+           #:+COLOR-RED+
+           #:+COLOR-VERY-DARK-AQUA+
+           #:+COLOR-VERY-DARK-BLUE+
+           #:+COLOR-VERY-DARK-GRAY+
+           #:+COLOR-VERY-DARK-GREEN+
+           #:+COLOR-VERY-DARK-PURPLE+
+           #:+COLOR-VERY-DARK-RED+
+           #:+COLOR-VERY-DARK-YELLOW+
+           #:+COLOR-VERY-LIGHT-AQUA+
+           #:+COLOR-VERY-LIGHT-BLUE+
+           #:+COLOR-VERY-LIGHT-GRAY+
+           #:+COLOR-VERY-LIGHT-GREEN+
+           #:+COLOR-VERY-LIGHT-PURPLE+
+           #:+COLOR-VERY-LIGHT-RED+
+           #:+COLOR-VERY-LIGHT-YELLOW+
+           #:+COLOR-WHITE+
+           #:+COLOR-YELLOW+
            
            ;; ========== Font ==========
            #:default-font
            #:default-mono-font
 
            ;; ========== Theme ==========
-           #:*theme-default*            ; default: (theme-flat-gray)
-           #:deftheme-3d
-           #:deftheme-3d-all
-           #:deftheme-flat
-           #:deftheme-flat-all
-           #:find-theme
-           #:frame-color
-           #:interior-color
-           #:theme-3d
-           #:theme-3d-all
-           #:theme-3d-aqua
-           #:theme-3d-blue
-           #:theme-3d-gray
-           #:theme-3d-green
-           #:theme-3d-purple
-           #:theme-3d-red
-           #:theme-3d-yellow
+           #:*theme-default*
+           #:default-theme-style
+           #:default-theme-type
+           #:get-theme-value
+           #:get-theme-value-default
+           #:set-theme-value
+           #:set-theme-value-default
+           #:theme
            #:theme-base
-           #:theme-flat
-           #:theme-flat-all
-           #:theme-flat-aqua
-           #:theme-flat-blue
-           #:theme-flat-gray
-           #:theme-flat-green
-           #:theme-flat-purple
-           #:theme-flat-red
-           #:theme-flat-yellow
-
+           #:theme-style
+           #:with-theme-let
+           
            ;; ========== Manager ==========
            #:defmanager
            #:manager
@@ -138,30 +164,20 @@
            #:width
            
            ;; border
-           #:border
-           #:border-theme-3d-mixin
            #:border-bottom
-           #:border-theme-flat-mixin
            #:border-h
            #:border-left
            #:border-mixin
            #:border-mixin-base
            #:border-right
-           #:border-theme-mixin
            #:border-top
            #:border-v
-           #:defborder
-           #:style
-           #:thickness
            #:with-borders
            
            ;; button
            #:border-thickness
            #:borderp
            #:button
-           #:button-theme-3d-mixin
-           #:button-theme-flat-mixin
-           #:button-theme-mixin
            #:defbutton
            #:down-color
            #:hover-color
@@ -250,12 +266,6 @@
            #:spacing-top
            #:spacing-v
            
-           ;; style
-           #:style
-           #:style-3d-mixin
-           #:style-3d-mixin-base
-           #:style-3d-type
-           
            ;; theme
            #:theme
            #:theme-mixin
@@ -272,33 +282,23 @@
            #:visible-mixin-base
            
            ;; ========== Widgets ==========
+           ;; border
+           #:border
+           #:defborder
+           
            ;; box
            #:box
-           #:box-theme-3d-mixin
-           #:box-theme-flat-mixin
-           #:box-theme-mixin
            #:box-title-position-type
            #:defbox
            #:filled
-           #:thickness
            #:title-position
            #:validate-box-options
            
            ;; grid
-           #:color
-           #:color-h
-           #:color-v
            #:defgrid
            #:grid
-           #:grid-theme-mixin
            #:major
-           #:major-color
-           #:major-color-h
-           #:major-color-v
            #:minor
-           #:minor-color
-           #:minor-color-h
-           #:minor-color-v
            
            ;; primitives
            #:%point2
@@ -309,13 +309,7 @@
            #:h
            #:left
            #:line
-           #:line-theme-3d-mixin
-           #:line-theme-flat-mixin
-           #:line-theme-mixin
            #:rectangle
-           #:rectangle-theme-3d-mixin
-           #:rectangle-theme-flat-mixin
-           #:rectangle-theme-mixin
            #:right
            #:start
            #:top
@@ -363,7 +357,6 @@
            #:division-2
            #:division-25
            #:division-5
-           #:division-theme-mixin
            #:divisions
            #:extent
            #:extent-type
@@ -374,7 +367,6 @@
            #:ruler-100-25-5
            #:ruler-25-5
            #:ruler-align-type
-           #:ruler-theme-mixin
            #:thickness
            #:validate-ruler-options
            #:vertical
@@ -389,17 +381,11 @@
            #:text-calc-title-top
            #:text-calc-top
            #:text-calc-width
-           #:text-theme-mixin
 
-           ;; themer
-           #:themer
-           #:defthemer
-           
            ;; window
            #:defwindow
            #:interior-color
            #:window
-           #:window-theme-mixin
            
            ;; ========== Generics ==========
            #:area
@@ -469,6 +455,7 @@
            #:print-raw-object
            #:print-thread-name
            #:remove-keyword-params
+           #:slime-init
            
            ;; ========== Allegro ==========
            #:+ALIGN-CENTER+

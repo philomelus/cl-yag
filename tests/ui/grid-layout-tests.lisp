@@ -32,14 +32,14 @@
                                                    nil nil nil t1-5 nil nil nil
                                                    nil nil t1-6 nil t1-7 nil nil
                                                    nil t1-8 nil nil nil t1-9 nil)))
-      (setf (width (grid-layout-column 0 gl1)) 25)
-      (setf (width (grid-layout-column 6 gl1)) 25)
-      (setf (height (grid-layout-row 0 gl1)) 25)
-      (setf (height (grid-layout-row 4 gl1)) 25)
-      (grid-layout-column-cells-set (defborder :thickness 5) 'border-right 0 gl1 :recalc nil)
-      (grid-layout-column-cells-set (defborder :thickness 5) 'border-left 6 gl1 :recalc nil)
-      (grid-layout-row-cells-set (defborder :thickness 5) 'border-bottom 0 gl1 :recalc nil)
-      (grid-layout-row-cells-set (defborder :thickness 5) 'border-top 4 gl1 :recalc nil)
+      ;; (setf (width (layout-column 0 gl1)) 25)
+      ;; (setf (width (layout-column 6 gl1)) 25)
+      ;; (setf (height (layout-row 0 gl1)) 25)
+      ;; (setf (height (layout-row 4 gl1)) 25)
+      ;; (layout-column-cells-set (defborder :thickness 5) 'border-right 0 gl1 :recalc nil)
+      ;; (layout-column-cells-set (defborder :thickness 5) 'border-left 6 gl1 :recalc nil)
+      ;; (layout-row-cells-set (defborder :thickness 5) 'border-bottom 0 gl1 :recalc nil)
+      ;; (layout-row-cells-set (defborder :thickness 5) 'border-top 4 gl1 :recalc nil)
       
       ;;(setf gl1 (defgrid-layout :columns 2 :rows 2))
       (setf w1 (deftests-window :full 1 :content (list gl1)))

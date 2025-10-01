@@ -2,17 +2,23 @@
 
 (declaim (optimize (debug 3) (speed 0) (safety 3)))
 
-;;;; text-base ================================================================
+;;;; FORWARD ==================================================================
 
-(defclass text-base-theme-mixin (back-color-mixin
-                                 font-mixin
-                                 fore-color-mixin)
-  ())
+(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-height))
+(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-left))
+(declaim (ftype (function (t) (values (or float integer ratio) integer)) text-calc-title-left))
+(declaim (ftype (function (t) (or float integer ratio)) text-calc-title-top))
+(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-top))
+(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-width))
+
+;;;; TEXT-BASE ================================================================
+
+(defparameter *text-base-theme-data* `((text-base nil text-color)
+                                       (text-base nil text-font)))
 
 ;; This exists purely to allow a common base for all text objects.  If that
 ;; changes, the other logic in this file may need revalidation.
-(defclass text-base (text-base-theme-mixin
-                     area-mixin
+(defclass text-base (area-mixin
                      border-mixin
                      h-align-mixin
                      padding-mixin      ; between title and border
@@ -22,19 +28,18 @@
                      v-align-mixin)
   ())
 
-;;;; text =====================================================================
+;;;; TEXT =====================================================================
 
-(defclass text-theme-mixin (text-base-theme-mixin)
-  ((interior-color :initarg :interior-color :initform nil :accessor interior-color)))
+(defparameter *text-theme-data* `((text nil interior-color)))
 
 (defclass text (text-base
-                text-theme-mixin)
+                theme-mixin)
   ())
 
 (defmacro deftext (&rest rest &key &allow-other-keys)
   `(make-instance 'text ,@rest))
 
-;;; methods ---------------------------------------------------------
+;;; METHODS ---------------------------------------------------------
 
 (defmethod calc-border-let (side (area %rect) (object text))
   (case side
@@ -82,24 +87,38 @@
     (v:debug :layout "[calc-width] {text} result:~d ~a" rv (print-raw-object object))
     rv))
 
-(defmethod on-paint ((obj text) &key)
-  (with-object-or-theme ((fc fore-color) (fnt font) (ic interior-color)) obj
+(defmethod default-theme-style ((object text))
+  nil)
 
-    ;; Draw background
-    (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)
+(defmethod default-theme-type ((object text))
+  'text)
 
-    ;; Draw border
-    (paint-border obj (find-theme obj))
-    
-    (with-local-slots ((l left) (t_ top) (w width) (h height)) obj
-      (multiple-value-bind (x f) (text-calc-title-left obj)
+(defmethod initialize-instance :before ((object text) &key)
+  (unless (theme-value-defaultp 'text nil 'text-color)
+    (set-theme-value-default 'text nil 'text-color (get-theme-value-default nil nil 'text-color))
+    (set-theme-value-default 'text nil 'text-font (get-theme-value-default nil nil 'text-font))
+    (set-theme-value-default 'text nil 'interior-color (get-theme-value-default nil nil 'interior-color))))
+
+(defmethod on-paint ((object text) &key)
+  (with-theme-let ((ttc (text nil text-color))
+                   (ttf (text nil text-font))
+                   (tic (text nil interior-color)))
+                  object
+
+    (with-local-accessors ((l left) (t_ top) (w width) (h height)) object
+      ;; Draw background
+      (al:draw-filled-rectangle l t_ (right object) (+ (bottom object) 0.99) tic)
+
+      ;; Draw border
+      (paint-border object)
+      
+      (multiple-value-bind (x f) (text-calc-title-left object)
         (with-clipping (l t_ w h)
           (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-INVERSE-ALPHA+)
-            (al:draw-text fnt fc x (text-calc-title-top obj) f (title obj))))))))
+            (al:draw-text ttf ttc x (text-calc-title-top object) f (title object))))))))
 
-;;;; functions ================================================================
+;;;; FUNCTIONS ================================================================
 
-(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-height))
 (defun text-calc-height (type area object)
   (with-local-slots ((rv height)) area
     (case type
@@ -110,7 +129,7 @@
                           border-top border-bottom
                           padding-top padding-bottom)
                          object
-         (setq rv (al:get-font-line-height (theme-field font object)))
+         (setq rv (al:get-font-line-height (get-theme-value object 'text 'text-font)))
          (incf rv spacing-top)
          (incf rv spacing-bottom)
          (unless (eql border-top nil)
@@ -122,7 +141,6 @@
        (assert (<= rv (height area)))))
     rv))
 
-(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-left))
 (defun text-calc-left (type area width height object)
   "For any widget that only uses a title inside its content, this will calculate
 the left coordinate. Handles spacing, borders, and padding if widgets are
@@ -155,7 +173,6 @@ derived from appropriate mixins."
            (incf rv (/ (- aw width) 2))))))
     rv))
 
-(declaim (ftype (function (t) (values (or float integer ratio) integer)) text-calc-title-left))
 (defun text-calc-title-left (object)
   "Calculate left coordinate of title.  Returns left coordinate and text align flag."
   
@@ -201,13 +218,12 @@ derived from appropriate mixins."
     
     (values calc-left flags)))
 
-(declaim (ftype (function (t) (or float integer ratio)) text-calc-title-top))
 (defun text-calc-title-top (obj)
   "Calculate top coordinate of title.  Returns the coordinate."
   
   (with-local-slots ((at top) (va v-align)) obj
-    (with-object-or-theme ((fnt font)) obj
-      (assert (and (not (eql fnt nil))
+    (with-theme-let ((fnt (text nil text-font))) obj
+      (assert (and (not (null fnt))
                    (not (cffi:null-pointer-p fnt))))
       
       ;; When auto-calculated, start at 0 offset from parent
@@ -240,7 +256,6 @@ derived from appropriate mixins."
          (v:debug :layout "[text-calc-title-top] aligning text bottom:~a ~a" at (print-raw-object obj))))
       at)))
 
-(declaim (ftype (function (keyword %rect coordinate coordinate t) coordinate) text-calc-top))
 (defun text-calc-top (type area width height object)
   "For any widget that only uses a title inside its content, this will calculate
 the top coordinate. Handles spacing, borders, and padding if widgets are
@@ -274,7 +289,6 @@ derived from appropriate mixins."
          (incf rv (- (height area) calc-height)))))
     rv))
 
-(declaim (ftype (function (keyword %rect t) (or float integer ratio)) text-calc-width))
 (defun text-calc-width (type area object)
   (let (rv)
     (case type

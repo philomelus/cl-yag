@@ -4,9 +4,9 @@
 
 ;;;; manager ==================================================================
 
-(defclass manager (content-mixin
-                   theme-mixin)
+(defclass manager (content-mixin)
   ((process :initform nil :type boolean :accessor process)
+   (theme :type (or null theme) :initarg :theme :initform nil :accessor theme)
    (last-mouse-down :initform nil)))
 
 (defmacro defmanager (&rest rest &key &allow-other-keys)
@@ -26,7 +26,7 @@
 
 (defmethod paint ((obj manager) &key)
   (dolist (child (content obj))
-    (let ((co (foro child)))
+    (let ((co (a:ensure-car child)))
       (unless (eql co nil)
         (on-paint co)))))
 

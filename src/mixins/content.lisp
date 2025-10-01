@@ -17,7 +17,7 @@ widgets."))
 (defmethod initialize-instance :after ((obj content-mixin) &key)
   ;; Let children know who their parent is
   (dolist (child (content obj))
-    (let ((co (foro child)))
+    (let ((co (a:ensure-car child)))
       ;; If child has a parent
       (when (typep co 'parent-mixin-base)
         (v:debug :parent "[initialize-instance] {content-mixin} setting child parent: ~a" (print-raw-object co))
@@ -28,7 +28,7 @@ widgets."))
 (defmethod (setf content) :after (value (obj content-mixin))
   ;; Let children know who their parent is
   (dolist (child (content obj))
-    (let ((co (foro child)))
+    (let ((co (a:ensure-car child)))
       ;; If child has a parent slot
       (when (typep co 'parent-mixin-base)
         (v:debug :parent "[setf content] {content-mixin} setting child parent: ~a" (print-raw-object co))

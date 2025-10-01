@@ -31,9 +31,9 @@
       (setf l1 (deflayout :content `(,t1)))
       (setf b12 (defborder :thickness 0))
       (setf (border (layout-cell l1)) b12)
-      (setf th1 (deftheme-flat-all :color (al:map-rgb-f 1 0 0)))
-      (setf tr1 (defthemer th1 l1))
-      (setf w1 (deftests-window :wide 1 :content `(,tr1)))
+      ;; (setf th1 (deftheme-flat-all :color (al:map-rgb-f 1 0 0)))
+      ;; (setf tr1 (defthemer th1 l1))
+      (setf w1 (deftests-window :wide 1 :content `(,l1)))
       (push w1 widgets)
 
       ;; Test 2
