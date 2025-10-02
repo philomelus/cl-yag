@@ -63,7 +63,7 @@ BORDER's or children.")))
 (defmethod on-paint ((object window) &key)
   ;; Fill interior if desired
   (when (slot-value object 'filled)
-    (with-theme-let ((wic (window nil interior-color))) object
+    (let ((wic (get-theme-value object 'window 'interior-color :style nil)))
       (with-area-and-spacing (left-interior top-interior right-interior bottom-interior)
                              object
         (al:draw-filled-rectangle left-interior top-interior right-interior bottom-interior wic))))

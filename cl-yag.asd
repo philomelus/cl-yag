@@ -75,10 +75,6 @@
                              (:file "text" :depends-on ("theme"))
                              (:file "window" :depends-on ("theme"))
 
-                             ;; theme needs to be last as it relies on all the
-                             ;; other objects theme mixins
-                             (:file "theme-vars" :depends-on ("box" "grid" "ruler" "text" "theme" "window"))
-
                              ;; Used during development, and relies on ALL
                              ;; other files
                              (:file "cl-yag"))))

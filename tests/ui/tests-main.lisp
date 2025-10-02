@@ -194,16 +194,16 @@ Default event processing watches for :display-close event as well."
                          (ic2 +COLOR-RED+))
                      (mapc #'(lambda (w)
                                (unless (null w)
-                                 (with-theme-let ((ic (window nil interior-color))) w
-                                   (v:info :tests "[ON-CHAR] {:c} color: ~a" ic)
+                                 (let ((ic (get-theme-value w 'window 'interior-color :style nil)))
+                                   (v:debug :tests "[ON-CHAR] {:c} color: ~a" ic)
                                    (if (or (equal ic ic1)
                                            (equal ic nil))
                                        (progn
                                          (set-theme-value w (type-of w) 'interior-color ic2 :style nil)
-                                         (v:info :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to +COLOR-RED+"))
+                                         (v:debug :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to +COLOR-RED+"))
                                        (progn
                                          (set-theme-value w (type-of w) 'interior-color ic1 :style nil)
-                                         (v:info :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to theme default"))))))
+                                         (v:debug :tests "[ON-CHAR] {:c} set INTERIOR-COLOR to theme default"))))))
                            widgets)))
                  (when update
                    (tests-command-update data)))))

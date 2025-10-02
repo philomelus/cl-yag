@@ -43,7 +43,8 @@
 (defun paint-ruler-division (align object start size vertical)
   (declare (type division object))
   
-  (with-theme-let ((dc (division nil color)) (tn (division nil thickness))) object
+  (let ((dc (get-theme-value object 'division 'color :style nil))
+        (tn (get-theme-value object 'division 'thickness :style nil)))
     (with-local-accessors ((ex extent) (et extent-type)) object
       (case align
         (:begin
@@ -182,7 +183,8 @@
                ((:center :middle) (1- (+ top (/ height 2))))
                (:end (+ top height)))))
       ;; Paint the main line
-      (with-theme-let ((lc (ruler nil line-color)) (ltn (ruler nil line-thickness))) object
+      (let ((lc (get-theme-value object 'ruler 'line-color :style nil))
+            (ltn (get-theme-value object 'ruler 'line-thickness :style nil)))
         (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (al:draw-line (1- left) y (right object) y lc ltn)))
   
@@ -202,7 +204,8 @@
                ((:center :middle) (1- (+ left (/ width 2))))
                (:end (+ left width)))))
       ;; Paint the main line
-      (with-theme-let ((lc (ruler nil line-color)) (ltn (ruler nil line-thickness))) object
+      (let ((lc (get-theme-value object 'ruler 'line-color :style nil))
+            (ltn (get-theme-value object 'ruler 'line-thickness :style nil)))
         (with-blender (+OP-ADD+ +BLEND-ONE+ +BLEND-ZERO+)
           (al:draw-line x (1- top) x (bottom object) lc ltn)))
   

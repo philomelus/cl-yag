@@ -14,9 +14,9 @@
   w1 w2 w3 w4 w5 w6 w7 w8
   )
 
-(defparameter *box-data* (make-box-tests-data))
+(defparameter *box-data* nil)
 
-(defmethod tests-create ((data (eql *box-data*)))
+(defmethod tests-create ((data box-tests-data))
 
   (let (objs)
     (with-slots (manager
@@ -106,11 +106,11 @@
                                   (list "1 = :left/:center/:right"
                                         "2 = :top/:middle/:bottom"
                                         "3 = v-align :top/:middle/:bottom"
-                                        "4 = :inset/:outset/:flat")
+                                        "")
                                   (list ""
                                         "k/K = Thickness +/-"
                                         "c   = window interior red/default"
-                                        "t   = theme-flat/theme-3d"))))
+                                        "t   = flat/3d-out/3d-in/3d-flat"))))
 
       ;; Rulers
       (mapc #'(lambda (o) (push o objs)) (multiple-value-list (tests-rulers-create-standard data :r7 nil :r8 nil)))
@@ -119,19 +119,19 @@
       ;; The one in charge
       (setf manager (make-instance 'manager :content (reverse objs))))))
 
-(defmethod tests-destroy ((data (eql *box-data*)))
+(defmethod tests-destroy ((data box-tests-data))
   (let ((args `((eql ,data))))
-    (cl-yag::cleanup-method tests-command-1 args)
-    (cl-yag::cleanup-method tests-command-2 args)
-    (cl-yag::cleanup-method tests-command-3 args)
-    (cl-yag::cleanup-method tests-command-4 args)
-    (cl-yag::cleanup-method tests-command-update args)
-    (cl-yag::cleanup-method tests-get-interior-color args)
-    (cl-yag::cleanup-method tests-get-thickness args)
-    (cl-yag::cleanup-method tests-render args))
+    (cleanup-method tests-command-1 args)
+    (cleanup-method tests-command-2 args)
+    (cleanup-method tests-command-3 args)
+    (cleanup-method tests-command-update args)
+    (cleanup-method tests-get-interior-color args)
+    (cleanup-method tests-get-thickness args)
+    (cleanup-method tests-render args)
+    (cleanup-method tests-get-theme args))
   nil)
 
-(defmethod tests-ready ((box-data (eql *box-data*)))
+(defmethod tests-ready ((box-data box-tests-data))
   (defmethod tests-command-1 ((data (eql box-data)))
     (with-slots (b1 b2 b3 b5 b6 b7) data
       (dolist (obj (list b1 b2 b3 b5 b6 b7))
@@ -199,19 +199,10 @@
              (setf va :top))))))
     t)
 
-  (defmethod tests-command-4 ((data (eql box-data)))
-    (with-slots (manager theme2 b1 b2 b3 b4 b5 b6 b7) data
-      (when (equal (theme manager) theme2)
-        (with-slots (style) theme2
-          (case style
-            (:inset
-             (setf style :outset))
-            ((:outset :default)
-             (setf style :flat))
-            (:flat
-             (setf style :inset))))))
-    nil)
-
+  (defmethod tests-get-theme ((data (eql box-data)))
+    (with-slots (b1 b2 b3 b4 b5 b6 b7) data
+        (values `(,b1 ,b2 ,b3 ,b4 ,b5 ,b6 ,b7) nil)))
+  
   (defmethod tests-get-thickness ((data (eql box-data)))
     (with-slots (b1 b2 b3 b4 b5 b6 b7 b8) data
       (values (list b1 b2 b3 b4 b5 b6 b7 b8) nil)))
@@ -254,10 +245,10 @@
   (tests-command-update box-data)
 
   ;; Change frame color
-  ;; TODO:
-  ;; (setf (frame-color (tests-theme1 box-data)) (al:map-rgb-f 0.5 0.5 0.5))
+  (set-theme-value-default nil nil 'frame-color (al:map-rgb-f 0.5 0.5 0.5))
   nil)
 
 (defun box-tests-main ()
+  (setf *box-data* (make-box-tests-data))
   (tests-main *box-data*))
 

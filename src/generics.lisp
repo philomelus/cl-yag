@@ -77,20 +77,14 @@ PAINT-BOX-FRAME, PAINT-BOX-INTERIOR, and PAINT-BOX-TITLE.
 
 theme - Theme used for painting box."))
 
-(defgeneric paint-box-frame (box)
-  (:documentation "Called to paint the frame of a box.
+(defgeneric paint-box-frame (style box)
+  (:documentation "Called to paint the frame of a box."))
 
-theme  - Theme used to paint box frame."))
+(defgeneric paint-box-interior (style box)
+  (:documentation "Called to paint the interior of a box."))
 
-(defgeneric paint-box-interior (box)
-  (:documentation "Called to paint the interior of a box.
-
-theme - Theme used to paint box interior."))
-
-(defgeneric paint-box-title (box)
-  (:documentation "Called to paint the title of a box.
-
-theme - Theme used to paint box title."))
+(defgeneric paint-box-title (style box)
+  (:documentation "Called to paint the title of a box."))
 
 ;;; LAYOUT ----------------------------------------------------------
 

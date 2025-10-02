@@ -111,10 +111,11 @@
 (defmethod on-paint ((obj button) &key)
   (with-local-slots ((in inside) (down was-down)) obj
     (with-local-accessors (left top width height) obj
-      (with-theme-let ((cd down-color) (ch hover-color) (cu up-color)
-                       (ic interior-color)
-                       (fnt font))
-                      obj
+      (let ((cd (get-theme-value obj 'button 'down-color))
+            (ch (get-theme-value obj 'button 'hover-color))
+            (cu (get-theme-value obj 'button 'up-color))
+            (ic (get-theme-value obj 'button 'interior-color))
+            (fnt (get-theme-value obj 'button 'font)))
       
         ;; Draw background
         (al:draw-filled-rectangle (left obj) (top obj) (right obj) (+ (bottom obj) 0.99) ic)

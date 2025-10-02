@@ -78,7 +78,6 @@
            #:theme
            #:theme-base
            #:theme-style
-           #:with-theme-let
            
            ;; ========== Manager ==========
            #:defmanager

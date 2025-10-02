@@ -100,10 +100,9 @@
     (set-theme-value-default 'text nil 'interior-color (get-theme-value-default nil nil 'interior-color))))
 
 (defmethod on-paint ((object text) &key)
-  (with-theme-let ((ttc (text nil text-color))
-                   (ttf (text nil text-font))
-                   (tic (text nil interior-color)))
-                  object
+  (let ((ttc (get-theme-value object 'text 'text-color :style nil))
+        (ttf (get-theme-value object 'text 'text-font :style nil))
+        (tic (get-theme-value object 'text 'interior-color :style nil)))
 
     (with-local-accessors ((l left) (t_ top) (w width) (h height)) object
       ;; Draw background
@@ -222,7 +221,7 @@ derived from appropriate mixins."
   "Calculate top coordinate of title.  Returns the coordinate."
   
   (with-local-slots ((at top) (va v-align)) obj
-    (with-theme-let ((fnt (text nil text-font))) obj
+    (let ((fnt (get-theme-value obj 'text 'text-font :style nil)))
       (assert (and (not (null fnt))
                    (not (cffi:null-pointer-p fnt))))
       
